@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+
+# TeX の中間生成物（提出には不要）
+thesis/*.aux
+thesis/*.log
+thesis/*.dvi
+thesis/*.out
+thesis/*.toc
+thesis/*.bbl
+thesis/*.blg
+thesis/*.synctex.gz
+
+# 大きな生データは追跡しない（入手手順を docs/データの入手方法.md に書く）
+data/raw/
+
+# 結果と図はスクリプトから再生成できるが、卒論提出物なので追跡する
+# （results/ figures/ は .gitignore しない）
+
+# パッケージのメタ情報（pip install -e で生成される）
+*.egg-info/
