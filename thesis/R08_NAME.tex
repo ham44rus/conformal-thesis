@@ -1,0 +1,245 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 卒業論文  R08（2026）年度
+%% 等角予測による分布によらない予測区間
+%% 東京理科大学 理学部第一部 応用数学科 黒沢研究室
+%%
+%% 【重要】このファイルは目次を先に作るための雛形です。
+%%   1. 先生配布の卒論フォーマットを入手したら、プリアンブルと表紙を
+%%      そちらに差し替えてください（章立てはそのまま流用できます）。
+%%   2. ファイル名を R08_<自分の姓（英字・先頭大文字）>.tex に変更してください。
+%%
+%% コンパイル:
+%%   platex   R08_NAME
+%%   pbibtex  R08_NAME     <- \bibitem は禁止。必ず pbibtex を通すこと
+%%   platex   R08_NAME
+%%   platex   R08_NAME
+%%   dvipdfmx R08_NAME
+%% 提出前に .log から undefined と Warning が消えていることを確認する。
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[a4paper,11pt]{jsarticle}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[dvipdfmx]{hyperref}
+
+\theoremstyle{definition}
+\newtheorem{definition}{定義}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}[definition]{補題}
+\newtheorem{theorem}[definition]{定理}
+\newtheorem{corollary}[definition]{系}
+\newtheorem{proposition}[definition]{命題}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{注意}
+
+%% 本論文で使う記法（第2章で定義する）
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Exp}{\mathbb{E}}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\Ind}{\mathbb{1}}
+\newcommand{\Dtr}{\mathcal{D}_{\mathrm{tr}}}     % 学習用データ
+\newcommand{\Dcal}{\mathcal{D}_{\mathrm{cal}}}   % 較正用データ
+\newcommand{\qhat}{\hat{q}}
+\newcommand{\fhat}{\hat{f}}
+
+\title{等角予測による分布によらない予測区間}
+\author{東京理科大学 理学部第一部 応用数学科\\ 黒沢研究室\\ （氏名）}
+\date{2027年1月}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+%% TODO: 最後に書く。200〜400字。
+%% 「何を扱い、何を示し、何が分かったか」の3文で十分。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%%=====================================================================
+\section{序論}
+%%=====================================================================
+
+\subsection{研究の背景}
+%% TODO: 予測の不確実性を定量化する必要性。予測値だけでは意思決定に使えない。
+
+\subsection{既存手法とその限界}
+%% TODO: 線形回帰の予測区間（正規性・等分散・モデルの正しさに依存）
+%%       ブートストラップ（漸近的）、ベイズ信用区間（事前分布とモデルに依存）
+%%       機械学習モデルではこれらの仮定が成り立たない。
+
+\subsection{本論文の目的}
+%% TODO: 3つの問い（RQ）を明示する。
+%%   RQ1 有限標本被覆保証は実際にどの程度正確に成り立つか
+%%   RQ2 予測区間の幅は、下敷きモデルと非適合度スコアでどう変わるか
+%%   RQ3 保証が及ばない範囲・前提が壊れる範囲はどこか
+
+\subsection{本論文の構成}
+%% TODO: 最後に書く。
+
+%%=====================================================================
+\section{準備}
+%%=====================================================================
+
+\subsection{記法}
+
+\subsection{交換可能性}
+%% TODO: 定義。i.i.d. より真に弱いことを例で示す（有限母集団からの非復元抽出）。
+
+\subsection{順序統計量と経験分位点}
+%% TODO: 経験分位点の定義に注意。線形補間ではなく順序統計量を使う。
+
+\subsection{回帰モデルと分位点回帰}
+%% TODO: 第4章のCQRで使うので、ここで分位点回帰（Koenker--Bassett）を導入。
+
+\subsection{等角予測の原型：full conformal prediction}
+%% TODO: 紹介のみ。計算量が重いことに触れ、次章の分割型へつなぐ。
+
+%%=====================================================================
+\section{分割等角予測の理論}
+%%=====================================================================
+%% 本論文の中核。実装は src/conformal/split.py に対応する。
+
+\subsection{アルゴリズムの定式化}
+%% TODO: 学習用／較正用への分割、非適合度スコア、共形分位点、予測区間。
+%%       k = \lceil (n+1)(1-\alpha) \rceil であることを強調する。
+
+\subsection{被覆保証}
+
+\begin{lemma}[順序統計量の補題]
+%% TODO: 交換可能な S_1,...,S_{n+1} に対し
+%%   \Prob( S_{n+1} \le S_{(\lceil (n+1)\beta \rceil)} ) \ge \beta
+\end{lemma}
+
+\begin{proof}
+%% TODO: 交換可能性より S_{n+1} の順位は一様。それだけで示せる。
+\end{proof}
+
+\begin{theorem}[有限標本被覆保証]
+%% TODO: 1-\alpha \le \Prob(Y_{n+1} \in C(X_{n+1})) \le 1-\alpha+1/(n+1)
+\end{theorem}
+
+\begin{proof}
+%% TODO:
+\end{proof}
+
+\subsection{上界の意味：保証は保守的すぎない}
+%% TODO: 下界だけでなく上界も効いていること。同点が確率0であることの仮定。
+
+\subsection{同点の扱い}
+%% TODO: 離散スコアの場合のtie-breaking。
+
+\subsection{被覆率そのものの分布}
+%% TODO: 較正集合を固定したときの被覆率は Beta(n+1-l, l), l=\lfloor (n+1)\alpha \rfloor
+%%       （Vovk 2012）。第5章 E1 の検証対象。
+
+\subsection{何を保証していないか：条件付き被覆}
+%% TODO: 周辺被覆と条件付き被覆の区別。
+%%       Barber et al. (2021) の不可能性定理を紹介する。
+%%       ★ここが本論文の深さを出す節。第5章E3と第7章に接続する。
+
+%%=====================================================================
+\section{拡張}
+%%=====================================================================
+
+\subsection{正規化残差スコア}
+%% TODO: S = |y - \fhat(x)| / \hat{\sigma}(x)。異分散への簡易な対処。
+
+\subsection{Conformalized Quantile Regression (CQR)}
+%% TODO: スコア S = \max\{ \hat{q}_{lo}(x) - y, y - \hat{q}_{hi}(x) \}
+%%       区間 [\hat{q}_{lo}(x) - \qhat, \hat{q}_{hi}(x) + \qhat]
+
+\subsection{jackknife+ と CV+}
+%% TODO: データ分割の無駄をなくす。保証が 1-2\alpha に緩むこと。
+
+\subsection{共変量シフトと重み付き等角予測}
+%% TODO: 尤度比による重み付け。第5章E4に対応。
+
+%%=====================================================================
+\section{数値実験}
+%%=====================================================================
+
+\subsection{評価指標}
+%% TODO: 周辺被覆率（Clopper--Pearson信頼区間を必ず併記）、平均区間幅、
+%%       幅の変動係数、特徴量層別被覆、サイズ層別被覆(SSC)、計算時間。
+
+\subsection{実験設定}
+%% TODO: データ生成過程、下敷きモデル、試行回数、乱数シード。
+%%       仕様は specs/ の各実験仕様書に対応。
+
+\subsection{E1：有限標本被覆保証の検証}
+%% TODO: 上下界に入ること。被覆率の分布がBeta分布と一致すること。
+%%       図: fig_e1_coverage_beta_alpha10.pdf, fig_e1_bounds.pdf
+
+\subsection{E1b：検証の水準と誤りの検出力}
+%% TODO: 平均で捉えられる誤り（off-by-one）と、分布でしか捉えられない誤り
+%%       （分散のずれ）の切り分け。
+
+\subsection{E2：下敷きモデルへの非依存性}
+%% TODO: 被覆率は不変、区間幅は変わる。この対比自体が結論。
+
+\subsection{E3：異分散データと条件付き被覆の破綻}
+%% TODO: ★本論文の見せ場。周辺被覆は保たれるが層別被覆が割れること。
+%%       CQRによる改善。
+
+\subsection{E4：交換可能性が破れる場合}
+%% TODO: 共変量シフト下で被覆が名目値を下回ること。重み付きによる部分的回復。
+
+\subsection{E5：学習／較正の分割比}
+
+\subsection{E6：jackknife+・CV+ とのデータ効率比較}
+
+\subsection{考察}
+
+%%=====================================================================
+\section{実データ解析}
+%%=====================================================================
+
+\subsection{データ}
+%% TODO: UCI Machine Learning Repository から2〜3件。入手手順は別途提出。
+
+\subsection{結果}
+
+\subsection{考察}
+
+%%=====================================================================
+\section{結論と今後の課題}
+%%=====================================================================
+
+\subsection{本論文で明らかにしたこと}
+%% TODO: 3つのRQへの回答。
+%%   保証は理論の上下界どおりに成り立ち、被覆率の分布まで理論と一致する。
+%%   一方その保証は周辺被覆に限られ、区間の有用性も条件付き妥当性も保証の外にある。
+
+\subsection{本研究の限界}
+
+\subsection{今後の課題}
+%% TODO: 条件付き被覆の近似的改善（Mondrian等）、時系列への拡張（ACI, EnbPI）、
+%%       分類への適用。
+
+%%=====================================================================
+\appendix
+%%=====================================================================
+
+\section{数式と実装の対応表}
+%% TODO: 本文の式番号と、src/ の関数名を対応させた表。
+%%       ★これは必ず入れること。実装を理解している証拠になり、口頭試問でも効く。
+
+\section{実験環境と再現手順}
+%% TODO: Python 3.11 / numpy, scipy, scikit-learn, pandas, matplotlib
+%%       乱数シード、実行コマンド、所要時間。
+
+\section{生成AIの利用について}
+%% TODO: docs/AI利用の記載.md の文案をそのまま入れる。
+%%       利用範囲・利用しなかった範囲・検証体制の3点を書く。
+
+%%=====================================================================
+\bibliographystyle{jplain}   %% 先生指定のスタイルに合わせること
+\bibliography{refs}
+%%=====================================================================
+
+\end{document}

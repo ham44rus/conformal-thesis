@@ -25,8 +25,13 @@ pip install -e ".[dev]"
 
 make test      # 検証テスト（実装を信用する唯一の根拠）
 make e1        # 実験E1を実行 -> results/*.csv
+make e1b       # 実験E1b（検証の水準と誤りの検出力）
 make figures   # csv から figures/*.pdf を再生成
 ```
+
+**実装は Claude Code で行います。貼れるプロンプトは `docs/ClaudeCodeプロンプト集.md`。**
+進め方は **`docs/実行計画.md`** を見てください。 週次のスケジュール、マイルストーンの
+判定基準、遅れたときの縮退プランがまとまっています。
 
 `make e1` は約10秒、`make test` は約1分で終わる。
 
@@ -54,8 +59,8 @@ make figures   # csv から figures/*.pdf を再生成
 | `experiments/` | 実験の実行スクリプト。`results/` に csv を吐く |
 | `results/` | 数値結果（csv）。論文の一次資料なので git 管理する |
 | `figures/` | 図（pdf と png）。csv から再生成できる |
-| `thesis/` | 卒論本文（TeX）と `refs.bib` |
-| `docs/` | 提出要件・締切、生成AI利用の記載 |
+| `thesis/` | 卒論本文（`R08_NAME.tex` に目次の雛形あり）と `refs.bib` |
+| `docs/` | **実行計画（週次スケジュール）**・**Claude Codeプロンプト集**・提出要件・締切・AI利用の記載 |
 | `submission/` | BOX 提出用のチェックリストと `Readme.txt` 雛形 |
 | `slides/` | 発表スライド |
 
