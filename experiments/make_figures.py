@@ -128,6 +128,92 @@ def fig_bounds(summary: pd.DataFrame) -> None:
     save(fig, "fig_e1_bounds")
 
 
+# --- E2: 下敷きモデルへの非依存性（仕様書 specs/E2_model_agnostic.md「図」）---
+
+# n_cal と alpha は csv に列として持っていないので、仕様書「手続き」の値を定数で置く。
+# experiments/e2_model_agnostic.py の N_CAL, ALPHA と同じ値。片方だけ変えないこと。
+E2_N_CAL, E2_ALPHA = 500, 0.10
+
+# 横軸のモデル順。e2_model_agnostic.py の MODEL_KEYS と同じ順に固定する
+# （幅が単調に下がる順なので、この順でないと「階段状」が見えない）。
+E2_MODEL_ORDER = ("constant", "ridge", "rf", "gbm", "mlp")
+
+# 表示用の和名（csv には英字キーが入っている）
+E2_LABELS = {
+    "constant": "定数予測器",
+    "ridge": "リッジ回帰",
+    "rf": "ランダム\nフォレスト",
+    "gbm": "勾配\nブースティング",
+    "mlp": "ニューラル\nネット",
+}
+
+
+def fig_e2_model_agnostic(summary: pd.DataFrame) -> None:
+    """図5.3: 被覆はモデルによらず、区間幅だけがモデルで変わることを示す2段組。
+
+    上段が平ら・下段が階段状に見えることがこの図の主張（仕様書「図」の節）。
+
+    上段の縦軸は理論の上下界の幅 1/(n+1) を単位にして取る。データの範囲に
+    合わせて自動で詰めるとモデル間のわずかな差が画面いっぱいに拡大され、
+    「被覆はモデルによらない」という主張と逆の印象を与えるため。
+
+    上段の誤差棒は `coverage_se`（= 試行間成分とテスト集合間成分の合成 ±1.96 SE）。
+    E2 は全試行・全モデルで同じテスト集合を使い回すので、その集合固有のズレは
+    試行数では薄まらない。どの成分を含めたかは凡例に明記する
+    （CLAUDE.md「報告の作法」）。
+
+    下段の誤差棒は試行間のみ（`width_se`）。学習集合を引き直したときのばらつきは
+    含まれていないので、層内の順序をこの誤差棒で論じてはいけない（C4 の問題）。
+    """
+    g = summary.set_index("model").loc[list(E2_MODEL_ORDER)]
+    x = np.arange(len(g))
+
+    lower = 1 - E2_ALPHA                 # 名目値
+    band = 1 / (E2_N_CAL + 1)            # 理論の上下界の幅（第2章 定理2.1）
+    upper = lower + band
+
+    fig, (ax_cov, ax_w) = plt.subplots(
+        2, 1, figsize=(6.0, 4.8), sharex=True, gridspec_kw={"hspace": 0.16}
+    )
+
+    # 上段：平均被覆率 -------------------------------------------------
+    ax_cov.fill_between([-0.5, len(g) - 0.5], lower, upper, color=RED, alpha=0.16,
+                        label="理論の上下界")
+    ax_cov.axhline(lower, color=INK, linewidth=1, linestyle=(0, (4, 3)),
+                   label=r"名目値 $1-\alpha$")
+    ax_cov.axhline(upper, color=RED, linewidth=1.4,
+                   label=r"上界 $1-\alpha+1/(n+1)$")
+    ax_cov.errorbar(x, g["coverage_mean"], yerr=1.96 * g["coverage_se"],
+                    fmt="o-", color=BLUE, markersize=5, linewidth=1.6, capsize=3,
+                    label="実測（試行間＋テスト集合間 95%）")
+
+    # 縦軸は理論帯の上下に 1.5 帯分ずつ余白を取る（帯が軸の 1/4 を占める）
+    margin = 1.5 * band
+    ax_cov.set_ylim(lower - margin, upper + margin)
+    ax_cov.set_xlim(-0.5, len(g) - 0.5)
+    ax_cov.set_ylabel("平均被覆率")
+    ax_cov.grid(axis="y")
+    ax_cov.set_axisbelow(True)
+    ax_cov.legend(loc="upper left", fontsize=7, ncol=2)
+
+    # 下段：平均区間幅 -------------------------------------------------
+    w, w_err = g["width_mean"].to_numpy(), 1.96 * g["width_se"].to_numpy()
+    ax_w.errorbar(x, w, yerr=w_err, fmt="o-", color=BLUE, markersize=5,
+                  linewidth=1.6, capsize=3, label="実測（試行間 95%）")  # 学習集合間は含まない
+    span = w.max() - w.min()
+    ax_w.set_ylim(w.min() - 0.18 * span, w.max() + 0.18 * span)
+    ax_w.set_ylabel(r"平均区間幅 $2\hat{q}$")
+    ax_w.set_xticks(x, [E2_LABELS[k] for k in E2_MODEL_ORDER], fontsize=8)
+    ax_w.grid(axis="y")
+    ax_w.set_axisbelow(True)
+
+    fig.suptitle(
+        rf"被覆はモデルによらず、幅だけが変わる（$\alpha$ = {E2_ALPHA}, $n$ = {E2_N_CAL}）",
+        y=0.96, fontsize=11, color=INK,
+    )
+    save(fig, "fig_e2_model_agnostic")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -138,6 +224,13 @@ def main() -> None:
     for a in sorted(df["alpha"].unique()):
         fig_coverage_beta(df, alpha=float(a))
     fig_bounds(summary)
+
+    # E2 は独立に回すので、csv が無ければ飛ばす（E1 の図だけは常に出せるように）
+    e2_path = RESULTS / "e2_summary.csv"
+    if e2_path.exists():
+        fig_e2_model_agnostic(pd.read_csv(e2_path))
+    else:
+        print("  results/e2_summary.csv が無いため E2 の図は省略（先に `make e2`）")
 
 
 if __name__ == "__main__":
