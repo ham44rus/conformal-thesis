@@ -16,7 +16,7 @@
 # venv を使わない環境では:  make PYTHON=python3 test
 PYTHON ?= .venv/bin/python
 
-.PHONY: help setup test e1 e1b e2 all-experiments figures clean check
+.PHONY: help setup test e1 e1b e2 e3 all-experiments figures clean check
 
 help:
 	@echo "make setup      依存パッケージをインストール"
@@ -43,10 +43,13 @@ e1b:
 e2:
 	$(PYTHON) experiments/e2_model_agnostic.py --seed 20260901
 
+e3:
+	$(PYTHON) experiments/e3_conditional.py --seed 20260901
+
 figures:
 	$(PYTHON) experiments/make_figures.py
 
-check: test e1 e1b e2
+check: test e1 e1b e2 e3
 
 clean:
 	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
