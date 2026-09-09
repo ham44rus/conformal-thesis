@@ -15,7 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4.0", "mapie>=0.9"]
+# 上限は必須。MAPIE 1.x は scikit-learn>=1.4 を要求し、手元の 1.3.0 が
+# アップグレードされる。それは rf/gbm/mlp の学習結果を変え、results/*.csv が
+# 再現しなくなる（CLAUDE.md 再現性ルール違反）。上限を外す場合は
+# 全実験を回し直して結果を差し替えること。
+dev = ["pytest>=7.4.0", "mapie>=0.9,<1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
