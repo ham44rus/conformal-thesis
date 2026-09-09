@@ -143,6 +143,10 @@ E2_N_CAL, E2_ALPHA = 500, 0.10
 # （幅が単調に下がる順なので、この順でないと「階段状」が見えない）。
 E2_MODEL_ORDER = ("constant", "ridge", "rf", "gbm", "mlp")
 
+# 学習集合間の区間に使う t(4) の両側5%点。rep が5通りなので自由度は 4
+# （experiments/e2_model_agnostic.py の T_CRIT_4 と同じ値。片方だけ変えないこと）
+T_CRIT_4 = 2.776
+
 # 表示用の和名（csv には英字キーが入っている）
 E2_LABELS = {
     "constant": "定数予測器",
@@ -211,8 +215,7 @@ def fig_e2_model_agnostic(summary: pd.DataFrame,
     w = g["width_mean"].to_numpy()
     w_trial = 1.96 * g["width_se"].to_numpy()
 
-    # 外側：学習集合間。rep が5通りなので t(4) の両側5%点 2.776 を使う
-    T_CRIT_4 = 2.776
+    # 外側：学習集合間。rep が5通りなので t(4) の両側5%点を使う
     w_train = None
     if robust is not None:
         r = robust.groupby("model")["width_mean"].agg(["std", "count"])
@@ -245,6 +248,50 @@ def fig_e2_model_agnostic(summary: pd.DataFrame,
     save(fig, "fig_e2_model_agnostic")
 
 
+def fig_e2_tier1_zoom(summary: pd.DataFrame, tiers: pd.DataFrame) -> None:
+    """図5.4: 第1層（非線形3モデル）だけを拡大し、内側と外側の誤差棒を比べる。
+
+    fig_e2_model_agnostic の下段は縦軸が 1.7〜3.0 あるため、第1層内の 0.03 程度の
+    差と、そこに付く誤差棒がほとんど見えない。この図は第1層だけを専用スケールで
+    描き、**内側（試行間）だけ見ると3モデルは分離しているが、外側（学習集合間）
+    まで含めると重なる**ことを示す。
+
+    C2 は内側で「この学習集合のもとでは幅が違う」と言い、C4 は外側で
+    「学習集合を超えては言えない」と言う。両者が別の問いに答えていることの図示。
+
+    誤差棒の中心は主分析（学習集合1つ・1000試行）の平均。外側の半幅だけを
+    頑健性の確認（学習集合5通り）の rep 間 SD から作っている点に注意
+    （fig_e2_model_agnostic の下段と同じ作法）。
+    """
+    keys = [k for k in E2_MODEL_ORDER if k in set(tiers[tiers.tier == 1]["model"])]
+    s = summary.set_index("model").loc[keys]
+    t = tiers.set_index("model").loc[keys]
+    x = np.arange(len(keys))
+
+    m = s["width_mean"].to_numpy()
+    inner = 1.96 * s["width_se"].to_numpy()
+    outer = T_CRIT_4 * t["width_rep_se"].to_numpy()
+
+    fig, ax = plt.subplots(figsize=(3.2, 2.6))
+
+    ax.errorbar(x, m, yerr=outer, fmt="none", ecolor=BLUE, alpha=0.30,
+                elinewidth=9, capsize=0, label="学習集合間 95%")
+    ax.errorbar(x, m, yerr=inner, fmt="o", color=BLUE, markersize=5,
+                capsize=3, elinewidth=1.4, label="試行間 95%")
+
+    lo, hi = (m - outer).min(), (m + outer).max()
+    span = hi - lo
+    ax.set_ylim(lo - 0.10 * span, hi + 0.26 * span)
+    ax.set_xlim(-0.5, len(keys) - 0.5)
+    ax.set_xticks(x, [E2_LABELS[k] for k in keys], fontsize=8)  # 和名は2行のまま使う
+    ax.set_ylabel(r"平均区間幅 $2\hat{q}$")
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper left", fontsize=7)
+    ax.set_title("第1層の拡大：内側は分離、外側は重なる", fontsize=9, color=INK)
+    save(fig, "fig_e2_tier1_zoom")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -260,7 +307,13 @@ def main() -> None:
     e2_path, e2_rob = RESULTS / "e2_summary.csv", RESULTS / "e2_robustness.csv"
     if e2_path.exists():
         rob = pd.read_csv(e2_rob) if e2_rob.exists() else None
-        fig_e2_model_agnostic(pd.read_csv(e2_path), rob)
+        e2_sum = pd.read_csv(e2_path)
+        fig_e2_model_agnostic(e2_sum, rob)
+
+        # 第1層の拡大図。C4 の層構造の解析が済んでいるときだけ作る
+        e2_tiers = RESULTS / "e2_tiers.csv"
+        if e2_tiers.exists():
+            fig_e2_tier1_zoom(e2_sum, pd.read_csv(e2_tiers))
     else:
         print("  results/e2_summary.csv が無いため E2 の図は省略（先に `make e2`）")
 
