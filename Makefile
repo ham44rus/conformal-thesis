@@ -1,6 +1,20 @@
 # 卒業研究 タスクランナー
-# Windows など python3 が無い環境では:  make PYTHON=python test
-PYTHON ?= python3
+#
+# 実行には**プロジェクト直下の venv** を使う。手順は README のクイックスタート参照：
+#
+#     python3 -m venv --system-site-packages .venv
+#     .venv/bin/python -m pip install -e ".[dev]"
+#
+# ここに絶対パス（/Users/... など）を書いてはいけない。この Makefile は提出物であり、
+# 他人の環境で動かなくなるうえ、個人のパスが露出するため。相対パスの .venv にすることで
+# 環境の切り替えを Makefile の外に追い出している。
+#
+# --system-site-packages は必須。これを付けないと numpy 等が最新版で入り直され、
+# rf/gbm/mlp の学習結果が変わって results/*.csv が再現しなくなる
+# （CLAUDE.md 再現性ルール）。検証済みのバージョンは docs/環境.txt を参照。
+#
+# venv を使わない環境では:  make PYTHON=python3 test
+PYTHON ?= .venv/bin/python
 
 .PHONY: help setup test e1 e1b e2 all-experiments figures clean check
 
