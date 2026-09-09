@@ -85,17 +85,33 @@ E1と同じDGPを使うのは、E1の結果と直接比較できるようにす�
 : 列 = `[model, trial, coverage, width]`
 
 `results/e2_summary.csv`
-: 列 = `[model, coverage_mean, coverage_se, coverage_ci_lo, coverage_ci_hi,
-         width_mean, width_se, test_rmse, test_q90_abs_resid]`
-: `coverage_se` は**試行間**の標準偏差 / sqrt(R)。
-  `test_q90_abs_resid` はテスト集合における絶対残差の 0.90 分位点
+: 列 = `[model, coverage_mean, coverage_se_trial, coverage_se_test, coverage_se,
+         coverage_ci_lo, coverage_ci_hi, width_mean, width_se,
+         test_rmse, test_q90_abs_resid]`
+: `coverage_se` は `coverage_se_trial` と `coverage_se_test` の**2成分の合成**
+  （CLAUDE.md「報告の作法」）。`coverage_se_trial` は試行間の標準偏差 / sqrt(R)、
+  `coverage_se_test` は固定テスト集合1つ分の `sqrt(p(1-p)/N_test)` で、
+  後者は全試行に共通のバイアスなので sqrt(R) では薄まらない。
+: `test_q90_abs_resid` はテスト集合における絶対残差の 0.90 分位点
 
 `results/e2_robustness.csv`
 : 列 = `[train_rep, model, coverage_mean, width_mean, width_rank]`
 
+`results/e2_tiers.csv`（C4 の層構造。モデルごとに1行）
+: 列 = `[model, tier, width_rep_mean, width_rep_sd, width_rep_se,
+         width_ci_lo, width_ci_hi, rank_min, rank_max, rank_stable, n_rep]`
+: `tier` は幅の昇順で 1 = 最も狭い層。`width_rep_*` は **rep 間**（学習集合間）の
+  統計で、`width_ci_*` は t(4) の 2.776 による95%区間。
+  `rank_stable` は `width_rank` が5通りすべてで同じだったか
+
+`results/e2_tier_pairs.csv`（C4 の対検定。10ペアごとに1行）
+: 列 = `[model_a, model_b, mean_diff, sd_diff, t_stat, df, p_value,
+         alpha_bonferroni, distinguishable]`
+: `df = 4`（rep が5通り）。`distinguishable` は `p_value < 0.005` の判定
+
 > **注意：Clopper–Pearson は使わない。** あれは1試行内でテスト点を二項標本とみなす区間であり、
-> ここで問題になるのは試行間（較正集合の引き直し）のばらつきである。
-> 試行平均の信頼区間は `平均 ± 1.96 × 試行間標準偏差 / sqrt(R)` で作る。
+> ここで問題になるのは較正集合の引き直しによる試行間のばらつきと、
+> 固定テスト集合1つ分のばらつきである。両者の分散を足して合成する。
 
 ## 検証（この実験が正しく走ったと判断する基準）
 

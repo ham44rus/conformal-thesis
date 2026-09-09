@@ -61,7 +61,12 @@ plt.rcParams.update(
 def save(fig, name: str) -> None:
     FIGURES.mkdir(exist_ok=True)
     for ext in ("pdf", "png"):
-        fig.savefig(FIGURES / f"{name}.{ext}", bbox_inches="tight")
+        # PDF は既定で生成時刻を埋め込むので、同じ csv から作り直しても毎回
+        # git の差分に出てしまう（実際に差分は CreationDate の2バイトだけだった）。
+        # 図は提出物として git 管理するため時刻を落とし、内容が同じなら
+        # バイト単位で一致するようにする。PNG には元から時刻が入らない。
+        meta = {"metadata": {"CreationDate": None}} if ext == "pdf" else {}
+        fig.savefig(FIGURES / f"{name}.{ext}", bbox_inches="tight", **meta)
     plt.close(fig)
     print(f"  figures/{name}.pdf, figures/{name}.png")
 
@@ -148,7 +153,8 @@ E2_LABELS = {
 }
 
 
-def fig_e2_model_agnostic(summary: pd.DataFrame) -> None:
+def fig_e2_model_agnostic(summary: pd.DataFrame,
+                          robust: pd.DataFrame | None = None) -> None:
     """図5.3: 被覆はモデルによらず、区間幅だけがモデルで変わることを示す2段組。
 
     上段が平ら・下段が階段状に見えることがこの図の主張（仕様書「図」の節）。
@@ -162,8 +168,13 @@ def fig_e2_model_agnostic(summary: pd.DataFrame) -> None:
     試行数では薄まらない。どの成分を含めたかは凡例に明記する
     （CLAUDE.md「報告の作法」）。
 
-    下段の誤差棒は試行間のみ（`width_se`）。学習集合を引き直したときのばらつきは
-    含まれていないので、層内の順序をこの誤差棒で論じてはいけない（C4 の問題）。
+    下段の誤差棒は**二重**にする。内側が試行間（`width_se`、較正集合の引き直し）、
+    外側が学習集合間（`e2_robustness.csv` の rep 間 SD、t(4) の 2.776 による95%）。
+
+    同じ「平均区間幅」という量に対して、何に条件づけるかで不確実性の大きさが
+    変わることを一目で見せるのがこの図の狙い。内側だけを見ると非線形3モデルは
+    綺麗に分離しているように見えるが、外側まで含めると重なる。C2 と C4 が
+    別の問いに答えているのはこのためである（仕様書 C2 の注意書き）。
     """
     g = summary.set_index("model").loc[list(E2_MODEL_ORDER)]
     x = np.arange(len(g))
@@ -197,11 +208,31 @@ def fig_e2_model_agnostic(summary: pd.DataFrame) -> None:
     ax_cov.legend(loc="upper left", fontsize=7, ncol=2)
 
     # 下段：平均区間幅 -------------------------------------------------
-    w, w_err = g["width_mean"].to_numpy(), 1.96 * g["width_se"].to_numpy()
-    ax_w.errorbar(x, w, yerr=w_err, fmt="o-", color=BLUE, markersize=5,
-                  linewidth=1.6, capsize=3, label="実測（試行間 95%）")  # 学習集合間は含まない
-    span = w.max() - w.min()
-    ax_w.set_ylim(w.min() - 0.18 * span, w.max() + 0.18 * span)
+    w = g["width_mean"].to_numpy()
+    w_trial = 1.96 * g["width_se"].to_numpy()
+
+    # 外側：学習集合間。rep が5通りなので t(4) の両側5%点 2.776 を使う
+    T_CRIT_4 = 2.776
+    w_train = None
+    if robust is not None:
+        r = robust.groupby("model")["width_mean"].agg(["std", "count"])
+        r = r.loc[list(E2_MODEL_ORDER)]
+        w_train = (T_CRIT_4 * r["std"] / np.sqrt(r["count"])).to_numpy()
+        # 色相は増やさず、同じ BLUE の淡い太線で外側を描く
+        ax_w.errorbar(x, w, yerr=w_train, fmt="none", ecolor=BLUE, alpha=0.30,
+                      elinewidth=6, capsize=0,
+                      label=f"学習集合間 95%（rep 間 SD, t(4)）")
+
+    ax_w.errorbar(x, w, yerr=w_trial, fmt="o-", color=BLUE, markersize=5,
+                  linewidth=1.6, capsize=3, elinewidth=1.4,
+                  label="試行間 95%（較正集合の引き直し）")
+    ax_w.legend(loc="upper right", fontsize=7)
+
+    # 縦軸は外側の誤差棒まで入るように取る
+    lo = (w - w_train).min() if w_train is not None else w.min()
+    hi = (w + w_train).max() if w_train is not None else w.max()
+    span = hi - lo
+    ax_w.set_ylim(lo - 0.12 * span, hi + 0.22 * span)
     ax_w.set_ylabel(r"平均区間幅 $2\hat{q}$")
     ax_w.set_xticks(x, [E2_LABELS[k] for k in E2_MODEL_ORDER], fontsize=8)
     ax_w.grid(axis="y")
@@ -226,9 +257,10 @@ def main() -> None:
     fig_bounds(summary)
 
     # E2 は独立に回すので、csv が無ければ飛ばす（E1 の図だけは常に出せるように）
-    e2_path = RESULTS / "e2_summary.csv"
+    e2_path, e2_rob = RESULTS / "e2_summary.csv", RESULTS / "e2_robustness.csv"
     if e2_path.exists():
-        fig_e2_model_agnostic(pd.read_csv(e2_path))
+        rob = pd.read_csv(e2_rob) if e2_rob.exists() else None
+        fig_e2_model_agnostic(pd.read_csv(e2_path), rob)
     else:
         print("  results/e2_summary.csv が無いため E2 の図は省略（先に `make e2`）")
 

@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 from pathlib import Path
 
 import numpy as np
@@ -237,7 +238,97 @@ def run_robustness(rng: np.random.Generator, X_te: np.ndarray, y_te: np.ndarray)
     return pd.DataFrame(rows)
 
 
-def judge(summary: pd.DataFrame, robust: pd.DataFrame) -> None:
+# C4 が不一致だったときの層構造の解析（仕様書「検証」C4 の2点目）
+T_CRIT_4 = 2.776          # t(4) の両側5%点。rep が5通りなので自由度は 4
+N_PAIRS = 10              # 5モデルから2つ選ぶ組み合わせの数
+ALPHA_PAIR = 0.05 / N_PAIRS  # Bonferroni 補正後の有意水準 = 0.005
+
+
+def analyze_tiers(robust: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """幅のモデル間差を「学習集合間」のばらつきで検定し、モデルを層に分ける。
+
+    C2 が使う width_se は較正集合の引き直し（試行間）のばらつきしか含まないため、
+    学習集合1つに条件づいた主張しかできない。ここでは学習集合を5通り振った
+    e2_robustness.csv を使い、rep をペアとする対応あり t 検定で幅を比べる。
+    同じ rep では学習集合が共通なので、ペアにすると学習集合の効果が差し引かれる。
+
+    多重比較になるので有意水準は Bonferroni 補正する（0.05 / 10 = 0.005）。
+
+    層の作り方：幅の昇順にモデルを並べ、すでに層に入っている全メンバーと
+    区別できない（p >= 0.005）モデルだけを同じ層に加える。区別できるモデルが
+    現れたらそこが層の境界になる。
+
+    Returns
+    -------
+    tiers : モデルごとに1行。層の割り当てと rep 間の要約統計
+    pairs : 10ペアごとに1行。対応あり t 検定の結果
+    """
+    # rep × モデル の幅の行列。行が対応（同じ学習集合）になる
+    w = robust.pivot(index="train_rep", columns="model", values="width_mean")
+    w = w[list(MODEL_KEYS)]
+    n_rep = len(w)
+
+    # --- 1. モデルごとの rep 間の平均・SD・SE ---
+    mean, sd = w.mean(), w.std(ddof=1)
+    se = sd / np.sqrt(n_rep)
+
+    # --- 2-3. 全ペアの対応あり t 検定 ＋ Bonferroni 補正 ---
+    pair_rows = []
+    pvals: dict[frozenset, float] = {}
+    for a, b in itertools.combinations(MODEL_KEYS, 2):
+        t_stat, p = stats.ttest_rel(w[a], w[b])
+        pvals[frozenset((a, b))] = float(p)
+        pair_rows.append(
+            {
+                "model_a": a,
+                "model_b": b,
+                "mean_diff": float(mean[a] - mean[b]),
+                "sd_diff": float((w[a] - w[b]).std(ddof=1)),
+                "t_stat": float(t_stat),
+                "df": n_rep - 1,
+                "p_value": float(p),
+                "alpha_bonferroni": ALPHA_PAIR,
+                "distinguishable": bool(p < ALPHA_PAIR),
+            }
+        )
+    pairs = pd.DataFrame(pair_rows)
+
+    # --- 4. 層に分ける（幅の昇順。1 = 最も狭い層）---
+    order = list(mean.sort_values().index)
+    tier_of: dict[str, int] = {}
+    current: list[str] = []
+    tier_no = 1
+    for key in order:
+        # すでに層にいる全員と「区別できない」ときだけ同じ層に入れる
+        if current and any(pvals[frozenset((key, m))] < ALPHA_PAIR for m in current):
+            tier_no += 1
+            current = []
+        current.append(key)
+        tier_of[key] = tier_no
+
+    # 幅の順位が5通りすべてで一致したかもモデルごとに持たせる
+    rank = robust.pivot(index="train_rep", columns="model", values="width_rank")[list(MODEL_KEYS)]
+
+    tiers = pd.DataFrame(
+        {
+            "model": list(MODEL_KEYS),
+            "tier": [tier_of[k] for k in MODEL_KEYS],
+            "width_rep_mean": [float(mean[k]) for k in MODEL_KEYS],
+            "width_rep_sd": [float(sd[k]) for k in MODEL_KEYS],
+            "width_rep_se": [float(se[k]) for k in MODEL_KEYS],
+            "width_ci_lo": [float(mean[k] - T_CRIT_4 * se[k]) for k in MODEL_KEYS],
+            "width_ci_hi": [float(mean[k] + T_CRIT_4 * se[k]) for k in MODEL_KEYS],
+            "rank_min": [int(rank[k].min()) for k in MODEL_KEYS],
+            "rank_max": [int(rank[k].max()) for k in MODEL_KEYS],
+            "rank_stable": [bool(rank[k].nunique() == 1) for k in MODEL_KEYS],
+            "n_rep": n_rep,
+        }
+    ).sort_values(["tier", "width_rep_mean"], ignore_index=True)
+    return tiers, pairs
+
+
+def judge(summary: pd.DataFrame, robust: pd.DataFrame,
+          tiers: pd.DataFrame, pairs: pd.DataFrame) -> None:
     """検証基準 C1〜C4 を自動判定して表示する（仕様書「検証」）。"""
     ok = "○"
     ng = "×"
@@ -319,8 +410,50 @@ def judge(summary: pd.DataFrame, robust: pd.DataFrame) -> None:
     for rep in sorted(ranks):
         print(f"  {rep:<11}" + "".join(f"{r:>12}" for r in ranks[rep]))
     print("  ※ width_rank は幅の昇順で 1 = 最も狭い")
-    if not c4:
-        print("  → 幅の順位が学習集合に依存する。第5章に明記すること")
+
+    if c4:
+        print("  → 幅の順位は学習集合によらない")
+    else:
+        # 順位が一致しないのは失敗ではない。層構造として報告する（仕様書 C4 の2点目）
+        print("  → 幅の順位は学習集合に依存する。以下、層構造として報告する")
+
+        print(f"\n  [C4-a] 学習集合間の対応あり t 検定（自由度 {int(pairs.df.iloc[0])}、"
+              f"Bonferroni 補正後の有意水準 {ALPHA_PAIR:.4f} = 0.05/{N_PAIRS}）")
+        print(f"    {'ペア':24}{'幅の差':>10}{'t 値':>9}{'p 値':>10}   判定")
+        for _, r in pairs.sort_values("p_value").iterrows():
+            mark = "区別できる" if r.distinguishable else "区別できない"
+            print(f"    {r.model_a + ' vs ' + r.model_b:24}{r.mean_diff:>10.4f}"
+                  f"{r.t_stat:>9.2f}{r.p_value:>10.5f}   {mark}")
+
+        print(f"\n  [C4-b] 層の割り当て（幅の昇順。区間は t(4) による学習集合間の95%）")
+        print(f"    {'層':>4}  {'モデル':12}{'幅の平均':>10}{'rep間SD':>10}"
+              f"{'95%区間':>22}  順位")
+        for _, r in tiers.iterrows():
+            ci = f"[{r.width_ci_lo:.4f}, {r.width_ci_hi:.4f}]"
+            rank = f"{r.rank_min}" if r.rank_stable else f"{r.rank_min}-{r.rank_max}"
+            print(f"    {r.tier:>4}  {r.model:12}{r.width_rep_mean:>10.4f}"
+                  f"{r.width_rep_sd:>10.5f}{ci:>22}  {rank}"
+                  f"{'（固定）' if r.rank_stable else '（入れ替わる）'}")
+
+        print("\n  [C4-c] 層の境界")
+        for t in range(1, int(tiers.tier.max())):
+            lo = tiers[tiers.tier == t]
+            hi = tiers[tiers.tier == t + 1]
+            gap = float(hi.width_rep_mean.min() - lo.width_rep_mean.max())
+            within = float(max(
+                (lo.width_rep_mean.max() - lo.width_rep_mean.min()),
+                (hi.width_rep_mean.max() - hi.width_rep_mean.min()),
+            ))
+            print(f"    第{t}層 {'/'.join(lo.model)} と 第{t + 1}層 {'/'.join(hi.model)} "
+                  f"の境界: 幅の差 {gap:.4f}")
+            if within > 0:
+                print(f"      （層内の広がりは最大 {within:.4f} なので、"
+                      f"境界は層内の {gap / within:.1f} 倍）")
+
+        n_tier = int(tiers.tier.max())
+        print(f"\n  → 結論: 幅は {n_tier} 層に分かれる。"
+              "層間は学習集合によらず安定、層内は本実験では区別できない。")
+        print("     第5章にはこの形で書く（C4 が通るより情報量の多い結果である）")
 
     print("\n" + "-" * 78)
     print(f"判定: C1 {ok if c1 else ng} / C2 {ok if c2 else ng} / "
@@ -356,8 +489,13 @@ def main(seed: int) -> None:
     summary.to_csv(RESULTS / "e2_summary.csv", index=False)
     robust.to_csv(RESULTS / "e2_robustness.csv", index=False)
 
-    judge(summary, robust)
-    for name in ("e2_model_agnostic.csv", "e2_summary.csv", "e2_robustness.csv"):
+    tiers, pairs = analyze_tiers(robust)
+    tiers.to_csv(RESULTS / "e2_tiers.csv", index=False)
+    pairs.to_csv(RESULTS / "e2_tier_pairs.csv", index=False)
+
+    judge(summary, robust, tiers, pairs)
+    for name in ("e2_model_agnostic.csv", "e2_summary.csv", "e2_robustness.csv",
+                 "e2_tiers.csv", "e2_tier_pairs.csv"):
         print(f"出力: {RESULTS / name}")
 
 
