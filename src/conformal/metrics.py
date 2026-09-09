@@ -51,6 +51,8 @@ def feature_stratified_coverage(
     これが「条件付き被覆は保証されない」ことの実証になる。
     """
     x = np.asarray(x)
+    # 層の境界を等頻度で切るだけの記述統計。共形分位点ではないので np.quantile を使う
+    # （CLAUDE.md「絶対に守ること 1」が禁じているのは共形分位点の計算のこと）。
     edges = np.quantile(x, np.linspace(0, 1, n_bins + 1))
     edges[-1] = np.inf
     out = []

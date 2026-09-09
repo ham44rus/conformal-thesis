@@ -40,6 +40,8 @@ def test_分位点回帰が完璧ならqはほぼ0():
     rng = np.random.default_rng(0)
     n = 2000
     y = rng.normal(0.0, 1.0, size=n)
+    # 分位点回帰の出力を模した定数。標本分位点であって共形分位点ではないので
+    # np.quantile を使ってよい（共形分位点は下の conformal_quantile が計算する）。
     q_lo = np.full(n, float(np.quantile(y, 0.05)))
     q_hi = np.full(n, float(np.quantile(y, 0.95)))
     q_hat = conformal_quantile(cqr_score(y, q_lo, q_hi), 0.1)

@@ -3,16 +3,19 @@ name = "conformal-thesis"
 version = "0.1.0"
 description = "等角予測による分布によらない予測区間（卒業研究）"
 requires-python = ">=3.11"
+# 下限は「実際に検証した最も古い環境」に合わせてある（手元の Anaconda）。
+# 上げると手元で動かなくなるので、上げる前に必ず make test を通すこと。
+# 提出時は付録Bに「実際に使ったバージョン」を pip freeze から転記する。
 dependencies = [
-    "numpy>=2.0",
-    "scipy>=1.14",
-    "scikit-learn>=1.5",
-    "pandas>=2.2",
-    "matplotlib>=3.9",
+    "numpy>=1.26.4",
+    "scipy>=1.15.3",
+    "scikit-learn>=1.3.0",
+    "pandas>=1.5.3",
+    "matplotlib>=3.7.1",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "mapie>=0.9"]
+dev = ["pytest>=7.4.0", "mapie>=0.9"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
