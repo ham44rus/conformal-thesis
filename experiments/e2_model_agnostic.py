@@ -160,20 +160,34 @@ def run_trials(
 def summarize(df: pd.DataFrame, perf: dict[str, dict[str, float]]) -> pd.DataFrame:
     """モデルごとの要約を作る（仕様書「出力」の e2_summary.csv）。
 
-    標準誤差は**試行間**の標準偏差 / sqrt(R) で作る。
+    被覆率の標準誤差は2成分の合成（CLAUDE.md「報告の作法」）。
+
+    - `coverage_se_trial` : 較正集合の引き直しによる試行間のばらつき。試行数 R で薄まる
+    - `coverage_se_test`  : 固定テスト集合1つ分の二項ノイズ。E2 は全試行・全モデルで
+      同じテスト点を使い回すので、このズレは全試行に共通のバイアスとして乗り、
+      **sqrt(R) で割ってはいけない**
+
     ここで Clopper–Pearson を使わないのは、あれが1試行内でテスト点を二項標本とみなす区間で
     あるのに対し、E2 で問題になるのは較正集合の引き直しによる試行間のばらつきだから
     （仕様書「出力」の注意書き）。
+
+    なお C1 はモデル間の差で判定するが、`coverage_se_test` は全モデルに共通なので
+    モデル間の比較では相殺する。この成分が効くのは絶対水準を述べるときである。
     """
     rows = []
     for key in MODEL_KEYS:
         g = df[df["model"] == key]
         cov, width = g["coverage"].to_numpy(), g["width"].to_numpy()
-        cov_se = float(cov.std(ddof=1) / np.sqrt(cov.size))
+        cov_m = float(cov.mean())
+        cov_se_trial = float(cov.std(ddof=1) / np.sqrt(cov.size))
+        cov_se_test = float(np.sqrt(cov_m * (1 - cov_m) / N_TEST))
+        cov_se = float(np.sqrt(cov_se_trial**2 + cov_se_test**2))
         rows.append(
             {
                 "model": key,
-                "coverage_mean": float(cov.mean()),
+                "coverage_mean": cov_m,
+                "coverage_se_trial": cov_se_trial,
+                "coverage_se_test": cov_se_test,
                 "coverage_se": cov_se,
                 "coverage_ci_lo": float(cov.mean() - 1.96 * cov_se),
                 "coverage_ci_hi": float(cov.mean() + 1.96 * cov_se),

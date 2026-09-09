@@ -23,7 +23,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.linear_model import Ridge
 
-from conformal import absolute_residual, clopper_pearson, conformal_quantile
+from conformal import absolute_residual, conformal_quantile
 from conformal.datasets import homoscedastic
 
 N_CALS = (20, 50, 100, 500, 2000)
@@ -71,14 +71,24 @@ def main(seed: int) -> None:
         l = int(np.floor((n_cal + 1) * alpha))
         a_par, b_par = n_cal + 1 - l, l
         cov = g["coverage"].to_numpy()
-        n_hit = int(round(cov.mean() * N_TEST))
-        ci_lo, ci_hi = clopper_pearson(n_hit, N_TEST)
+        # 被覆率の平均に付ける区間は2成分の合成（CLAUDE.md「報告の作法」）。
+        #   se_trial : 較正集合の引き直しによる試行間のばらつき。試行数 R で薄まる
+        #   se_test  : 固定テスト集合1つ分の二項ノイズ。全試行に共通のバイアスとして
+        #              乗るので **sqrt(R) で割ってはいけない**
+        # n_cal が大きいほど se_trial は縮み、se_test が支配的になる。
+        m = float(cov.mean())
+        se_trial = float(cov.std(ddof=1) / np.sqrt(cov.size))
+        se_test = float(np.sqrt(m * (1 - m) / N_TEST))
+        se = float(np.sqrt(se_trial**2 + se_test**2))
+        ci_lo, ci_hi = m - 1.96 * se, m + 1.96 * se
         summary.append(
             {
                 "n_cal": n_cal,
                 "alpha": alpha,
                 "lower_bound": 1 - alpha,
                 "coverage_mean": cov.mean(),
+                "se_trial": se_trial,
+                "se_test": se_test,
                 "ci_lo": ci_lo,
                 "ci_hi": ci_hi,
                 "upper_bound": 1 - alpha + 1 / (n_cal + 1),

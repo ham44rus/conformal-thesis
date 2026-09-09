@@ -33,8 +33,15 @@ def mean_width(lo: np.ndarray, hi: np.ndarray) -> float:
 def clopper_pearson(n_success: int, n_total: int, conf: float = 0.95) -> tuple[float, float]:
     """二項比率の Clopper–Pearson 信頼区間。
 
-    被覆率を報告するときは必ずこれを併記する（CLAUDE.md「報告の作法」）。
-    点推定だけでは、名目値との差がモンテカルロ誤差の範囲かどうか判断できない。
+    **これは「1試行内」のばらつき専用である。** 有限個のテスト点を二項標本とみなして
+    作る区間なので、母数は「その1回の適用での被覆率」になる。
+
+    **試行間のばらつきには使えない。** 較正集合を引き直して多数回試行するシミュレーション
+    （E1, E2 など）で平均被覆率に付ける区間は母数が違うため、試行間SD / sqrt(R) と
+    固定テスト集合成分を合成して作ること（CLAUDE.md「報告の作法」の表を参照）。
+
+    用途は、1回きりの適用の被覆率を報告するとき（実データ解析）と、
+    層別被覆率のように1試行内で層ごとの被覆を見るとき。
     """
     a = 1.0 - conf
     lo = 0.0 if n_success == 0 else stats.beta.ppf(a / 2, n_success, n_total - n_success + 1)
