@@ -6,8 +6,16 @@ from .metrics import (
     coverage,
     mean_width,
     clopper_pearson,
+    bin_edges_from_quantiles,
     feature_stratified_coverage,
     size_stratified_coverage,
+)
+from .adaptive import (
+    out_of_fold_predict,
+    fit_sigma,
+    SigmaEstimator,
+    fit_quantile_pair,
+    QuantilePair,
 )
 
 __all__ = [
@@ -21,6 +29,12 @@ __all__ = [
     "coverage",
     "mean_width",
     "clopper_pearson",
+    "bin_edges_from_quantiles",
     "feature_stratified_coverage",
     "size_stratified_coverage",
+    "out_of_fold_predict",
+    "fit_sigma",
+    "SigmaEstimator",
+    "fit_quantile_pair",
+    "QuantilePair",
 ]

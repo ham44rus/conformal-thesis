@@ -14,6 +14,7 @@ __all__ = [
     "coverage",
     "mean_width",
     "clopper_pearson",
+    "bin_edges_from_quantiles",
     "feature_stratified_coverage",
     "size_stratified_coverage",
 ]
@@ -49,21 +50,65 @@ def clopper_pearson(n_success: int, n_total: int, conf: float = 0.95) -> tuple[f
     return float(lo), float(hi)
 
 
+def bin_edges_from_quantiles(x: np.ndarray, n_bins: int = 5) -> np.ndarray:
+    """データ x の等頻度分位点から層の境界を作る（長さ n_bins+1）。
+
+    境界を「どのデータから決めるか」は実験の設計判断なので、決める側と使う側を
+    分けてある。呼び出し側が較正集合から決めることも、真の分布が既知なら
+    固定境界を直接 feature_stratified_coverage に渡すこともできる。
+
+    最上端は +inf にする。最大値をちょうど取る点を最後の層に含めるため。
+    """
+    # 層の境界を等頻度で切るだけの記述統計。共形分位点ではないので np.quantile を使う
+    # （CLAUDE.md「絶対に守ること 1」が禁じているのは共形分位点の計算のこと）。
+    edges = np.quantile(np.asarray(x), np.linspace(0.0, 1.0, n_bins + 1))
+    edges[-1] = np.inf
+    return edges
+
+
 def feature_stratified_coverage(
-    x: np.ndarray, y: np.ndarray, lo: np.ndarray, hi: np.ndarray, n_bins: int = 5
+    x: np.ndarray,
+    y: np.ndarray,
+    lo: np.ndarray,
+    hi: np.ndarray,
+    n_bins: int = 5,
+    edges: np.ndarray | None = None,
 ) -> list[dict]:
     """特徴量 x の分位点で層別した各層の被覆率（卒論 5.1節・実験E3）。
 
     周辺被覆が 1-alpha でも層ごとに大きく割れることがある。
     これが「条件付き被覆は保証されない」ことの実証になる。
+
+    Parameters
+    ----------
+    edges : 層の境界（長さ n_bins+1、昇順）。省略すると x 自身の等頻度分位点から作る。
+        **試行ごとに層の位置を動かしたくないときは外から固定境界を渡す。**
+        x の分位点から毎回切ると、境界そのものが試行ごとに揺れて層別被覆の
+        ばらつきに混ざる。真の分布が既知なら固定境界のほうが解釈が楽になる。
+        渡した場合 n_bins は無視され、len(edges)-1 が層の数になる。
+
+    Notes
+    -----
+    空の層は結果から落ちる。**区間幅が全点で一定のとき**（絶対残差スコアなど）
+    size_stratified_coverage 経由で呼ぶと境界がすべて同値になり、層が1つに
+    潰れて周辺被覆と同じ値になる。SSC を報告する側でこの縮退を検査すること。
+
+    各層の信頼区間は Clopper–Pearson。これは1試行内でその層のテスト点を
+    二項標本とみなす区間である（CLAUDE.md「報告の作法」の1行目）。
+    試行間や固定テスト集合のばらつきは含まないので、多数回試行の結果を
+    まとめるときは呼び出し側で別に合成すること。
     """
     x = np.asarray(x)
-    # 層の境界を等頻度で切るだけの記述統計。共形分位点ではないので np.quantile を使う
-    # （CLAUDE.md「絶対に守ること 1」が禁じているのは共形分位点の計算のこと）。
-    edges = np.quantile(x, np.linspace(0, 1, n_bins + 1))
-    edges[-1] = np.inf
+    if edges is None:
+        edges = bin_edges_from_quantiles(x, n_bins)
+    else:
+        edges = np.asarray(edges, dtype=float)
+        if edges.ndim != 1 or edges.size < 2:
+            raise ValueError("edges は長さ2以上の1次元配列でなければならない")
+        if np.any(np.diff(edges) < 0):
+            raise ValueError("edges は昇順でなければならない")
     out = []
-    for b in range(n_bins):
+    for b in range(len(edges) - 1):
         m = (x >= edges[b]) & (x < edges[b + 1])
         if m.sum() == 0:
             continue
@@ -79,6 +124,11 @@ def size_stratified_coverage(
     """区間幅で層別した各層の被覆率（SSC, 卒論 5.1節）。
 
     最悪層の被覆率が、条件付き被覆の代理指標として最も分かりやすい。
+
+    **区間幅が全点で一定だと層が1つに潰れる。** 絶対残差スコアの区間は
+    幅が定数なので、SSC は周辺被覆と同じ値しか返さない（層の数で判別できる）。
+    適応的な区間（正規化残差・CQR）でなければ SSC は意味を持たない。
+
     """
     width = np.asarray(hi) - np.asarray(lo)
     return feature_stratified_coverage(width, y, lo, hi, n_bins=n_bins)
