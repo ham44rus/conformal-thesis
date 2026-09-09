@@ -128,6 +128,34 @@ def test_定数幅の区間ではSSCが層に分かれない():
     assert out[0]["coverage"] == pytest.approx(np.mean(np.abs(y) <= 1.5))
 
 
+def test_浮動小数の丸めがあっても定数幅は層に分かれない():
+    """lo = f(x) - q, hi = f(x) + q で組んだ区間の幅は数学的には 2q で一定。
+
+    しかし浮動小数では f(x) の大きさで丸めが変わり、幅に 1e-15 程度の相対的な
+    散らばりが出る。これを素通しすると np.quantile が異なる境界を作り、
+    **丸め誤差で層別された「最悪層」**が出てくる。実験E3 で実際にこれが起き、
+    絶対残差の SSC が 0.55 という無意味な値を返した。
+
+    定数幅の判定は相対許容で行うべき、という理論側の要請。
+    """
+    rng = np.random.default_rng(4)
+    n = 200_000
+    pred = rng.normal(0.0, 3.0, size=n)      # f(x) が大きく散らばる状況
+    y = pred + rng.normal(size=n)
+    q = 1.1551
+    lo, hi = pred - q, pred + q
+
+    width = hi - lo
+    assert np.unique(width).size > 1, "前提: 丸めで幅が複数の値を取る"
+    assert np.ptp(width) / width.mean() < 1e-12, "前提: 散らばりは丸め誤差の水準"
+
+    out = size_stratified_coverage(y, lo, hi, n_bins=5)
+
+    assert len(out) == 1, "丸め誤差で層に分かれてはいけない"
+    assert out[0]["n"] == n
+    assert out[0]["coverage"] == pytest.approx(np.mean((y >= lo) & (y <= hi)))
+
+
 def test_可変幅の区間ではSSCが層に分かれる():
     """適応的な区間なら SSC が意味を持つことの対照。"""
     rng = np.random.default_rng(3)

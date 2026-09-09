@@ -119,7 +119,7 @@ def feature_stratified_coverage(
 
 
 def size_stratified_coverage(
-    y: np.ndarray, lo: np.ndarray, hi: np.ndarray, n_bins: int = 5
+    y: np.ndarray, lo: np.ndarray, hi: np.ndarray, n_bins: int = 5, rtol: float = 1e-12
 ) -> list[dict]:
     """区間幅で層別した各層の被覆率（SSC, 卒論 5.1節）。
 
@@ -129,6 +129,20 @@ def size_stratified_coverage(
     幅が定数なので、SSC は周辺被覆と同じ値しか返さない（層の数で判別できる）。
     適応的な区間（正規化残差・CQR）でなければ SSC は意味を持たない。
 
+    定数幅の判定は**相対許容 rtol で行う**。lo = f(x) - q, hi = f(x) + q と
+    組んだ区間の幅は数学的には 2q で一定だが、浮動小数では f(x) の大きさに応じて
+    丸めが変わり、実際に 1e-15 程度の相対的な散らばりが出る。これをそのまま
+    np.quantile に渡すと**丸め誤差で層が分かれてしまい**、意味のない「最悪層」が
+    出てくる（実測で 0.55 という値が出た）。定数幅とみなせるときは層を1つに畳む。
     """
-    width = np.asarray(hi) - np.asarray(lo)
+    y = np.asarray(y)
+    lo, hi = np.asarray(lo), np.asarray(hi)
+    width = hi - lo
+
+    scale = float(np.abs(width).mean())
+    if width.size == 0 or scale == 0.0 or float(np.ptp(width)) <= rtol * scale:
+        # 定数幅。層に分けず、全点を1つの層として返す
+        return feature_stratified_coverage(
+            width, y, lo, hi, edges=np.array([-np.inf, np.inf])
+        )
     return feature_stratified_coverage(width, y, lo, hi, n_bins=n_bins)
