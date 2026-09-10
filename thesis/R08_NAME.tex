@@ -25,6 +25,10 @@
 \usepackage{booktabs}
 \usepackage[dvipdfmx]{hyperref}
 
+%% jsarticle の既定は tocdepth=2 で、\subsubsection は .toc に書かれるが目次に出ない。
+%% 5.1 のように subsubsection まで立てる節があるので 3 にする。
+\setcounter{tocdepth}{3}
+
 \theoremstyle{definition}
 \newtheorem{definition}{定義}[section]
 \theoremstyle{plain}
@@ -163,9 +167,22 @@
 \section{数値実験}
 %%=====================================================================
 
-\subsection{評価指標}
-%% TODO: 周辺被覆率（Clopper--Pearson信頼区間を必ず併記）、平均区間幅、
-%%       幅の変動係数、特徴量層別被覆、サイズ層別被覆(SSC)、計算時間。
+\subsection{評価指標と不確実性の報告}
+%% 下書き: thesis/drafts/5.1_評価指標と不確実性の報告.md
+%% 数値はすべて results/*.csv から引くこと。csv を再生成したら本文の数値も更新する。
+
+\subsubsection{被覆率と区間幅}
+%% TODO: 周辺被覆率、平均区間幅、幅の変動係数、計算時間。
+
+\subsubsection{分散成分の分解}
+%% TODO: 試行間／テスト集合間／学習集合間の3成分と合成の式(5.1)。
+%%       CLAUDE.md「4. 報告の作法」の表に対応する。
+%%       **Clopper--Pearson は「1試行内」専用。試行間のばらつきには使えない。**
+%%       4つの実例: E1 / E1b / E2 / E3。
+
+\subsubsection{層別被覆とサイズ層別被覆}
+%% TODO: 特徴量層別被覆、サイズ層別被覆(SSC)。
+%%       SSC は区間幅が定数だと層が1つに潰れる（絶対残差スコアが該当）。
 
 \subsection{実験設定}
 %% TODO: データ生成過程、下敷きモデル、試行回数、乱数シード。
@@ -238,6 +255,12 @@
 %%       利用範囲・利用しなかった範囲・検証体制の3点を書く。
 
 %%=====================================================================
+%% \nocite{*} は refs.bib の全件を強制的に引用扱いにして、本文の \cite が
+%% まだ無い段階でも参考文献リストを生成させるためのもの。
+%% **第2締切までに削除する（本文の \cite に置き換わったら不要）。**
+%% 提出要件（docs/提出要件と締切.md 第4節）により pbibtex の Warning は残せないので、
+%% 12件をまとめて今のうちに検証する目的で置いている。
+\nocite{*}
 \bibliographystyle{jplain}   %% 先生指定のスタイルに合わせること
 \bibliography{refs}
 %%=====================================================================
