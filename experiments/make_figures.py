@@ -292,6 +292,134 @@ def fig_e2_tier1_zoom(summary: pd.DataFrame, tiers: pd.DataFrame) -> None:
     save(fig, "fig_e2_tier1_zoom")
 
 
+# --- E3: 異分散と条件付き被覆の破綻（仕様書 specs/E3_conditional_coverage.md「図」）---
+
+# alpha は csv に列として持っていないので、仕様書「規模のパラメータ」の値を定数で置く。
+# experiments/e3_conditional.py の ALPHA と同じ値。片方だけ変えないこと。
+E3_ALPHA = 0.10
+
+# 手法の順。experiments/e3_conditional.py の METHOD_KEYS と同じ順に固定する
+E3_METHOD_ORDER = ("abs", "norm", "cqr")
+E3_LABELS = {"abs": "絶対残差", "norm": "正規化残差", "cqr": "CQR"}
+
+# 3手法を塗り分けるための3色目。BLUE / RED に PURPLE を足した3色は
+# colorblind-safe の検証（明度帯・彩度下限・CVD分離・通常色覚分離・地との
+# コントラスト）をすべて通る。BLUE と PURPLE の2色だけでは通常色覚での分離が
+# 足りず（ΔE 12.1 < 15）、RED を含む3色が唯一の通過解だった。
+PURPLE = "#7A5C9E"
+E3_COLORS = {"abs": BLUE, "norm": RED, "cqr": PURPLE}
+
+
+def fig_e3_band(band: pd.DataFrame) -> None:
+    """図5.5: 予測区間の帯。定数幅（絶対残差）と適応幅（CQR）の対比。
+
+    本論文の顔になる図（仕様書「図1」）。絶対残差は X1 によらず幅が一定、
+    CQR は X1 とともに広がる。この対比だけを狙い、正規化残差は載せない
+    （図5.6 に出る）。
+
+    **縦軸は Y そのものではなく Y から区間の中心を引いた値にしている。**
+    仕様書は縦軸 Y と書いているが、本 DGP は Y = X1 + sin(2*pi*X2) + sigma(X1)*eps
+    であり、区間の中心は X2 にも依存する。実測でも中心の標準偏差は
+    どの X1 帯でも 0.6〜0.8 あり、(X1, Y) 平面では区間が帯にならず波形に潰れる。
+    中心を引くと X2 由来の変動が落ち、幅の X1 依存だけが残る。
+
+    この変換で**被覆の読み取りは保たれる**。点が帯の内側にあることと
+    lo <= y <= hi は同値なので、帯からはみ出す点の割合はそのまま非被覆率になる。
+
+    残った幅のばらつき（CQR で X1 帯内 SD 約 0.25）は、分位点回帰が X1 以外の
+    共変量も拾っているため。全体レンジ 2.34 の約10%なので帯の傾向は読める。
+
+    キャプション（TeX にそのまま貼る。**この2文は省略しないこと**）:
+
+        縦軸は Y から予測区間の中心を引いた値である。区間の中心を引いて
+        X_2 由来の変動を除いた。点が帯の内側にあることと被覆は同値なので、
+        はみ出す点の割合はそのまま非被覆率である。
+    """
+    keys = ("abs", "cqr")
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9), sharey=True,
+                             gridspec_kw={"wspace": 0.08})
+
+    work = {}
+    for key in keys:
+        g = band[band["method"] == key].sort_values("x1").copy()
+        center = (g["lo"] + g["hi"]) / 2.0
+        work[key] = (g["x1"].to_numpy(),
+                     (g["lo"] - center).to_numpy(),
+                     (g["hi"] - center).to_numpy(),
+                     (g["y"] - center).to_numpy())
+
+    # 2枚で共通の縦軸レンジ（揃えないと広がり方の違いが消える）
+    y_lo = min(min(lo.min(), yy.min()) for _, lo, _, yy in work.values())
+    y_hi = max(max(hi.max(), yy.max()) for _, _, hi, yy in work.values())
+    pad = 0.05 * (y_hi - y_lo)
+
+    for ax, key in zip(axes, keys):
+        x, lo, hi, yy = work[key]
+        ax.fill_between(x, lo, hi, color=E3_COLORS[key], alpha=0.30, linewidth=0,
+                        label="予測区間")
+        ax.plot(x, lo, color=E3_COLORS[key], linewidth=0.9)
+        ax.plot(x, hi, color=E3_COLORS[key], linewidth=0.9)
+        ax.scatter(x, yy, s=2.5, color=INK, alpha=0.30, linewidths=0,
+                   label="テスト点", zorder=3)
+
+        w = hi - lo
+        note = f"幅 {w.min():.2f}（一定）" if w.ptp() < 1e-9 else f"幅 {w.min():.2f} → {w.max():.2f}"
+        ax.set_title(f"{E3_LABELS[key]}　{note}", fontsize=9.5, color=INK)
+        ax.set_xlabel("$X_1$")
+        ax.set_xlim(0, 1)
+        ax.grid(axis="y")
+        ax.set_axisbelow(True)
+
+    axes[0].set_ylim(y_lo - pad, y_hi + pad)
+    axes[0].set_ylabel("$Y$ − 区間の中心")
+    axes[0].legend(loc="lower left", fontsize=7.5, markerscale=3)
+    fig.suptitle(r"予測区間の形（$\alpha$ = %.2f, 1試行分）" % E3_ALPHA,
+                 y=1.02, fontsize=11, color=INK)
+    save(fig, "fig_e3_band")
+
+
+def fig_e3_stratified(summary: pd.DataFrame) -> None:
+    """図5.6: X1 の5分位で層別した被覆率。周辺は満たすが条件付きは割れる。
+
+    誤差棒は**試行間＋テスト集合間の2成分合成**（CLAUDE.md「報告の作法」）。
+    層別ではビン内の点数が 1/5 になるので se_test が √5 倍効き、
+    この図ではテスト集合成分の方が支配的である。
+
+    絶対残差は右肩下がりに大きく割れ、正規化残差と CQR は名目線の近くに寄る。
+    ただし不可能性定理により完全には平らにならない。そこが第5章の論点になる。
+    """
+    fig, ax = plt.subplots(figsize=(6.2, 3.0))
+    n_bins = int(summary["bin"].max()) + 1
+    x = np.arange(n_bins)
+    width = 0.26
+
+    for i, key in enumerate(E3_METHOD_ORDER):
+        g = summary[summary["method"] == key].sort_values("bin")
+        se = np.sqrt(g["se_trial"] ** 2 + g["se_test"] ** 2)
+        gap = float(g["coverage_mean"].max() - g["coverage_mean"].min())
+        ax.bar(x + (i - 1) * width, g["coverage_mean"], width * 0.92,
+               color=E3_COLORS[key], alpha=0.88, linewidth=0,
+               label=f"{E3_LABELS[key]}（gap {gap:.3f}）")
+        ax.errorbar(x + (i - 1) * width, g["coverage_mean"], yerr=1.96 * se,
+                    fmt="none", ecolor=INK, elinewidth=0.9, capsize=2, alpha=0.75)
+
+    ax.axhline(1 - E3_ALPHA, color=INK, linewidth=1.1, linestyle=(0, (4, 3)),
+               zorder=4, label=r"名目値 $1-\alpha$")
+
+    # 縦軸は名目値をはさんで、割れの大きさがそのまま高さに出る範囲にする
+    ax.set_ylim(0.70, 1.01)
+    ax.set_xticks(x, [f"層{b}\n$X_1$ {0.2 * b:.1f}–{0.2 * (b + 1):.1f}" for b in x],
+                  fontsize=8)
+    ax.set_ylabel("被覆率")
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    # 層3・層4 の棒は 0.90 を超えないので、右上が空く
+    ax.legend(loc="upper right", fontsize=7.5, ncol=1)
+    fig.suptitle(r"$X_1$ で層別した被覆率（誤差棒は試行間＋テスト集合間 95%）",
+                 y=0.99, fontsize=11, color=INK)
+    save(fig, "fig_e3_stratified")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -316,6 +444,14 @@ def main() -> None:
             fig_e2_tier1_zoom(e2_sum, pd.read_csv(e2_tiers))
     else:
         print("  results/e2_summary.csv が無いため E2 の図は省略（先に `make e2`）")
+
+    # E3 も独立に回すので、csv が無ければ飛ばす
+    e3_band, e3_sum = RESULTS / "e3_band_trial0.csv", RESULTS / "e3_summary.csv"
+    if e3_band.exists() and e3_sum.exists():
+        fig_e3_band(pd.read_csv(e3_band))
+        fig_e3_stratified(pd.read_csv(e3_sum))
+    else:
+        print("  results/e3_*.csv が無いため E3 の図は省略（先に `make e3`）")
 
 
 if __name__ == "__main__":
