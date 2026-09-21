@@ -26,7 +26,7 @@ def absolute_residual(y: np.ndarray, pred: np.ndarray) -> np.ndarray:
 def normalized_residual(
     y: np.ndarray, pred: np.ndarray, scale: np.ndarray, eps: float = 1e-8
 ) -> np.ndarray:
-    r"""正規化残差スコア  S = |y - \hat{f}(x)| / \hat{\sigma}(x)（卒論 4.1 節。ラベルは仮に eq:score-normalized）。
+    r"""正規化残差スコア  S = |y - \hat{f}(x)| / \hat{\sigma}(x)（卒論 sec:normalized-score。ラベルは仮に eq:score-normalized）。
 
     \hat{\sigma}(x) は残差の大きさを別に回帰して推定したもの。
     異分散への簡易な対処。区間は \hat{f}(x) \pm \hat{q}\,\hat{\sigma}(x)。
@@ -42,7 +42,7 @@ def normalized_residual(
 
 
 def cqr_score(y: np.ndarray, q_lo: np.ndarray, q_hi: np.ndarray) -> np.ndarray:
-    r"""CQR の非適合度スコア（卒論 4.2 節。ラベルは仮に eq:cqr-score。Romano et al. 2019）。
+    r"""CQR の非適合度スコア（卒論 sec:cqr。ラベルは仮に eq:cqr-score。Romano et al. 2019）。
 
         S = \max\{ \hat{q}_{lo}(x) - y,\;  y - \hat{q}_{hi}(x) \}
 
@@ -57,7 +57,7 @@ def cqr_score(y: np.ndarray, q_lo: np.ndarray, q_hi: np.ndarray) -> np.ndarray:
 def cqr_interval(
     q_lo: np.ndarray, q_hi: np.ndarray, q_hat: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    r"""CQR の予測区間（卒論 4.2 節。ラベルは仮に eq:cqr-interval）。
+    r"""CQR の予測区間（卒論 sec:cqr。ラベルは仮に eq:cqr-interval）。
 
         C(x) = [\hat{q}_{lo}(x) - \hat{q},\;  \hat{q}_{hi}(x) + \hat{q}]
 

@@ -1,6 +1,6 @@
 # E2: 下敷きモデルへの非依存性
 
-対応：卒論 第5章 5.6節 ／ 実装 `experiments/e2_model_agnostic.py`
+対応：卒論 第5章 E2 の節（`sec:e2`）／ 実装 `experiments/e2_model_agnostic.py`
 
 ## 目的
 

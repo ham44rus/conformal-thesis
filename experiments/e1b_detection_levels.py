@@ -1,6 +1,6 @@
 """実験E1b: 検証の水準と、誤りの検出力。
 
-対応箇所: 卒論 第5章 5.5節 E1b / 仕様書 specs/E1b_detection_levels.md
+対応箇所: 卒論 第5章 E1b の節（sec:e1b） / 仕様書 specs/E1b_detection_levels.md
 
 目的:
     被覆保証の検証には水準がある。

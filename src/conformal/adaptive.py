@@ -1,7 +1,7 @@
 """適応的な区間幅を作るための部品。sigma(x) の推定と CQR の分位点回帰。
 
 対応箇所:
-    卒論 第4章「適応的な非適合度スコア」4.1節（正規化残差）・4.2節（CQR）
+    卒論 第4章「拡張」正規化残差スコアの節（sec:normalized-score）・CQR の節（sec:cqr）
     実験E3（異分散データと条件付き被覆の破綻）で使う
 
 ここに置くのは**スコアの材料を作る**部分だけである。スコアそのものの定義は
@@ -36,7 +36,7 @@ def out_of_fold_predict(
     n_splits: int = 5,
     random_state: int | None = None,
 ) -> np.ndarray:
-    """K分割の out-of-fold 予測を返す（卒論 4.1節）。
+    """K分割の out-of-fold 予測を返す（卒論 sec:normalized-score）。
 
     各点の予測を、**その点を含まない** fold で学習したモデルから作る。
     自分自身の情報が予測に入らないので、残差が過学習で過小評価されない。
@@ -72,7 +72,7 @@ def out_of_fold_predict(
 
 
 class SigmaEstimator:
-    """sigma(x) の推定器。predict(X) が正の尺度を返す（卒論 4.1 節。ラベルは仮に eq:sigma-hat）。
+    """sigma(x) の推定器。predict(X) が正の尺度を返す（卒論 sec:normalized-score。ラベルは仮に eq:sigma-hat）。
 
     正規化残差スコア S = |y - f(x)| / sigma(x) の分母を作る。
     区間は f(x) ± q_hat * sigma(x) になるので、sigma(x) が x に応じて動けば
@@ -115,7 +115,7 @@ def fit_sigma(
     floor_quantile: float = 0.05,
     target: str = "abs",
 ) -> tuple[BaseEstimator, SigmaEstimator]:
-    """下敷きモデルと sigma(x) を学習集合から作る（卒論 4.1節）。
+    """下敷きモデルと sigma(x) を学習集合から作る（卒論 sec:normalized-score）。
 
     手順：
 
@@ -186,7 +186,7 @@ class _SqrtWrapper:
 
 
 class QuantilePair:
-    """CQR の下側・上側の分位点回帰の組（卒論 4.2節, Romano et al. 2019）。
+    """CQR の下側・上側の分位点回帰の組（卒論 sec:cqr, Romano et al. 2019）。
 
     下側と上側は**別々のモデルとして学習する**。sklearn の分位点損失は片側ずつしか
     最適化しないため、1本のモデルで両側を出すことはできない。
@@ -234,7 +234,7 @@ def fit_quantile_pair(
     random_state_lo: int | None = None,
     random_state_hi: int | None = None,
 ) -> QuantilePair:
-    """下側・上側の分位点回帰を別々に学習する（卒論 4.2節）。
+    """下側・上側の分位点回帰を別々に学習する（卒論 sec:cqr）。
 
     **較正集合を渡してはいけない。** 分位点回帰の学習に較正集合が入ると
     データリークになる（CLAUDE.md「2. データリークの禁止」）。

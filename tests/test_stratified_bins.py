@@ -1,6 +1,6 @@
 """層別被覆のビン分けの検証（実験E3 の部品）。
 
-対応箇所: 卒論 第5章 5.7節・実装 src/conformal/metrics.py
+対応箇所: 卒論 第5章 E3 の節（sec:e3）・評価指標の節（sec:metrics）・実装 src/conformal/metrics.py
 
 理論から導かれる性質を検査する：
 

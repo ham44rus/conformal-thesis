@@ -1,6 +1,6 @@
 """同点（離散スコア）があるときの被覆保証の非対称性。
 
-対応箇所: 卒論 第3章 補題 lem:quantile・定理 thm:coverage・系 cor:upper・3.4 節 sec:ties
+対応箇所: 卒論 第3章 補題 lem:quantile・定理 thm:coverage・系 cor:upper・同点の節 sec:ties
           （例 ex:binary、注意 rem:tiebreak-vs-det）/ CLAUDE.md「よくあるバグ」#5
 
 理論が言っていること:

@@ -1,6 +1,6 @@
 """CQR のスコアを手計算例と照合する（CLAUDE.md「よくあるバグ」#4）。
 
-対応箇所: 卒論 4.2 節（ラベルは仮に eq:cqr-score, eq:cqr-interval）, 実験E3
+対応箇所: 卒論 sec:cqr（ラベルは仮に eq:cqr-score, eq:cqr-interval）, 実験E3
 
 符号を逆にするのが典型的なバグ。手で計算できる数例を直接書いておく。
 """

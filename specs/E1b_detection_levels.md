@@ -1,6 +1,6 @@
 # E1b: 検証の水準と、誤りの検出力
 
-対応：卒論 第5章 5.5節 ／ 実装 `experiments/e1b_detection_levels.py`
+対応：卒論 第5章 E1b の節（`sec:e1b`）／ 実装 `experiments/e1b_detection_levels.py`
 
 ## 目的
 

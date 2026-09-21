@@ -1,6 +1,6 @@
 """sigma(x) 推定と CQR 分位点回帰の検証（実験E3 の部品）。
 
-対応箇所: 卒論 第4章 4.1節・4.2節、実装 src/conformal/adaptive.py
+対応箇所: 卒論 第4章 sec:normalized-score・sec:cqr、実装 src/conformal/adaptive.py
 
 理論から導かれる性質を検査する：
 

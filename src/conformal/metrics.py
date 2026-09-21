@@ -1,7 +1,7 @@
 """評価指標。被覆率・区間幅・層別被覆。
 
 対応箇所:
-    卒論 第5章「数値実験」5.1節（評価指標の定義）
+    卒論 第5章「数値実験」評価指標の節（sec:metrics）
     全実験で共通に使う
 """
 
@@ -21,13 +21,13 @@ __all__ = [
 
 
 def coverage(y: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> float:
-    """周辺被覆率 (1/m) * sum 1[y_j in [lo_j, hi_j]]（卒論 5.1.1 項。ラベルは仮に eq:coverage-rate）。"""
+    """周辺被覆率 (1/m) * sum 1[y_j in [lo_j, hi_j]]（卒論 sec:metrics。ラベルは仮に eq:coverage-rate）。"""
     y, lo, hi = map(np.asarray, (y, lo, hi))
     return float(np.mean((y >= lo) & (y <= hi)))
 
 
 def mean_width(lo: np.ndarray, hi: np.ndarray) -> float:
-    """平均区間幅。被覆が同じなら狭いほど良い（卒論 5.1.1 項。ラベルは仮に eq:mean-width）。"""
+    """平均区間幅。被覆が同じなら狭いほど良い（卒論 sec:metrics。ラベルは仮に eq:mean-width）。"""
     return float(np.mean(np.asarray(hi) - np.asarray(lo)))
 
 
@@ -74,7 +74,7 @@ def feature_stratified_coverage(
     n_bins: int = 5,
     edges: np.ndarray | None = None,
 ) -> list[dict]:
-    """特徴量 x の分位点で層別した各層の被覆率（卒論 5.1節・実験E3）。
+    """特徴量 x の分位点で層別した各層の被覆率（卒論 sec:metrics・実験E3 sec:e3）。
 
     周辺被覆が 1-alpha でも層ごとに大きく割れることがある。
     これが「条件付き被覆は保証されない」ことの実証になる。
@@ -121,7 +121,7 @@ def feature_stratified_coverage(
 def size_stratified_coverage(
     y: np.ndarray, lo: np.ndarray, hi: np.ndarray, n_bins: int = 5, rtol: float = 1e-12
 ) -> list[dict]:
-    """区間幅で層別した各層の被覆率（SSC, 卒論 5.1節）。
+    """区間幅で層別した各層の被覆率（SSC, 卒論 sec:metrics）。
 
     最悪層の被覆率が、条件付き被覆の代理指標として最も分かりやすい。
 
