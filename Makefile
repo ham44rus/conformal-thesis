@@ -16,13 +16,14 @@
 # venv を使わない環境では:  make PYTHON=python3 test
 PYTHON ?= .venv/bin/python
 
-.PHONY: help setup test e1 e1b e2 e3 all-experiments figures clean check
+.PHONY: help setup test e1 e1b e1-reeval e2 e3 all-experiments figures clean check
 
 help:
 	@echo "make setup      依存パッケージをインストール"
 	@echo "make test       検証テストを実行（実装を信用する唯一の根拠）"
 	@echo "make e1         実験E1を実行し results/ に csv を出力"
 	@echo "make e1b        実験E1b（検証の水準）を実行"
+	@echo "make e1-reeval  E1 の再評価（400万点の独立テスト集合で KS 検定をやり直す）"
 	@echo "make e2         実験E2（モデル非依存性）を実行"
 	@echo "make figures    results/ の csv から figures/ の図を再生成"
 	@echo "make check      test + 主要実験の通し確認"
@@ -39,6 +40,9 @@ e1:
 
 e1b:
 	$(PYTHON) experiments/e1b_detection_levels.py --seed 7
+
+e1-reeval:
+	$(PYTHON) experiments/e1_reeval_large_test.py --seed 20260901 --test-seed 20260922
 
 e2:
 	$(PYTHON) experiments/e2_model_agnostic.py --seed 20260901

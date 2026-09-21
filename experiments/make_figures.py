@@ -159,6 +159,51 @@ E2_LABELS = {
 }
 
 
+def fig_e1b_ecdf(df: pd.DataFrame) -> None:
+    """E1b: 3 ケースの被覆率の経験分布関数と理論 Beta(901, 100) の分布関数の重ね描き。
+
+    仕様書 specs/E1b_detection_levels.md「図」に対応する。
+    誤実装は曲線全体が左にずれ（位置のずれ）、テスト集合が小さいケースは中央で交差して
+    両裾が外に出る（形のずれ）。正しい実装は理論に重なる。
+    乱数は使わず csv から決定的に描く。
+    """
+    n_cal, alpha = 1000, 0.10  # experiments/e1b_detection_levels.py と同じ
+    l = n_cal + 1 - conformal_index(n_cal, alpha)
+    a_par, b_par = n_cal + 1 - l, l
+    lower, upper = 1 - alpha, 1 - alpha + 1 / (n_cal + 1)
+
+    cases = [
+        ("correct", "正しい実装", BLUE, "-"),
+        ("offbyone", r"誤実装（$n+1$ を $n$ に）", "#7A4E9E", "-"),
+        ("small_test", "テスト集合が小さい（2,000 点）", "#D28C1A", "-"),
+    ]
+
+    fig, ax = plt.subplots(figsize=(5.2, 3.2))
+    xs = np.linspace(0.86, 0.94, 800)
+    ax.plot(xs, stats.beta.cdf(xs, a_par, b_par), color=RED, linewidth=2.4,
+            label=f"理論 Beta({a_par}, {b_par})", zorder=1)
+    for key, label, color, ls in cases:
+        cov = np.sort(df[df.case == key]["coverage"].to_numpy())
+        if cov.size == 0:
+            continue
+        ecdf = np.arange(1, cov.size + 1) / cov.size
+        ax.step(cov, ecdf, where="post", color=color, linewidth=1.1, linestyle=ls,
+                label=label, zorder=2)
+
+    ax.axvline(lower, color=INK, linewidth=1, linestyle=(0, (4, 3)), label=r"下界 $1-\alpha$")
+    ax.axvline(upper, color=INK, linewidth=1, linestyle=(0, (1, 2)), label=r"上界 $1-\alpha+1/(n+1)$")
+    ax.set_xlim(0.865, 0.935)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("被覆率")
+    ax.set_ylabel("累積確率")
+    ax.grid(axis="both")
+    ax.set_axisbelow(True)
+    ax.legend(fontsize=7.5, loc="upper left")
+    ax.set_title(rf"E1b：被覆率の経験分布関数（$n$ = {n_cal}, $\alpha$ = {alpha}, 2000 試行）",
+                 fontsize=9.5, color=INK)
+    save(fig, "fig_e1b_ecdf")
+
+
 def fig_e2_model_agnostic(summary: pd.DataFrame,
                           robust: pd.DataFrame | None = None) -> None:
     """図5.3: 被覆はモデルによらず、区間幅だけがモデルで変わることを示す2段組。
@@ -432,6 +477,13 @@ def main() -> None:
     for a in sorted(df["alpha"].unique()):
         fig_coverage_beta(df, alpha=float(a))
     fig_bounds(summary)
+
+    # E1b は独立に回すので、csv が無ければ飛ばす
+    e1b_path = RESULTS / "e1b_detection_levels.csv"
+    if e1b_path.exists():
+        fig_e1b_ecdf(pd.read_csv(e1b_path))
+    else:
+        print("  results/e1b_detection_levels.csv が無いため E1b の図は省略（先に `make e1b`）")
 
     # E2 は独立に回すので、csv が無ければ飛ばす（E1 の図だけは常に出せるように）
     e2_path, e2_rob = RESULTS / "e2_summary.csv", RESULTS / "e2_robustness.csv"
