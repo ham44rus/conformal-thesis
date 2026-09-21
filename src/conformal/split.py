@@ -9,15 +9,45 @@
 
 from __future__ import annotations
 
+import math
+from fractions import Fraction
+
 import numpy as np
 
-__all__ = ["conformal_quantile", "conformal_pvalue", "interval_from_quantile"]
+__all__ = [
+    "conformal_index",
+    "conformal_quantile",
+    "conformal_pvalue",
+    "interval_from_quantile",
+]
+
+
+def conformal_index(n: int, alpha: float) -> int:
+    r"""共形分位点の順位 k = \lceil (n+1)(1-\alpha) \rceil を厳密に返す（卒論 eq:khat）。
+
+    (n+1)*(1-alpha) を float で計算すると丸め誤差で k が 1 ずれることがある。
+    例: alpha=1/3, n=8 では 9*(1-1/3) が 6.000000000000001 になり ceil で 7 になる
+    （正しくは 6）。そこで alpha を「分母が 10^9 以下の有理数」として復元し、
+    整数・有理数の演算で天井をとる。float(1/3) は 1/3 に戻り、小数点以下 9 桁までの
+    alpha は正確に戻る。
+
+    Parameters
+    ----------
+    n : キャリブレーション集合のサイズ
+    alpha : 有意水準。0 < alpha < 1
+
+    Returns
+    -------
+    int : k。1 <= k <= n+1（k = n+1 は保証できない場合で、呼び出し側で +inf にする）
+    """
+    alpha_exact = Fraction(alpha).limit_denominator(10**9)
+    return math.ceil((n + 1) * (1 - alpha_exact))
 
 
 def conformal_quantile(scores: np.ndarray, alpha: float) -> float:
     r"""非適合度スコアから共形分位点 \hat{q} を返す。
 
-    定義（卒論 式(3.4)）:
+    定義（卒論 eq:khat。順序統計量は定義 def:order-stat）:
         k = \lceil (n+1)(1-\alpha) \rceil
         \hat{q} = S_{(k)}          （S_{(k)} は昇順第 k 順序統計量）
         k > n のときは \hat{q} = +\infty
@@ -47,14 +77,14 @@ def conformal_quantile(scores: np.ndarray, alpha: float) -> float:
         raise ValueError(f"scores は1次元配列でなければならない: shape={scores.shape}")
 
     n = scores.size
-    k = int(np.ceil((n + 1) * (1.0 - alpha)))  # ← (n+1) であって n ではない
+    k = conformal_index(n, alpha)  # ← (n+1) であって n ではない。float の丸めも避ける
     if k > n:
         return np.inf
     return float(np.sort(scores)[k - 1])  # 第 k 順序統計量（0-indexed で k-1）
 
 
 def conformal_pvalue(cal_scores: np.ndarray, test_score: float) -> float:
-    r"""共形 p 値を返す（卒論 式(3.7)）。
+    r"""共形 p 値を返す（卒論 第3章。式のラベルは未定）。
 
         p = \frac{1 + \#\{ i : S_i \ge S_{n+1} \}}{n+1}
 
@@ -69,9 +99,9 @@ def conformal_pvalue(cal_scores: np.ndarray, test_score: float) -> float:
 def interval_from_quantile(
     pred: np.ndarray, q_hat: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    r"""絶対残差スコア S = |y - \hat{f}(x)| に対する予測区間を返す。
+    r"""絶対残差スコア S = |y - \hat{f}(x)|（卒論 eq:score）に対する予測区間を返す。
 
-        C(x) = [\hat{f}(x) - \hat{q},  \hat{f}(x) + \hat{q}]      （卒論 式(3.5)）
+        C(x) = [\hat{f}(x) - \hat{q},  \hat{f}(x) + \hat{q}]      （卒論 eq:interval）
 
     正規化残差スコアや CQR の場合は区間の作り方が異なるため、
     src/conformal/scores.py 側の対応する関数を使うこと。

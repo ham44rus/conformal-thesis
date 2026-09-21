@@ -32,7 +32,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.linear_model import Ridge
 
-from conformal import absolute_residual
+from conformal import absolute_residual, conformal_index
 from conformal.datasets import homoscedastic
 
 N_CAL, ALPHA, N_TRIAL = 1000, 0.10, 2000
@@ -42,12 +42,16 @@ RESULTS = Path(__file__).resolve().parents[1] / "results"
 
 
 def q_correct(scores: np.ndarray, alpha: float) -> float:
-    """正しい共形分位点: k = ceil((n+1)(1-alpha))。"""
-    return float(np.sort(scores)[int(np.ceil((len(scores) + 1) * (1 - alpha))) - 1])
+    """正しい共形分位点: k = ceil((n+1)(1-alpha))。k は conformal_index で厳密に求める。"""
+    return float(np.sort(scores)[conformal_index(len(scores), alpha) - 1])
 
 
 def q_offbyone(scores: np.ndarray, alpha: float) -> float:
-    """誤実装: k = ceil(n(1-alpha))。n+1 を n にしてしまう典型的なバグ。"""
+    """誤実装: k = ceil(n(1-alpha))。n+1 を n にしてしまう典型的なバグ。
+
+    この実験で検出したい誤りを意図的に再現した変種なので、conformal_index には
+    置き換えない（float の ceil のままでよい。alpha=0.1 では丸めの問題は起きない）。
+    """
     return float(np.sort(scores)[int(np.ceil(len(scores) * (1 - alpha))) - 1])
 
 
