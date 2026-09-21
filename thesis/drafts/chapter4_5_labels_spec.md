@@ -7,6 +7,7 @@
 > - 記号は TeX 本文に合わせる（$\hat f$、$\hat q$、$\mathcal{D}_{\mathrm{tr}}$、$\mathcal{D}_{\mathrm{cal}}$）。
 > - 命名規則は既存のラベルと同じ：`eq:` + 小文字・ハイフン区切りの名詞
 >   （既存例：`eq:score`, `eq:khat`, `eq:interval`, `eq:two-sided`, `eq:cond-coverage`, `eq:ceil-bounds`）。
+> - 第 4・5 章の節仕様書を作成したら、この文書はそこに統合する。
 > - コードの docstring は「ラベルは仮に …」と書いている。TeX に `\label` が付いた時点で「仮に」を外す
 >   （コード側の作業。この文書では触れない）。
 
