@@ -1,7 +1,7 @@
-# 第2章 仕様書：記法・交換可能性・順序統計量と経験分位点
+# 第2章 仕様書：記法・交換可能性・順序統計量と経験分位点・分位点回帰
 
 > **この文書について（TeX 本文には含めない）**
-> - 卒論第2章のうち、2.1 記法、2.2 交換可能性、2.3 順序統計量と経験分位点の仕様書。論理の正典はこの文書とする。2.4・2.5 は範囲外。
+> - 卒論第2章のうち、2.1 記法、2.2 交換可能性、2.3 順序統計量と経験分位点、2.4 回帰モデルと分位点回帰（v1.2 で追加。第4章 CQR の前提節）の仕様書。論理の正典はこの文書とする。2.5 は範囲外。
 > - 第3章の仕様書（`main_theorem_spec.md`）は v3 で、ここの定義・命題を参照する形に改めた（末尾の「第3章への反映」）。
 > - 定義・命題の番号は、骨組みの定理環境（section ごとの通し番号）で順に置いた場合の目安。TeX では各項目に付けた**提案ラベル**で参照し、番号を直接書かない。
 > - 骨組みには「例」の環境がないので、例 2.7 のために追加が必要（definition スタイル、定義と同じカウンタ）。
@@ -169,6 +169,56 @@ $$\tilde Q(\beta)=s_{(\lceil(n+1)\beta\rceil)}$$
 
 ---
 
+## 2.4 回帰モデルと分位点回帰　提案ラベル `sec:quantile-regression`
+
+> v1.2 で追加。第4章の CQR（`chapter4_sections_spec.md` の 4.2）が前提とする。第3章からは参照されない。
+
+**本文の導入.** 第3章の点予測器 $\hat f$ は、$Y\mid X=x$ の分布の「中心」を推定するものであれば何でもよい（例えば最小二乗法による条件付き期待値の推定）。第4章の CQR では、中心ではなく $Y\mid X=x$ の分布の**分位点**を推定する回帰が要る。本節では、そのための損失関数（pinball 損失）と、条件付き分位点がその期待値の最小化元であることを述べる。
+
+### 定義 2.15（分位点・条件付き分位点）　提案ラベル `def:cond-quantile`
+
+実数値確率変数 $Y$ の分布関数を $F(t):=\mathbb{P}(Y\le t)$ とする。$\tau\in(0,1)$ に対し
+$$Q(\tau):=\min\{\,t\in\mathbb{R}: F(t)\ge\tau\,\}$$
+を $Y$ の **$\tau$ 分位点**という（$F$ は右連続で $\lim_{t\to-\infty}F(t)=0<\tau<1=\lim_{t\to\infty}F(t)$ なので、集合は空でない下に有界な右閉区間 $[Q(\tau),\infty)$ であり、最小値が存在する）。定義 2.11 の経験分位点は、経験分布 $\hat F_n$ に対するこの定義である。
+
+組 $(X,Y)$ について、$X=x$ を与えたときの $Y$ の条件付き分布関数 $F_{Y\mid X}(t\mid x)$ が各 $x$ で分布関数になるように与えられているとし（正則条件付き分布の存在を仮定する）、
+$$q_\tau(x):=\min\{\,t\in\mathbb{R}: F_{Y\mid X}(t\mid x)\ge\tau\,\}$$
+を **条件付き $\tau$ 分位点**という。$\tau=1/2$ なら条件付き中央値である。
+
+### pinball 損失　提案ラベル `eq:pinball`
+
+$\tau\in(0,1)$ に対し
+$$\rho_\tau(u):=\begin{cases}\tau\,u & (u\ge0)\\ (\tau-1)\,u & (u<0)\end{cases}\ =\ \max\{\tau u,\ (\tau-1)u\}\qquad(u\in\mathbb{R})\tag{`eq:pinball`}$$
+を **pinball 損失**（check 損失）という。$\rho_\tau\ge0$、$\rho_\tau(0)=0$ で、凸かつ区分的に線形である。$\tau=1/2$ のとき $\rho_{1/2}(u)=|u|/2$ で、絶対誤差の $1/2$ である。$\tau>1/2$ なら過小予測（$u>0$）の方が過大予測より重く罰せられ、最小化元は上側に寄る。
+
+$u^+:=\max\{u,0\}$、$u^-:=\max\{-u,0\}$ とおくと $\rho_\tau(u)=\tau u^++(1-\tau)u^-$ である（証明で使う）。
+
+### 命題 2.16（分位点は pinball 損失の期待値を最小化する）　提案ラベル `prop:pinball-quantile`
+
+$\mathbb{E}|Y|<\infty$、$\tau\in(0,1)$ とし、$L(c):=\mathbb{E}[\rho_\tau(Y-c)]$（$c\in\mathbb{R}$）とおく。$q:=Q(\tau)$ とすると、任意の $c\in\mathbb{R}$ について
+$$L(c)-L(q)=\int_q^c\bigl(\mathbb{P}(Y<t)-\tau\bigr)\,dt\ \ge\ 0$$
+が成り立つ（$c<q$ のときの右辺は $\int_c^q(\tau-\mathbb{P}(Y<t))\,dt$ の意味）。すなわち $Q(\tau)$ は $L$ を最小化する。
+
+さらに、$(X,Y)$ が定義 2.15 の条件付き分布関数をもち、$\mathbb{E}|Y|<\infty$ ならば、可測な $g\colon\mathcal{X}\to\mathbb{R}$（$\mathbb{E}|g(X)|<\infty$）の中で $g=q_\tau$ が $\mathbb{E}[\rho_\tau(Y-g(X))]$ を最小化する。
+
+**証明（草案。本文に載せるかは TODO(著者) 1）.** $\rho_\tau(u)=\tau u^++(1-\tau)u^-$ と書く。実数 $y$ を固定すると、$t\mapsto(y-t)^+$ はリプシッツ連続で、ほとんどすべての $t$ で微分係数 $-\mathbf{1}\{t<y\}$ をもつ。同様に $t\mapsto(y-t)^-=(t-y)^+$ の微分係数は $\mathbf{1}\{t>y\}$ である。よって $c\ge q$ のとき
+$$\rho_\tau(y-c)-\rho_\tau(y-q)=\int_q^c\bigl(-\tau\,\mathbf{1}\{t<y\}+(1-\tau)\,\mathbf{1}\{t>y\}\bigr)\,dt=\int_q^c\bigl(\mathbf{1}\{y<t\}-\tau\bigr)\,dt$$
+である（$\mathbf{1}\{t<y\}=1-\mathbf{1}\{t\ge y\}$ を代入し、$\{t=y\}$ はルベーグ測度 $0$ なので落とした）。$c<q$ のときも、積分の向きを込めて同じ式が成り立つ。$y=Y$ とおいて期待値をとる。被積分関数は有界区間上で有界なのでフビニの定理が使え、
+$$L(c)-L(q)=\int_q^c\bigl(\mathbb{P}(Y<t)-\tau\bigr)\,dt$$
+を得る（$\mathbb{E}|Y|<\infty$ より $L$ は有限）。$c\ge q$ のとき、$t>q$ ならば $\{Y\le q\}\subseteq\{Y<t\}$ より $\mathbb{P}(Y<t)\ge F(q)\ge\tau$ なので被積分関数は非負である。$c<q$ のとき、$t<q$ ならば $q$ の最小性より $F(t)<\tau$、よって $\mathbb{P}(Y<t)\le F(t)<\tau$ なので、$\int_c^q(\tau-\mathbb{P}(Y<t))\,dt\ge0$ である。
+
+条件付き版は、$\mathbb{E}[\rho_\tau(Y-g(X))]=\mathbb{E}\bigl[\,\mathbb{E}[\rho_\tau(Y-g(X))\mid X]\,\bigr]$ と書き、$X=x$ を与えたときの内側の期待値 $\int\rho_\tau(y-g(x))\,dF_{Y\mid X}(y\mid x)$ に前半を（$c=g(x)$、分布関数 $F_{Y\mid X}(\cdot\mid x)$ について）適用すれば、各 $x$ で $g(x)=q_\tau(x)$ が最小にする。$x$ について積分して結論を得る。$\blacksquare$
+
+### 分位点回帰　提案ラベル `eq:quantile-regression`
+
+データ $(x_i',y_i')$（$i=1,\dots,N$）と、関数のクラス $\mathcal{G}$ が与えられたとき、
+$$\hat q_\tau\in\operatorname*{arg\,min}_{g\in\mathcal{G}}\ \frac1N\sum_{i=1}^{N}\rho_\tau\bigl(y_i'-g(x_i')\bigr)\tag{`eq:quantile-regression`}$$
+を水準 $\tau$ の**分位点回帰**という。命題 2.16 の経験版であり、最小二乗法が条件付き期待値の経験版であるのと同じ関係にある。Koenker and Bassett (1978) は $\mathcal{G}$ を線形関数のクラスとしてこれを導入した（`koenker1978regression`。線形の場合は線形計画問題になる）。本論文では $\mathcal{G}$ を特定せず、pinball 損失を最小化する任意の回帰法を分位点回帰とよぶ（第5章で使うモデルは実験設定の節で述べる）。
+
+**注（第4章への接続）.** 異なる水準 $\tau_1<\tau_2$ の分位点回帰は別々の最適化問題として解くので、$x$ によっては $\hat q_{\tau_1}(x)>\hat q_{\tau_2}(x)$ と推定値が**交差**しうる（真の分位点は $\tau$ について単調なので交差しない）。交差の扱いは第4章 CQR の節（`rem:cqr-crossing`）で述べる。
+
+---
+
 ## 第3章への反映（`main_theorem_spec.md` v3 で反映済み。TeX 本文には含めない）
 
 | 箇所 | v2 | v3 |
@@ -208,3 +258,4 @@ $$\tilde Q(\beta)=s_{(\lceil(n+1)\beta\rceil)}$$
 |---|---|
 | v1 | 初版 |
 | v1.1 | 実装との対応メモのみ更新（確認環境の明記、Claude Code による実装確認の結果、落とし穴 4 の該当 $\alpha$ の追記、`limit_denominator` の上限を `10**9` に変更）。TeX 本文への影響なし |
+| v1.2 | 2.4 回帰モデルと分位点回帰を追加（定義 `def:cond-quantile`、pinball 損失 `eq:pinball`、命題 `prop:pinball-quantile` と証明の草案、分位点回帰 `eq:quantile-regression`）。第4章の仕様書 `chapter4_sections_spec.md` v1 の前提節。証明を本文に載せるかは TODO(著者)（第4章の仕様書の TODO 一覧 1〜3） |

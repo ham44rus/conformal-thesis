@@ -1,4 +1,4 @@
-# 第4・5章 ラベル仕様書（v1：式ラベルの確定）
+# 第4・5章 ラベル仕様書（v1.1：第4章分は統合済み）
 
 > **この文書について（TeX 本文には含めない）**
 > - 第4章（拡張）と第5章（数値実験）の本文はまだ書いていない。この文書は、コードの docstring と
@@ -8,6 +8,10 @@
 > - 命名規則は既存のラベルと同じ：`eq:` + 小文字・ハイフン区切りの名詞
 >   （既存例：`eq:score`, `eq:khat`, `eq:interval`, `eq:two-sided`, `eq:cond-coverage`, `eq:ceil-bounds`）。
 > - 第 4・5 章の節仕様書を作成したら、この文書はそこに統合する。
+>   **第 4 章分（`eq:score-normalized`, `eq:sigma-hat`, `eq:cqr-score`, `eq:cqr-interval`）は
+>   `chapter4_sections_spec.md` v1 に統合済み**（v1.1）。定義・区間の形・実装との対応はそちらを正典とする。
+>   ここに残す 4 つの名前は、`tests/test_label_refs.py` がこの文書から確定ラベルを読むためのものであり、
+>   TeX に `\label` が付いた時点で行ごと削除してよい。第 5 章分（`eq:coverage-rate`, `eq:mean-width`）は未統合。
 > - コードの docstring は「ラベルは仮に …」と書いている。TeX に `\label` が付いた時点で「仮に」を外す
 >   （コード側の作業。この文書では触れない）。
 
@@ -17,10 +21,7 @@
 
 | ラベル | 予定の節 | 内容 | 参照しているコード |
 |---|---|---|---|
-| `eq:score-normalized` | 4.1 正規化残差スコア | $S=\dfrac{\lvert y-\hat f(x)\rvert}{\hat\sigma(x)}$。区間は $\hat f(x)\pm\hat q\,\hat\sigma(x)$ | `src/conformal/scores.py` `normalized_residual` |
-| `eq:sigma-hat` | 4.1 正規化残差スコア | $\hat\sigma(x)$ の推定：学習用データの out-of-fold 残差の大きさ $\lvert y-\hat f(x)\rvert$（または $(y-\hat f(x))^2$ の平方根）を $x$ で回帰し、下限 $\sigma_{\min}>0$ でクリップしたもの。較正用データは使わない | `src/conformal/adaptive.py` `fit_sigma`, `SigmaEstimator` |
-| `eq:cqr-score` | 4.2 CQR | $S=\max\{\hat q_{\mathrm{lo}}(x)-y,\ y-\hat q_{\mathrm{hi}}(x)\}$。区間の内側で負、外側で正 | `src/conformal/scores.py` `cqr_score`、`tests/test_cqr_score.py` |
-| `eq:cqr-interval` | 4.2 CQR | $C(x)=[\hat q_{\mathrm{lo}}(x)-\hat q,\ \hat q_{\mathrm{hi}}(x)+\hat q]$ | `src/conformal/scores.py` `cqr_interval`、`tests/test_cqr_score.py` |
+| `eq:score-normalized`, `eq:sigma-hat`, `eq:cqr-score`, `eq:cqr-interval` | 4.1 / 4.2 | **`chapter4_sections_spec.md` に統合済み**（v1.1）。内容はそちらを参照 | `src/conformal/scores.py`, `src/conformal/adaptive.py`, `tests/test_cqr_score.py`, `tests/test_adaptive.py` |
 | `eq:coverage-rate` | 5.1.1 被覆率と区間幅 | テスト点 $(x_j,y_j)$、$j=1,\dots,m$ での**経験的な被覆割合** $\widehat{\mathrm{Cov}}:=\dfrac1m\sum_{j=1}^{m}\mathbf{1}\{y_j\in C(x_j)\}$ | `src/conformal/metrics.py` `coverage`、`experiments/e2_model_agnostic.py` `coverage_from_sorted` |
 | `eq:mean-width` | 5.1.1 被覆率と区間幅 | 平均区間幅 $\dfrac1m\sum_{j=1}^{m}\lvert C(x_j)\rvert$（$\lvert C(x)\rvert$ は区間の長さ） | `src/conformal/metrics.py` `mean_width` |
 
@@ -40,3 +41,4 @@ $\widehat{\mathrm{Cov}}$ は、区間（したがって $\mathcal{D}_{\mathrm{tr
 | 版 | 内容 |
 |---|---|
 | v1 | 仮ラベル 6 つを確定。`eq:coverage-rate` に経験的な被覆割合であることの定義を明記 |
+| v1.1 | 第 4 章分の 4 ラベルを `chapter4_sections_spec.md` v1 に統合。名前だけをここに残す（`tests/test_label_refs.py` の参照先のため）。第 5 章分は変更なし |
