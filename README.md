@@ -114,4 +114,4 @@ venv を使わない環境では `make PYTHON=python3 test` のように指定�
 ## 生成AIの利用
 
 数値実験の実装に Claude / Claude Code を利用する。方針は `CLAUDE.md` と
-`docs/AI利用の記載.md` を参照。**着手前に指導教員に可否と記載方法を確認すること。**
+`docs/AI利用の記載.md` を参照。
