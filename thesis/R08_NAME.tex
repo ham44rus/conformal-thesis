@@ -21,7 +21,7 @@
 
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{bm}
-\usepackage{graphicx}
+\usepackage[dvipdfmx]{graphicx}   % pdf の図を dvipdfmx で取り込む（bounding box は extractbb で自動取得）
 \usepackage{booktabs}
 \usepackage[dvipdfmx]{hyperref}
 
@@ -51,6 +51,7 @@
 \newcommand{\Dcal}{\mathcal{D}_{\mathrm{cal}}}   % 較正用データ
 \newcommand{\qhat}{\hat{q}}
 \newcommand{\fhat}{\hat{f}}
+\newcommand{\encircle}[1]{\textcircled{\scriptsize #1}}   % 丸数字（platex では U+2460 系が使えない）
 
 \title{等角予測による分布によらない予測区間}
 \author{東京理科大学 理学部第一部 応用数学科\\ 黒沢研究室\\ （氏名）}
@@ -1851,48 +1852,885 @@ $(\qhat_{\mathrm{lo}},\qhat_{\mathrm{hi}})$ は $\Dtr$ のみから決まるの�
 \section{数値実験}
 \label{sec:experiments}
 %%=====================================================================
+%% 事実の記述（設定・手順・表・図・csv から読める数値）は本文に書いてある。
+%% 解釈・考察は「著者執筆（考察）」のコメントブロックに論点だけを置き、本文は著者が書く
+%% （CLAUDE.md「生成AIの利用について」）。
+%% 数値はすべて results/*.csv から引いている。csv を再生成したら本文の数値も更新する。
 
 \subsection{評価指標と不確実性の報告}
 \label{sec:metrics}
-%% 下書き: thesis/drafts/5.1_評価指標と不確実性の報告.md
-%% 数値はすべて results/*.csv から引くこと。csv を再生成したら本文の数値も更新する。
+%% 下書き: thesis/drafts/5.1_評価指標と不確実性の報告.md（著者執筆。5.1.1・5.1.2 は
+%% 文章を変えずに TeX 化した。記法とラベル参照のみ調整）。
+%% 実装: src/conformal/metrics.py（coverage, mean_width, feature_stratified_coverage,
+%% size_stratified_coverage）。
+%% 数値の出どころ: 表 tab:e1-se-decomp = results/e1_summary.csv（alpha=0.10 の 5 行）、
+%% 表 tab:e1b-cases = results/e1b_detection_levels.csv、
+%% 表 tab:e2-width-se = results/e2_summary.csv, results/e2_tiers.csv、
+%% 表 tab:e3-se-test = results/e3_summary.csv, results/e3_marginal.csv。
 
 \subsubsection{被覆率と区間幅}
-%% TODO: 周辺被覆率、平均区間幅。
+
+本論文で用いる基本的な評価指標は次の $2$ つである。
+
+\textbf{周辺被覆率}\quad テスト集合 $\{(X_j,Y_j)\}_{j=1}^{m}$ に対し
+\begin{equation}
+  \label{eq:coverage-rate}
+  \widehat{\mathrm{Cov}}=\frac1m\sum_{j=1}^{m}\Ind\bigl\{Y_j\in C(X_j)\bigr\}
+\end{equation}
+と定める。第\ref{sec:split-theory}章の定理が保証するのはこの量の期待値であり、
+名目水準 $1-\alpha$ を下回らないことが要求される。
+
+\textbf{平均区間幅}\quad
+\begin{equation}
+  \label{eq:mean-width}
+  \frac1m\sum_{j=1}^{m}\bigl(\mathrm{hi}(X_j)-\mathrm{lo}(X_j)\bigr)
+\end{equation}
+と定める。被覆率が同じであれば幅が狭いほど情報量が多い。被覆率は「正しさ」を、
+幅は「有用性」を測る指標であり、両者は独立に報告しなければならない。
+
+以下では、これらの点推定に付す不確実性の扱いを述べる。
+\textbf{本節の主張は、被覆率という単一の量に対しても、何に条件づけて見るかによって
+不確実性の大きさが桁で変わる}ということである。
 
 \subsubsection{分散成分の分解}
-%% TODO: 試行間／テスト集合間／学習集合間の3成分と合成の式(5.1)。
-%%       CLAUDE.md「4. 報告の作法」の表に対応する。
-%%       **Clopper--Pearson は「1試行内」専用。試行間のばらつきには使えない。**
-%%       4つの実例: E1 / E1b / E2 / E3。
+
+\paragraph{(1) 何がばらつくのか.}
+本論文のシミュレーションは、次の手順を多数回繰り返す形をとる。
+\begin{enumerate}
+  \item 学習集合 $\Dtr$ を生成し、予測モデル $\fhat$ を学習する
+  \item 較正集合 $\Dcal$（サイズ $n$）を生成し、共形分位点 $\qhat$ を求める
+  \item テスト集合で被覆率を評価する
+\end{enumerate}
+このとき、報告される被覆率には少なくとも $3$ つの独立な変動源がある。
+
+\begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    成分 & 何を引き直したときのばらつきか & 試行数 $R$ で縮むか \\
+    \midrule
+    \textbf{試行間} & 較正集合 $\Dcal$ & 縮む \\
+    \textbf{テスト集合間} & テスト集合そのもの & \textbf{縮まない} \\
+    \textbf{学習集合間} & 学習集合 $\Dtr$ & \textbf{縮まない} \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\textbf{試行間成分}は、較正集合の引き直しによる $\qhat$ の変動に由来する。
+第\ref{sec:split-theory}章で述べたとおり、較正集合を固定したときの条件付き被覆率は
+$\mathrm{Beta}(n+1-l,\,l)$、$l=\lfloor(n+1)\alpha\rfloor$ に従うから、この成分の
+標準偏差はベータ分布の標準偏差そのものであり、$n$ とともに $O(n^{-1/2})$ で縮む。
+試行を $R$ 回繰り返せば、その平均の標準誤差はさらに $\sqrt{R}$ で割られる。
+
+\textbf{テスト集合間成分}は見落とされやすい。本論文の実験は計算量を抑えるため、
+\textbf{$1$ つのテスト集合を全試行で共有している}。この設計では、そのテスト集合固有の
+ズレが全試行に共通のバイアスとして乗るため、\textbf{試行数をいくら増やしても消えない}。
+有限のテスト集合 $m$ 点で真の被覆確率 $p$ を推定する誤差であるから、その標準偏差は
+$\sqrt{p(1-p)/m}$ である。
+
+\textbf{学習集合間成分}は、学習集合を $1$ つ固定している以上、通常の試行では現れない。
+学習集合を複数回引き直して初めて観測できる（\ref{sec:e2}節 E2 の頑健性検証がこれにあたる）。
+
+なお、テスト集合を全試行で共有する設計では「$1$ 試行内の二項変動」は独立な成分として
+現れない。較正集合が決まれば $\qhat$ が決まり、テスト集合は固定なので被覆率が一意に
+定まるからである。$1$ 回きりの適用について被覆率を報告する場面（第6章の実データ解析）では、
+この成分に対して Clopper--Pearson 信頼区間を用いる。
+
+\paragraph{(2) 合成の式.}
+試行間成分とテスト集合間成分がともに効く場面では、両者の分散を加えて
+\begin{equation}
+  \label{eq:se-composite}
+  \mathrm{SE}=\sqrt{\frac{s_{\mathrm{trial}}^{2}}{R}+\frac{p(1-p)}{m}}
+\end{equation}
+とする。ここで $s_{\mathrm{trial}}$ は試行間の標準偏差、$R$ は試行数、$m$ はテスト集合の
+サイズ、$p$ は被覆率の推定値である。
+
+\textbf{第 $1$ 項のみを $R$ で割ることが要点である.} 第 $2$ 項を $R$ で割ってはならない。
+テスト集合は引き直されていないため、試行を重ねてもその集合固有のズレは平均されない
+からである。この区別を誤ると、$R$ を大きくするほど信頼区間が不当に狭くなり、理論値を外す。
+
+以下、報告する区間がどの成分を含むものかを、表および図のキャプションに必ず明記する。
+
+\textbf{成分の独立性について}\quad 式~\eqref{eq:se-composite} は分散の加法性を用いているが、
+これは常に無条件に成り立つわけではない。第 $2$ 項の $p(1-p)/m$ は被覆率 $p$ そのものを
+含むため、$p$ が層や条件によって変われば成分の大きさも変わる。実際、後述の実例\encircle{4}では、
+層別被覆が割れている手法において、この非線形性が支配的な効果を生む。分散を足すという
+操作は便宜的なものであり、成分が何に依存しているかを常に確認する必要がある。
+
+\paragraph{(3) $4$ つの実例.}
+以下では、本論文の各実験で観測された $4$ つの事例を、\textbf{気づきにくい順}に示す。
+\encircle{1}は表を見れば分かる。\encircle{2}は平均を見ても分からない。\encircle{3}は結論そのものが変わる。
+\encircle{4}は実験の設計段階で気づかなければ手遅れになる。
+
+\paragraph{\encircle{1} 標本サイズを増やすと支配的な成分が入れ替わる（E1）.}
+実験 E1（\ref{sec:e1}節）において、$\alpha=0.10$、$R=1000$、テスト集合 $m=100{,}000$ 点
+として被覆率の標準誤差を分解した結果を表~\ref{tab:e1-se-decomp} に示す。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E1 における標準誤差の分解（$\alpha=0.10$、$R=1000$、$m=100{,}000$）。
+    出典：\texttt{results/e1\_summary.csv}}
+  \label{tab:e1-se-decomp}
+  \small
+  \begin{tabular}{rrrrrrr}
+    \toprule
+    $n$ & 平均被覆率 & $s_{\mathrm{trial}}/\sqrt{R}$ & $\sqrt{p(1-p)/m}$ & 合成 SE & テスト集合成分の寄与率 & KS $p$ 値 \\
+    \midrule
+    20 & 0.902916 & 0.001947 & 0.000936 & 0.002160 & 18.8\,\% & 0.248 \\
+    50 & 0.902204 & 0.001314 & 0.000939 & 0.001615 & 33.8\,\% & 0.402 \\
+    100 & 0.901026 & 0.000938 & 0.000944 & 0.001331 & 50.3\,\% & 0.570 \\
+    500 & 0.899620 & 0.000428 & 0.000950 & 0.001042 & 83.2\,\% & 0.124 \\
+    2000 & 0.899411 & 0.000209 & 0.000951 & 0.000974 & 95.4\,\% & 0.00096 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{テスト集合成分が $n$ によらずほぼ一定（$0.00094$ 前後）である}のに対し、
+試行間成分だけが $n$ とともに縮む。その結果、$n=100$ 付近で両者が拮抗し、$n=2000$ では
+分散の $95.4\,\%$ がテスト集合成分によって占められる。
+
+較正集合を大きくすることは、被覆率の推定精度を上げる行為ではない。それは試行間成分を
+縮めるだけであり、テスト集合を固定している限り、推定精度には下限がある。
+
+この事実は、$n=2000$ の行の KS $p$ 値が $0.00096$ と棄却されていることの説明にもなる。
+第\ref{sec:split-theory}章で述べたとおり被覆率の分布は $\mathrm{Beta}(1801,200)$ に従う
+はずであり、実際に標準偏差の比は $0.987$ と理論とよく一致している。棄却されるのは分布の
+形が違うからではなく、\textbf{固定テスト集合 $1$ つ分のズレが、$n$ が大きいときのベータ分布の
+狭さに対して相対的に大きくなる}ためである。実装の誤りではない。
+
+\paragraph{\encircle{2} 平均には映らず、分布にだけ映る誤り（E1b）.}
+実験 E1b（\ref{sec:e1b}節）では、$n=1000$、$\alpha=0.10$、$R=2000$ の設定で、正しい実装と
+$2$ 種類の誤りを比較した。理論分布は $\mathrm{Beta}(901,100)$、平均 $0.90010$、
+標準偏差 $0.00947$ である。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E1b における $3$ ケースの比較。出典：\texttt{results/e1b\_detection\_levels.csv}}
+  \label{tab:e1b-cases}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    ケース & 平均 & 標準偏差 & 理論 SD との比 & 理論平均との $z$ & KS $p$ 値 \\
+    \midrule
+    正しい実装 & 0.90025 & 0.00950 & 1.003 & $+0.72$ & 0.911 \\
+    誤実装（$n+1$ を $n$ に） & 0.89927 & 0.00955 & 1.008 & $-3.94$ & $1.28\times10^{-4}$ \\
+    テスト集合が小さい & 0.90038 & 0.01140 & \textbf{1.203} & $+1.33$ & $1.53\times10^{-8}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+$2$ 行目は、共形分位点の添字を $\lceil(n+1)(1-\alpha)\rceil$ から $\lceil n(1-\alpha)\rceil$
+に誤った場合である。被覆率の平均は $0.89927$ で、正しい実装との差はわずか $0.001$ に
+すぎない。値を眺めるだけでは気づけないが、理論平均との $z$ は $-3.94$、KS 検定も
+$p=1.28\times10^{-4}$ で、\textbf{平均の検定でも分布の検定でも検出できる}。これは分布の
+位置がずれる型の誤りだからである。
+
+$3$ 行目は、実装は正しいが被覆率をテスト集合 $2{,}000$ 点で推定した場合である。
+\textbf{平均は $z=+1.33$ と完全に正常に見える}。しかし標準偏差は理論の $1.203$ 倍に
+膨らんでおり、KS 検定は $p=1.53\times10^{-8}$ で明確に棄却する。有限のテスト集合による
+二項変動が試行ごとに独立に加わり、分散が過大になっているためである。
+
+過大になる量も理論と一致する。有限のテスト集合による二項変動が独立に加わるならば、
+被覆率の標準偏差は
+\begin{equation*}
+  \sqrt{\sigma_{\mathrm{Beta}}^{2}+\frac{p(1-p)}{m}}
+  =\sqrt{0.00947^{2}+\frac{0.9\times0.1}{2000}}=0.01161
+\end{equation*}
+となり、理論標準偏差との比は $1.225$ と予測される。実測は $1.203$ であり、乖離は
+$1.9\,\%$ にとどまる。\textbf{式~\eqref{eq:se-composite} の分散の加法性が、この場面では
+実際に成り立っている}ことが確認できる。
+
+ただしこれは成分が互いに独立であるがゆえの結果である。加法性が常に成り立つわけではない
+ことは、実例\encircle{4}で見る。
+
+\textbf{位置のずれは平均が捉え、形のずれは分布が捉える.} 平均だけを見ていては、後者の型の
+誤りは永久に発見されない。較正集合の使い回し、標本間の相関など、平均を保ったまま分散のみを
+変える誤りは他にも存在する。本論文が被覆率の分布そのものを理論のベータ分布と照合している
+のは、この型の誤りを捕捉するためである。
+
+\paragraph{\encircle{3} 条件づけを変えると結論が変わる（E2）.}
+実験 E2（\ref{sec:e2}節）では、$5$ つの下敷きモデルについて予測区間の幅を比較した。
+表~\ref{tab:e2-width-se} に、較正集合を引き直したときのばらつき（試行間 SE）と、
+学習集合を引き直したときのばらつき（rep 間 SD）を対比する。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E2 における幅のばらつきの $2$ つの尺度。
+    出典：\texttt{results/e2\_summary.csv}, \texttt{results/e2\_tiers.csv}}
+  \label{tab:e2-width-se}
+  \begin{tabular}{lrrr}
+    \toprule
+    モデル & 幅の試行間 SE & 幅の学習集合間 SD & 倍率 \\
+    \midrule
+    定数予測器 & 0.00308 & 0.00934 & 3.0 \\
+    リッジ回帰 & 0.00260 & 0.00454 & 1.7 \\
+    ランダムフォレスト & 0.00227 & 0.02583 & 11.4 \\
+    勾配ブースティング & 0.00220 & 0.02347 & 10.7 \\
+    ニューラルネット & 0.00235 & \textbf{0.07303} & \textbf{31.1} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{倍率がモデルの複雑さと対応している.} 定数予測器と線形モデルでは $1.7$〜$3.0$ 倍に
+とどまるのに対し、非線形の $3$ モデルでは $10.7$〜$31.1$ 倍に達する。学習集合を引き直した
+ときの変動は、モデルが柔軟であるほど大きい。
+
+この差は、モデル間の比較の結論を左右する。試行間 SE のみを用いれば、ランダムフォレストと
+勾配ブースティングの幅の差（$0.01328$）は $95\,\%$ 信頼区間が重ならず有意に分離する
+（勾配ブースティングの上端 $1.77788$ が、ランダムフォレストの下端 $1.78241$ を下回る）。
+しかし学習集合を $5$ 通りに振ると、両者の順位は入れ替わる。\textbf{試行間 SE が測っているのは
+「この学習集合のもとで」の不確実性であり、学習集合を超えた主張には使えない.}
+
+これは実験上の技術的注意にとどまらない。\ref{sec:e3}節で扱う周辺被覆と条件付き被覆の
+区別と、構造がまったく同じである。信頼区間もまた、何に条件づけているかによって答える
+問いが変わる。
+
+\paragraph{\encircle{4} 層別すると成分の大きさ自体が変わる（E3）.}
+実験 E3（\ref{sec:e3}節）では、テスト集合 $200{,}000$ 点を $5$ つの層に分けて層別被覆を
+測った。$1$ 層あたり約 $40{,}000$ 点であるから、テスト集合成分の標準偏差は
+$\sqrt{p(1-p)/40000}$ となり、周辺被覆の $\sqrt{p(1-p)/200000}$ に対して
+$\sqrt5\approx2.236$ 倍に拡大するはずである。実測を表~\ref{tab:e3-se-test} に示す。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E3 におけるテスト集合成分の拡大。
+    出典：\texttt{results/e3\_summary.csv}, \texttt{results/e3\_marginal.csv}}
+  \label{tab:e3-se-test}
+  \begin{tabular}{lrrr}
+    \toprule
+    手法 & 周辺の $\mathrm{se}_{\mathrm{test}}$ & 層別の $\mathrm{se}_{\mathrm{test}}$（$5$ 層平均） & 比 \\
+    \midrule
+    絶対残差 & 0.000669 & 0.001178 & \textbf{1.760} \\
+    正規化残差 & 0.000669 & 0.001490 & 2.226 \\
+    CQR & 0.000667 & 0.001474 & 2.210 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+正規化残差と CQR は $2.21$〜$2.23$ で理論値 $\sqrt5$ とよく一致する。しかし
+\textbf{絶対残差だけが $1.760$ と大きく外れる.}
+
+原因は (2) で述べた成分の非独立性である。$\mathrm{se}_{\mathrm{test}}=\sqrt{p(1-p)/m}$ は
+$p$ に依存するから、$\sqrt5$ の関係が成り立つのは各層の $p$ が周辺の $p$ とほぼ等しいときに
+限られる。絶対残差の層別被覆は $0.999/0.990/0.938/0.841/0.733$ と大きく割れており、
+被覆がほぼ $1$ の層では $p(1-p)$ がほぼ $0$ になる。層ごとの $\mathrm{se}_{\mathrm{test}}$ は
+$0.000154$ から $0.002218$ まで $14$ 倍の開きを持ち、その平均が引き下げられているのである。
+
+\textbf{実際、最悪層のみを見れば $\mathrm{se}_{\mathrm{test}}=0.002218$ であり、$\sqrt5$ 倍の値
+$0.001497$ を上回る（比 $3.31$）.} 平均が理論より小さく出ることと、最も問題のある層で
+不確実性が理論より大きいことが、同時に成り立っている。
+
+すなわち、\textbf{$\sqrt5$ の関係から外れること自体が、層別被覆が割れていることの現れである.}
+分散成分の分解という道具の挙動が、測定対象である条件付き妥当性の欠如を映し出している。
+
+\paragraph{(4) 本論文の主題との対応.}
+本節で扱った分解は、「被覆率」という一つの量に対し、\textbf{何を固定し何を引き直したか}に
+よって不確実性の意味が変わることを示している。試行間 SE は較正集合に条件づけた不確実性、
+学習集合間 SD は学習集合を周辺化した不確実性、テスト集合成分はテスト集合という有限標本に
+条件づけた不確実性である。
+
+この構造は、本論文が主題とする\textbf{周辺被覆と条件付き被覆の区別と同型}である。
+等角予測が保証するのは $\Prob(Y\in C(X))\ge1-\alpha$ という周辺的な主張であり、
+$\Prob(Y\in C(X)\mid X=x)\ge1-\alpha$ という条件付きの主張ではない。
+\ref{sec:x-conditional}節で述べたとおり、後者は分布に仮定を置かない限り原理的に
+達成できない。
+
+測る側の不確実性においても、測られる側の保証においても、問うべきは同じである――
+\textbf{それは何に条件づけられた主張なのか.} この問いは \ref{sec:e3}節で、条件付き被覆の
+破綻という形で再び現れる。
 
 \subsubsection{層別被覆とサイズ層別被覆}
-%% TODO: 特徴量層別被覆、サイズ層別被覆(SSC)。
-%%       SSC は区間幅が定数だと層が1つに潰れる（絶対残差スコアが該当）。
+%% 実装: src/conformal/metrics.py の feature_stratified_coverage, size_stratified_coverage。
+%% 仕様書: specs/E3_conditional_coverage.md「層別のビン境界」「報告義務」。
+
+周辺被覆率 \eqref{eq:coverage-rate} はテスト集合全体の平均であり、部分集団ごとの被覆は
+見えない。\ref{sec:x-conditional}節の条件付き被覆を診断するため、次の $2$ つの層別指標を用いる。
+
+\textbf{特徴量による層別被覆}\quad 特徴量の $1$ 成分（本論文では $X_1$）について境界
+$b_0<b_1<\cdots<b_B$ を定め、テスト点を層 $g\in\{1,\dots,B\}$（$b_{g-1}\le X_{1j}<b_g$）に
+分ける。層 $g$ の被覆率を
+\begin{equation}
+  \label{eq:stratified-coverage}
+  \widehat{\mathrm{Cov}}_g:=\frac{1}{m_g}\sum_{j:\,b_{g-1}\le X_{1j}<b_g}\Ind\bigl\{Y_j\in C(X_j)\bigr\},
+  \qquad m_g:=\#\{\,j: b_{g-1}\le X_{1j}<b_g\,\}
+\end{equation}
+と定める。境界は、テスト集合の経験分位点から等頻度に切ることも、分布が既知なら固定の値を
+与えることもできる（E3 では後者。\ref{sec:exp-setup}節）。層別被覆の割れ（最大と最小の差）と
+最悪層の被覆率を報告する。
+
+\textbf{サイズ層別被覆（SSC）}\quad テスト点を予測区間の幅 $|C(X_j)|$ の経験分位点で
+$B$ 個の等頻度の層に分け、各層の被覆率を \eqref{eq:stratified-coverage} と同様に求める。
+その最小値
+\begin{equation}
+  \label{eq:ssc}
+  \widehat{\mathrm{Cov}}^{\mathrm{SSC}}_{\min}:=\min_{g}\widehat{\mathrm{Cov}}_g
+\end{equation}
+を報告する。区間の幅が全点で等しい場合（絶対残差スコアの \eqref{eq:interval}）は幅による
+層分けができないので、実装は全点を $1$ つの層として扱い、値は周辺被覆率に一致する。
+本論文の表ではこの場合を「---」で示す。
+
+これらの層別指標は、命題~\ref{prop:x-conditional-group} の層ごとの較正とは異なり、
+周辺較正した区間を層ごとに評価する\textbf{診断量}である。層別の標準誤差は
+\eqref{eq:se-composite} を層ごとに適用する（$m$ を層内の点数 $m_g$ にする）。
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - SSC が定数幅で 1 層に潰れる理由：定数幅の手法にはサイズ層別という概念がない
+%%    （欠陥ではない。E3 仕様書「報告義務」）
+%%  - 5.1.2 の実例\encircle{1}〜\encircle{4}の解釈と (4) は著者の下書きどおり本文に入れてある。追記があればここへ
+%% 参照候補：\ref{prop:x-conditional-group}, \ref{def:x-conditional}, \ref{rem:x-conditional-three}
+%% =============================
 
 \subsection{実験設定}
 \label{sec:exp-setup}
-%% TODO: データ生成過程、下敷きモデル、試行回数、乱数シード。
-%%       仕様は specs/ の各実験仕様書に対応。
+%% 仕様書: specs/E1_coverage.md, E1b_detection_levels.md, E2_model_agnostic.md,
+%% E3_conditional_coverage.md の「データ生成過程」「手続き」「規模のパラメータ」「モデルの設定」。
+%% 実装: src/conformal/datasets.py（DGP）、experiments/*.py。環境は docs/環境.txt。
+
+\paragraph{データ生成過程.}
+入力は $X=(X_1,\dots,X_5)\sim\mathrm{Uniform}(0,1)^5$ とし、$2$ つの生成過程を用いる。
+\begin{align}
+  \text{等分散：}&\quad Y=X_1+\sin(2\pi X_2)+\varepsilon,\qquad \varepsilon\sim N(0,\,0.5^2), \label{eq:dgp-homo}\\
+  \text{不均一分散：}&\quad Y=X_1+\sin(2\pi X_2)+\sigma(X_1)\,\varepsilon,\qquad
+  \sigma(x)=0.1+1.0\,x,\quad \varepsilon\sim N(0,1). \label{eq:dgp-hetero}
+\end{align}
+\eqref{eq:dgp-homo} は E1・E1b・E2 で、\eqref{eq:dgp-hetero} は E3 で用いる。
+\eqref{eq:dgp-hetero} では $X_1$ が大きいほど誤差の散らばりが大きく、$\sigma$ は $X_1$ の
+端点で $0.1$ から $1.1$ まで $11$ 倍、$5$ 分位の各層の代表値（$X_1=0.1,0.3,0.5,0.7,0.9$）
+では $0.2/0.4/0.6/0.8/1.0$ と $5$ 倍になる。
+
+\paragraph{共通の手続き.}
+すべての実験で、\textbf{学習集合と学習済みモデルは全試行で固定し、試行ごとに引き直すのは
+較正集合だけ}である。テスト集合も $1$ つを全試行で共有する（\ref{sec:metrics}節のテスト集合間
+成分はこの設計から生じる）。較正集合とテスト集合は学習集合と独立に生成するので、
+仮定 (A1$'$)(A2) が成り立つ。複数の手法・モデルを比べる実験（E2・E3）では、
+\textbf{同じ較正集合を全手法で共有}し、手法間の差からサンプリング変動を除く。
+共形分位点は \eqref{eq:khat} のとおり $k=\lceil(n+1)(1-\alpha)\rceil$ 番目の順序統計量とし、
+$k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）。
+
+\paragraph{規模.}
+各実験の設定を表~\ref{tab:exp-setup} にまとめる。
+
+\begin{table}[htbp]
+  \centering
+  \caption{各実験の設定。$R$ は試行数（較正集合の引き直し回数）。}
+  \label{tab:exp-setup}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lllllll}
+    \toprule
+    実験 & 生成過程 & 学習 & 較正 $n$ & $\alpha$ & $R$ & テスト \\
+    \midrule
+    E1（\ref{sec:e1}節） & \eqref{eq:dgp-homo} & 500 & 20--2000（5 通り） & 0.05, 0.10, 0.20 & 1000 & 100,000 \\
+    E1b（\ref{sec:e1b}節） & \eqref{eq:dgp-homo} & 500 & 1000 & 0.10 & 2000 & 4,000,000 / 2,000 \\
+    E2（\ref{sec:e2}節） & \eqref{eq:dgp-homo} & 500 & 500 & 0.10 & 1000（+5 rep$\times$200） & 200,000 \\
+    E3（\ref{sec:e3}節） & \eqref{eq:dgp-hetero} & 2,000 & 1000 & 0.10 & 500 & 200,000 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{下敷きモデル.}
+E1・E1b はリッジ回帰（正則化係数 $1.0$）を用いる。E2 は次の $5$ つを比べる：
+定数予測器（学習集合の $Y$ の平均を常に返す）、リッジ回帰（E1 と同一）、
+ランダムフォレスト（木の数 $200$）、勾配ブースティング（scikit-learn の既定値：木の数 $100$、
+深さ $3$、学習率 $0.1$）、ニューラルネット（隠れ層 $64\times64$、反復上限 $2000$）。
+E3 はすべて勾配ブースティング（既定値）で、(a) 絶対残差と (b) 正規化残差は\textbf{同じ}
+点予測器 $\fhat$ を共有し、(b) の $\hat\sigma$ は \eqref{eq:sigma-hat} のとおり
+$K=5$ の out-of-fold 残差の絶対値を回帰し、下限 $\sigma_{\min}$ を out-of-fold 残差の
+$5\,\%$ 分位点とする。(c) CQR は \eqref{eq:cqr-pair} のとおり水準 $0.05$ と $0.95$ の
+分位点回帰（勾配ブースティングの pinball 損失）を別々に学習する。$3$ 手法とも同じ学習集合
+全体を使う。E3 の層別の境界は $X_1$ の真の $5$ 分位 $0.2/0.4/0.6/0.8$ に固定する。
+
+\paragraph{乱数と再現性.}
+各実験スクリプトは $1$ つの seed から \texttt{numpy.random.default\_rng} を作り、
+モデルの内部乱数（ランダムフォレスト等の \texttt{random\_state}、out-of-fold の分割）も
+そこから決定的に導出する。同じ seed で $2$ 回実行すると結果の csv はバイト単位で一致する。
+図は csv から作り、実験を回し直さずに再生成できる。環境は Python 3.11、numpy 1.26.4、
+scipy 1.17.1、scikit-learn 1.3.0、pandas 1.5.3、matplotlib 3.7.1 である（付録に再現手順を置く）。
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - 勾配ブースティングの既定ハイパーパラメータを選んだ理由（チューニングの巧拙が結論に
+%%    混ざるのを避ける。E3 仕様書「モデルの設定」）
+%%  - E3 の層の境界を真の分位点に固定した理由と、その限界（実データでは経験分位点で切るため
+%%    境界自体が揺れる。第6章・今後の課題に接続。E3 仕様書「層別のビン境界」）
+%%  - 学習集合を固定する設計の理由（E1 との接続、幅の比較でモデルの差と学習の運を分離。
+%%    E2 仕様書「手続き」）
+%% 参照候補：\ref{rem:assumptions}, \ref{rem:general-score}, \ref{eq:sigma-hat}, \ref{eq:cqr-pair}
+%% =============================
 
 \subsection{E1：有限標本被覆保証の検証}
 \label{sec:e1}
-%% TODO: 上下界に入ること。被覆率の分布がBeta分布と一致すること。
-%%       図: fig_e1_coverage_beta_alpha10.pdf, fig_e1_bounds.pdf
+%% 仕様書: specs/E1_coverage.md。実装: experiments/e1_coverage.py（試行）、
+%% experiments/e1_reeval_large_test.py（再評価）、experiments/make_figures.py（図）。
+%% 数値: results/e1_summary.csv, results/e1_reeval_large_test.csv。
+
+\paragraph{目的.}
+分割等角予測の被覆確率が系~\ref{cor:upper} の上下界 \eqref{eq:two-sided} に入ること、
+および学習用データを固定したときの被覆率が定理~\ref{thm:cond-coverage-beta} の
+$\mathrm{Beta}(k,\,n+1-k)$ に従うことを確かめる。
+
+\paragraph{手続き.}
+\eqref{eq:dgp-homo} の学習集合 $500$ 点でリッジ回帰を学習し、固定する。テスト集合
+$100{,}000$ 点の絶対残差を先に計算しておく。$n\in\{20,50,100,500,2000\}$、
+$\alpha\in\{0.05,0.10,0.20\}$ の各組について、較正集合 $n$ 点を $R=1000$ 回引き直し、
+毎回 \eqref{eq:khat} の $\qhat$ を求めて被覆率 \eqref{eq:coverage-rate} と区間幅 $2\qhat$ を
+記録する。
+
+\paragraph{観測しているもの.}
+記録する被覆率は、定理~\ref{thm:cond-coverage-beta} の被覆率 $\mathrm{Cov}=F_{\Dtr}(\qhat)$
+そのものではなく、固定した $100{,}000$ 点のテスト集合による推定値
+\eqref{eq:coverage-rate} である。また学習用データ $d$ を $1$ つ固定しているので、検証して
+いるのは定理~\ref{thm:cond-coverage-beta} の証明のうち $d$ で条件付けた段階の主張
+（$d$ を固定しても $\mathrm{Cov}\sim\mathrm{Beta}(k,n+1-k)$）であり、$d$ の引き直しは含まない。
+テスト集合による推定誤差の標準偏差は $\sqrt{p(1-p)/N}$（$p=k/(n+1)$、$N=100{,}000$）で、
+$\mathrm{Beta}(k,n+1-k)$ の標準偏差 $\sqrt{k(n+1-k)/((n+1)^2(n+2))}$ との比は
+$p$ を期待値 $k/(n+1)$ で置くと厳密に $\sqrt{(n+2)/N}$ になる（$n=20$ で $0.015$、
+$n=500$ で $0.071$、$n=2000$ で $0.141$）。テスト集合を固定しているので、この誤差は
+試行間で共通であり、被覆率のヒストグラム全体がわずかに横にずれる形で現れる
+（\ref{sec:metrics}節のテスト集合間成分）。
+
+\paragraph{結果.}
+表~\ref{tab:e1-summary} に $15$ セルの結果を示す。平均被覆率は $15$ セルすべてで
+上下界 $[\,1-\alpha,\ 1-\alpha+1/(n+1)\,]$ に入る（図~\ref{fig:e1-bounds}）。
+被覆率の経験分布と理論 $\mathrm{Beta}(k,n+1-k)$ の密度を図~\ref{fig:e1-beta} に示す。
+KS 検定の $p$ 値は $13$ セルで $0.12$ 以上、$n=2000$ の $\alpha=0.05$（$p=0.00017$）と
+$\alpha=0.10$（$p=0.00096$）の $2$ セルで $0.01$ を下回った。
+
+\paragraph{再評価.}
+上の $2$ セルについて、同じ試行（同じ $\qhat$）を、E1 のテスト集合とは別の seed で作った
+$4{,}000{,}000$ 点の独立なテスト集合で測り直した（推定誤差の比は $n=2000$ で $0.022$）。
+測り直しの前に、E1 と同じ seed で学習集合とテスト集合を再生成し、記録された被覆率が
+最大差 $0$ で再現できることを確かめた。再評価後の KS $p$ 値を表~\ref{tab:e1-summary} の
+最終列に示す。$n=2000$ の $2$ セルは $p=0.532$、$0.289$ となり、$15$ セルすべてで
+$p\ge0.165$ である。経験標準偏差と理論標準偏差の比は、元の評価でも $0.98$〜$1.03$、
+再評価でも $0.98$〜$1.03$ である。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E1 の結果（$R=1000$）。$\mathrm{se}_{\mathrm{trial}}$ は試行間の標準偏差$/\sqrt{R}$、
+    $\mathrm{se}_{\mathrm{test}}$ は固定テスト集合 $1$ つ分の $\sqrt{p(1-p)/N}$（$N=100{,}000$）。
+    KS $p$ 値は被覆率の経験分布と $\mathrm{Beta}(k,\,n+1-k)$ の適合度。最終列は
+    $4{,}000{,}000$ 点の独立なテスト集合で測り直した値。
+    出典：\texttt{results/e1\_summary.csv}, \texttt{results/e1\_reeval\_large\_test.csv}}
+  \label{tab:e1-summary}
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{rrrrrrrrrrr}
+    \toprule
+    $n$ & $\alpha$ & $k$ & $n{+}1{-}k$ & $1-\alpha$ & 平均被覆率 & 上界 & $\mathrm{se}_{\mathrm{trial}}$ & $\mathrm{se}_{\mathrm{test}}$ & KS $p$ & KS $p$（再） \\
+    \midrule
+    20 & 0.05 & 20 & 1 & 0.9500 & 0.95194 & 0.99762 & 0.001480 & 0.000676 & 0.875 & 0.673 \\
+    20 & 0.10 & 19 & 2 & 0.9000 & 0.90292 & 0.94762 & 0.001947 & 0.000936 & 0.248 & 0.319 \\
+    20 & 0.20 & 17 & 4 & 0.8000 & 0.80866 & 0.84762 & 0.002586 & 0.001244 & 0.752 & 0.855 \\
+    50 & 0.05 & 49 & 2 & 0.9500 & 0.96097 & 0.96961 & 0.000869 & 0.000612 & 0.715 & 0.943 \\
+    50 & 0.10 & 46 & 5 & 0.9000 & 0.90220 & 0.91961 & 0.001314 & 0.000939 & 0.402 & 0.559 \\
+    50 & 0.20 & 41 & 10 & 0.8000 & 0.80234 & 0.81961 & 0.001725 & 0.001259 & 0.304 & 0.464 \\
+    100 & 0.05 & 96 & 5 & 0.9500 & 0.95075 & 0.95990 & 0.000682 & 0.000684 & 0.761 & 0.681 \\
+    100 & 0.10 & 91 & 10 & 0.9000 & 0.90103 & 0.90990 & 0.000938 & 0.000944 & 0.570 & 0.379 \\
+    100 & 0.20 & 81 & 20 & 0.8000 & 0.80252 & 0.80990 & 0.001273 & 0.001259 & 0.547 & 0.312 \\
+    500 & 0.05 & 476 & 25 & 0.9500 & 0.95038 & 0.95200 & 0.000309 & 0.000687 & 0.330 & 0.759 \\
+    500 & 0.10 & 451 & 50 & 0.9000 & 0.89962 & 0.90200 & 0.000428 & 0.000950 & 0.124 & 0.922 \\
+    500 & 0.20 & 401 & 100 & 0.8000 & 0.79980 & 0.80200 & 0.000560 & 0.001265 & 0.499 & 0.987 \\
+    2000 & 0.05 & 1901 & 100 & 0.9500 & 0.95056 & 0.95050 & 0.000155 & 0.000686 & 0.00017 & 0.532 \\
+    2000 & 0.10 & 1801 & 200 & 0.9000 & 0.89941 & 0.90050 & 0.000209 & 0.000951 & 0.00096 & 0.289 \\
+    2000 & 0.20 & 1601 & 400 & 0.8000 & 0.80003 & 0.80050 & 0.000278 & 0.001265 & 0.815 & 0.165 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/fig_e1_coverage_beta_alpha10.pdf}
+  \caption{E1：被覆率の経験分布（ヒストグラム）と理論 $\mathrm{Beta}(k,\,n+1-k)$ の密度
+    （$\alpha=0.10$、$R=1000$、テスト集合 $100{,}000$ 点）。破線は名目値 $1-\alpha$。
+    $\alpha=0.05,\,0.20$ の図は \texttt{figures/fig\_e1\_coverage\_beta\_alpha05.pdf}、\texttt{alpha20.pdf}。}
+  \label{fig:e1-beta}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/fig_e1_bounds.pdf}
+  \caption{E1：平均被覆率（$R=1000$）と理論の上下界 $[\,1-\alpha,\ 1-\alpha+1/(n+1)\,]$。}
+  \label{fig:e1-bounds}
+\end{figure}
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - n=2000 の 2 セルの KS 棄却の位置づけ：実装の誤りではなく、固定テスト集合による
+%%    共通のずれ（0.14 SD）が R=1000 の KS で検出できる大きさだったこと。再評価で
+%%    通ったことがその根拠（E1 仕様書「実行結果」「再評価」）
+%%  - 「理論と合わない」ときに実装のバグか推定の分散かを切り分ける方法
+%%    （テスト集合サイズを変える、in_bounds は鈍感、tests/ が通っているか。E1 仕様書「既知の注意点」）
+%%  - 上下界の幅 1/(n+1) と試行ごとの被覆率のばらつき（Beta の SD）の関係。
+%%    (n+1)α が整数のときの超過 0（命題 prop:excess。n=19, 99 は格子に無いので触れるなら注記）
+%%  - 検証しているのは d を固定した段階の主張であること（d の引き直しは含まない）
+%% 参照候補：\ref{thm:coverage}, \ref{cor:upper}, \ref{eq:two-sided}, \ref{prop:excess},
+%%   \ref{thm:cond-coverage-beta}, \ref{cor:cond-coverage-moments}, \ref{rem:cond-coverage-assumptions},
+%%   \ref{def:cond-coverage}, \ref{eq:coverage-rate}
+%% =============================
 
 \subsection{E1b：検証の水準と誤りの検出力}
 \label{sec:e1b}
-%% TODO: 平均で捉えられる誤り（off-by-one）と、分布でしか捉えられない誤り
-%%       （分散のずれ）の切り分け。
+%% 仕様書: specs/E1b_detection_levels.md。実装: experiments/e1b_detection_levels.py。
+%% 数値: results/e1b_detection_levels.csv。図: figures/fig_e1b_ecdf.pdf。
+
+\paragraph{目的.}
+被覆保証の検証には水準がある：L0 点推定を眺める、L1 下界 $1-\alpha$ を満たすか、
+L2 上界 $1-\alpha+1/(n+1)$ も満たすか、L3 被覆率の分布が $\mathrm{Beta}(k,n+1-k)$ と
+一致するか。どの水準がどの誤りを検出できるかを実演する。
+
+\paragraph{手続き.}
+$n=1000$、$\alpha=0.10$、$R=2000$ とし（$k=901$、理論分布 $\mathrm{Beta}(901,100)$、
+平均 $0.90010$、標準偏差 $0.00947$、上下界 $[0.90000,\,0.90100]$）、次の $3$ ケースを
+同じ較正集合で比べる。
+\begin{enumerate}
+  \item[(A)] \textbf{正しい実装}：$k=\lceil(n+1)(1-\alpha)\rceil$。
+  \item[(B)] \textbf{誤実装}：$k=\lceil n(1-\alpha)\rceil$（$n+1$ を $n$ にする、最も典型的な誤り）。
+  \item[(C)] \textbf{テスト集合が小さい}：実装は (A) と同じだが、被覆率を $2{,}000$ 点の
+    テスト集合で推定する。
+\end{enumerate}
+(A)(B) の被覆率は $4{,}000{,}000$ 点のテスト集合で評価する（表~\ref{tab:exp-setup}）。
+
+\paragraph{結果.}
+表~\ref{tab:e1b-cases} に $3$ ケースの平均・標準偏差・理論との比較を示した。
+図~\ref{fig:e1b-ecdf} は $3$ ケースの被覆率の経験分布関数と理論の分布関数である。
+\begin{itemize}
+  \item (A) は L1・L2・L3 のすべてを通る（平均 $0.90025$、$z=+0.72$、KS $p=0.911$）。
+  \item (B) は平均 $0.89927$ で下界を下回り（L1 で検出）、$z=-3.94$、KS $p=1.28\times10^{-4}$
+    （L3 でも検出）。(A) との平均の差は $0.001$ である。
+  \item (C) は平均 $0.90038$ で L1・L2 を通る（$z=+1.33$）が、標準偏差が理論の $1.203$ 倍で、
+    KS $p=1.53\times10^{-8}$（L3 でのみ検出）。
+\end{itemize}
+上下界の幅は $0.00100$、試行ごとの被覆率の標準偏差は $0.00947$ である。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{../figures/fig_e1b_ecdf.pdf}
+  \caption{E1b：$3$ ケースの被覆率の経験分布関数（階段）と理論 $\mathrm{Beta}(901,100)$ の
+    分布関数（太線）。縦線は下界 $1-\alpha$ と上界 $1-\alpha+1/(n+1)$。
+    出典：\texttt{results/e1b\_detection\_levels.csv}}
+  \label{fig:e1b-ecdf}
+\end{figure}
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - 位置のずれは平均が、形のずれは分布が捕まえる。両方を見て初めて検証したと言える
+%%  - off-by-one は被覆率を 0.001 しか動かさない（L0 では気づけない）が、位置のずれなので
+%%    平均の検定でも分布の検定でも検出できる
+%%  - 帯の幅 0.001 に対し試行ごとの SD 0.00947（約 10 倍）。1 回の実験では上下界を確かめられず、
+%%    多数回の平均で初めて挟める
+%%  - (C) の SD 比 1.203 と、加法性からの予測 1.225 の一致（5.1.2 の実例\encircle{2}に既述）
+%%  - 平均を保ったまま分散だけを変える誤り（較正集合の使い回し、標本間の相関）を L3 が捕まえる。
+%%    生成 AI が書いたコードを信用する根拠として L3 まで見ていること
+%%  - 外部実装（MAPIE）との照合は本文に入れず、付録の検証の節で扱う
+%%    （specs/E1b_detection_levels.md 末尾「付録に入れる候補」）
+%% 参照候補：\ref{eq:khat}, \ref{rem:quantile-types}, \ref{thm:cond-coverage-beta}, \ref{prop:excess}
+%% =============================
 
 \subsection{E2：下敷きモデルへの非依存性}
 \label{sec:e2}
-%% TODO: 被覆率は不変、区間幅は変わる。この対比自体が結論。
+%% 仕様書: specs/E2_model_agnostic.md。実装: experiments/e2_model_agnostic.py。
+%% 数値: results/e2_summary.csv, e2_robustness.csv, e2_tiers.csv, e2_tier_pairs.csv。
+%% 図: figures/fig_e2_model_agnostic.pdf, fig_e2_tier1_zoom.pdf。
+
+\paragraph{目的.}
+被覆率は下敷きモデルによらず一定であり、区間の幅だけがモデルの精度に応じて変わることを示す。
+
+\paragraph{手続き.}
+\eqref{eq:dgp-homo} の学習集合 $500$ 点を $1$ 回だけ生成し、\ref{sec:exp-setup}節の
+$5$ モデルすべてを同じ学習集合で学習して固定する。テスト集合 $200{,}000$ 点の絶対残差を
+モデルごとに計算しておく。$R=1000$ 回、較正集合 $500$ 点を引き直し（$5$ モデルで共有）、
+各モデルの被覆率と幅 $2\qhat$ を記録する（$\alpha=0.10$、$k=451$、上下界
+$[0.9000,\,0.9020]$）。主分析の後、学習集合と内部乱数を $5$ 通り（rep $0$〜$4$）に振り、
+各 $200$ 試行で幅の順位が学習集合によらないかを確かめる。
+
+\paragraph{結果.}
+表~\ref{tab:e2-summary} と図~\ref{fig:e2-main} に主分析の結果を示す。
+仕様書の判定基準 C1〜C4 の値は次のとおりである。
+\begin{itemize}
+  \item \textbf{C1（被覆はモデルによらない）}：$5$ モデルの平均被覆率はすべて上下界
+    $[0.9000,\,0.9020]$ に入り、モデル間の最大差は $0.00091$ で、上下界の幅 $1/501=0.0020$
+    より小さい。
+  \item \textbf{C2（幅は精度に依存する）}：テスト集合の RMSE の順位と平均幅の順位の
+    Spearman 順位相関は $1.0$。絶対残差の $0.90$ 分位点との順位相関も $1.0$。
+  \item \textbf{C3（定数予測器でも被覆する）}：定数予測器の平均被覆率は $0.90046$ で
+    $1-\alpha$ 以上。
+  \item \textbf{C4（学習集合を超えて言えるか）}：$5$ 通りの学習集合で幅の順位は一致
+    \textbf{しなかった}（表~\ref{tab:e2-robustness}）。定数予測器（常に $5$ 位）と
+    リッジ回帰（常に $4$ 位）の順位は固定だが、勾配ブースティング・ニューラルネット・
+    ランダムフォレストの $3$ つは $1$〜$3$ 位を入れ替わる。
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E2 の主分析（学習集合 $1$ つに条件づけた結果、$R=1000$、$\alpha=0.10$、$n=500$）。
+    被覆率の SE は試行間とテスト集合間（$N=200{,}000$）の $2$ 成分の合成
+    \eqref{eq:se-composite}、幅の SE は試行間のみ。RMSE と $0.90$ 分位点は
+    テスト集合での絶対残差のもの。出典：\texttt{results/e2\_summary.csv}}
+  \label{tab:e2-summary}
+  \small
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    モデル & 平均被覆率 & SE & 平均幅 & 幅の SE & RMSE & 残差の $0.90$ 分位点 \\
+    \midrule
+    定数予測器 & 0.90046 & 0.000798 & 2.9608 & 0.00308 & 0.9134 & 1.4762 \\
+    リッジ回帰 & 0.90137 & 0.000789 & 2.2048 & 0.00260 & 0.6683 & 1.0961 \\
+    ランダムフォレスト & 0.90046 & 0.000795 & 1.7869 & 0.00227 & 0.5410 & 0.8902 \\
+    勾配ブースティング & 0.90070 & 0.000789 & 1.7736 & 0.00220 & 0.5375 & 0.8832 \\
+    ニューラルネット & 0.90108 & 0.000788 & 1.8493 & 0.00235 & 0.5616 & 0.9198 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E2 の頑健性確認：学習集合を $5$ 通りに振ったときの平均幅（各 $200$ 試行）と
+    幅の順位（括弧内、$1$ が最も狭い）。出典：\texttt{results/e2\_robustness.csv}}
+  \label{tab:e2-robustness}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    rep & 定数予測器 & リッジ回帰 & ランダムフォレスト & 勾配ブースティング & ニューラルネット \\
+    \midrule
+    0 & 2.9567（5） & 2.2086（4） & 1.7716（2） & 1.7606（1） & 1.8107（3） \\
+    1 & 2.9566（5） & 2.2058（4） & 1.7841（3） & 1.7680（2） & 1.7305（1） \\
+    2 & 2.9763（5） & 2.1989（4） & 1.7959（2） & 1.7965（3） & 1.7428（1） \\
+    3 & 2.9684（5） & 2.2082（4） & 1.8165（2） & 1.8071（1） & 1.9144（3） \\
+    4 & 2.9738（5） & 2.2106（4） & 1.8363（3） & 1.8129（2） & 1.7947（1） \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+C4 が一致しなかったので、仕様書のとおり層構造として報告する（表~\ref{tab:e2-tiers}）。
+モデルごとに rep 間の平均と標準偏差を求め、$10$ ペアすべてについて rep を対とする
+対応あり $t$ 検定（自由度 $4$）を行い、Bonferroni 補正した有意水準 $0.05/10=0.005$ で
+判定した。定数予測器・リッジ回帰を含む $7$ ペアは区別でき、勾配ブースティング・
+ニューラルネット・ランダムフォレストの間の $3$ ペア（$p=0.040$、$0.94$、$0.77$）は
+区別できない。したがって幅は $3$ つの層に分かれる：第 $1$ 層 \{勾配ブースティング、
+ニューラルネット、ランダムフォレスト\}、第 $2$ 層 \{リッジ回帰\}、第 $3$ 層 \{定数予測器\}。
+第 $1$ 層の拡大図を図~\ref{fig:e2-zoom} に示す。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E2 の層構造。rep 間（学習集合間）の平均幅・標準偏差、$t(4)$ による $95\,\%$ 区間、
+    $5$ 通りの rep での順位の範囲。下段は対応あり $t$ 検定（自由度 $4$、Bonferroni 補正後の
+    有意水準 $0.005$）。出典：\texttt{results/e2\_tiers.csv}, \texttt{results/e2\_tier\_pairs.csv}}
+  \label{tab:e2-tiers}
+  \small
+  \begin{tabular}{llrrlc}
+    \toprule
+    層 & モデル & rep 間平均幅 & rep 間 SD & $95\,\%$ 区間 & 順位の範囲 \\
+    \midrule
+    1 & 勾配ブースティング & 1.7890 & 0.02347 & [1.7598, 1.8181] & 1--3 \\
+    1 & ニューラルネット & 1.7986 & 0.07303 & [1.7079, 1.8893] & 1--3 \\
+    1 & ランダムフォレスト & 1.8009 & 0.02583 & [1.7688, 1.8329] & 2--3 \\
+    2 & リッジ回帰 & 2.2064 & 0.00454 & [2.2008, 2.2120] & 4--4 \\
+    3 & 定数予測器 & 2.9664 & 0.00934 & [2.9548, 2.9780] & 5--5 \\
+    \bottomrule
+  \end{tabular}
+
+  \medskip
+  \begin{tabular}{lrrrc}
+    \toprule
+    ペア & 幅の差の平均 & $t$ & $p$ 値 & 区別できる \\
+    \midrule
+    定数予測器 -- リッジ回帰 & 0.7600 & 145.9 & 1.3e-08 & ○ \\
+    定数予測器 -- ランダムフォレスト & 1.1655 & 129.2 & 2.2e-08 & ○ \\
+    定数予測器 -- 勾配ブースティング & 1.1774 & 165.6 & 8e-09 & ○ \\
+    定数予測器 -- ニューラルネット & 1.1678 & 35.8 & 3.6e-06 & ○ \\
+    リッジ回帰 -- ランダムフォレスト & 0.4055 & 36.8 & 3.3e-06 & ○ \\
+    リッジ回帰 -- 勾配ブースティング & 0.4174 & 39.5 & 2.5e-06 & ○ \\
+    リッジ回帰 -- ニューラルネット & 0.4078 & 12.9 & 0.00021 & ○ \\
+    ランダムフォレスト -- 勾配ブースティング & 0.0119 & 3.0 & 0.040 & × \\
+    ランダムフォレスト -- ニューラルネット & 0.0023 & 0.1 & 0.945 & × \\
+    勾配ブースティング -- ニューラルネット & -0.0096 & -0.3 & 0.766 & × \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{../figures/fig_e2_model_agnostic.pdf}
+  \caption{E2：$5$ つの下敷きモデルの平均被覆率（上段）と平均区間幅（下段）。
+    上段の誤差棒は試行間とテスト集合間の $2$ 成分を合成した $95\,\%$ 区間、破線は名目値
+    $1-\alpha$、実線は上界 $1-\alpha+1/(n+1)$。出典：\texttt{results/e2\_summary.csv},
+    \texttt{results/e2\_robustness.csv}}
+  \label{fig:e2-main}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\linewidth]{../figures/fig_e2_tier1_zoom.pdf}
+  \caption{E2：第 $1$ 層（勾配ブースティング・ニューラルネット・ランダムフォレスト）の
+    平均幅の拡大図。誤差棒は rep 間（学習集合間）の $t(4)$ による $95\,\%$ 区間。
+    出典：\texttt{results/e2\_tiers.csv}}
+  \label{fig:e2-zoom}
+\end{figure}
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - 上段が平ら、下段が階段状。この対比自体が結論（被覆は不変、幅は変わる）
+%%  - 保証は「正しさ」であって「有用性」ではない。定数予測器は被覆 0.90 を満たすが幅は使い物にならない
+%%  - モデル選択は被覆の妥当性に影響せず、区間の情報量にのみ効く。予測モデルの改善努力は
+%%    区間の妥当性ではなく狭さに効く
+%%  - C2（試行間 SE で分離）と C4（学習集合間で分離）は別の問いに答えている。試行間 SE は
+%%    「この学習集合のもとで」の主張にとどまる。これは周辺／条件付きの区別と同じ構造
+%%    （5.1.2 の実例\encircle{3}に既述）
+%%  - 層構造の報告は C4 が通るより情報量が多い（実験の分解能が分かる）
+%%  - 定数予測器のテスト（tests/test_coverage_theory.py）はリーク検出の単体テスト、E2 は
+%%    第5章に載せる実験結果。役割が違う
+%% 参照候補：\ref{thm:coverage}, \ref{rem:assumptions}（A に条件を課さない）,
+%%   \ref{rem:upper-meaning}（3：幅は保証しない）, \ref{prop:excess}（C1 の基準 1/(n+1)）, \ref{rem:marginal}
+%% =============================
 
 \subsection{E3：異分散データと条件付き被覆の破綻}
 \label{sec:e3}
-%% TODO: ★本論文の見せ場。周辺被覆は保たれるが層別被覆が割れること。
-%%       CQRによる改善。
+%% 仕様書: specs/E3_conditional_coverage.md。実装: experiments/e3_conditional.py、
+%% experiments/e3_empty_interval_check.py（空区間の確認）。
+%% 数値: results/e3_summary.csv, e3_marginal.csv, e3_empty_interval_check.csv。
+%% 図: figures/fig_e3_band.pdf, fig_e3_stratified.pdf。
+
+\paragraph{目的.}
+周辺被覆が $1-\alpha$ を満たしていても、部分集団ごとの被覆は割れうる
+（例~\ref{ex:x-conditional-hetero}）。不均一分散のデータ \eqref{eq:dgp-hetero} で、
+(a) 絶対残差 \eqref{eq:score}、(b) 正規化残差 \eqref{eq:score-normalized}、
+(c) CQR \eqref{eq:cqr-score} の周辺被覆と $X_1$ による層別被覆を測り、
+(b)(c) が割れをどこまで縮めるかを比べる。
+
+\paragraph{手続き.}
+学習集合 $2{,}000$ 点で \ref{sec:exp-setup}節の下敷きモデル（(a)(b) は同じ $\fhat$、
+(b) の $\hat\sigma$、(c) の $2$ 本の分位点回帰）を学習し、固定する。テスト集合
+$200{,}000$ 点を全試行で共有し、$X_1$ の固定境界 $0.2/0.4/0.6/0.8$ で $5$ 層に分ける
+（各層約 $40{,}000$ 点）。$R=500$ 回、較正集合 $1{,}000$ 点を引き直し（$3$ 手法で共有）、
+各手法の $\qhat$、周辺被覆率、層別被覆率 \eqref{eq:stratified-coverage}、平均幅、
+SSC \eqref{eq:ssc} を記録する（$\alpha=0.10$、$k=901$、上下界 $[0.90000,\,0.90100]$）。
+
+\paragraph{結果：周辺被覆.}
+表~\ref{tab:e3-marginal} に周辺量を示す。$3$ 手法の平均周辺被覆率は $0.90052$、
+$0.90054$、$0.90122$ で、いずれも上下界に $\pm2\,\mathrm{SE}$ の許容で入る（C1）。
+平均幅は絶対残差 $2.310$、正規化残差 $2.122$、CQR $2.038$ である。
+
+\paragraph{結果：層別被覆.}
+表~\ref{tab:e3-stratified} と図~\ref{fig:e3-stratified} に層別被覆率と層別の平均幅を示す。
+\begin{itemize}
+  \item \textbf{C2}：絶対残差の層別被覆は $0.9991/0.9903/0.9378/0.8413/0.7335$ と割れ、
+    最大と最小の差（gap）は $0.2656$、最悪層（$X_1\in[0.8,1)$）の被覆率は $0.7335$ である。
+  \item \textbf{C3}：gap は正規化残差 $0.0449$（絶対残差の $17\,\%$）、CQR $0.0740$（同 $28\,\%$）
+    で、いずれも絶対残差の $1/2$ 以下。最悪層の被覆率は正規化残差 $0.8833$、CQR $0.8691$ で、
+    いずれも絶対残差より $1-\alpha$ に近い。どちらも平らにはならない。
+  \item \textbf{C4}：CQR の層別平均幅は $0.972/1.466/2.099/2.549/3.104$ と層番号とともに
+    単調に増え（Spearman 順位相関 $1.0$）、最上位層と最下位層の幅の比は $3.19$
+    （層の代表値での $\sigma$ の比は $5.0$）。正規化残差の比は $3.96$。絶対残差の幅は
+    全層で $2.310$（比 $1.0$）。
+\end{itemize}
+図~\ref{fig:e3-band} は trial $0$ の絶対残差と CQR の区間の形である。
+
+\paragraph{報告義務の $3$ 項目.}
+CQR の分位点の交差率はテスト集合で $0.0$（交差した点なし）、$\hat\sigma$ の下限クリップの
+発動率は $5\times10^{-5}$（テスト集合 $200{,}000$ 点中約 $10$ 点）、SSC の最悪層の被覆率は
+正規化残差 $0.8847$、CQR $0.8840$、絶対残差は幅が定数のため層が $1$ つに潰れる
+（表では「---」）。
+
+\paragraph{空区間.}
+CQR の $\qhat$ は $500$ 試行中 $2$ 試行で負（最小 $-0.00554$）であった。
+注意~\ref{rem:cqr-negative} の 2 により $\qhat<0$ では
+$\qhat_{\mathrm{hi}}(x)-\qhat_{\mathrm{lo}}(x)<-2\qhat$ となる $x$ で区間が空になりうるが、
+テスト集合 $200{,}000$ 点での $\min_x(\qhat_{\mathrm{hi}}(x)-\qhat_{\mathrm{lo}}(x))=0.1010$
+は $2|\min\qhat|=0.0111$ を上回り、空になった区間はない。
+
+\begin{table}[htbp]
+  \centering
+  \caption{E3 の周辺量（$R=500$、$\alpha=0.10$、$n=1000$、上下界 $[0.90000,\,0.90100]$）。
+    SE は試行間とテスト集合間（$N=200{,}000$）の $2$ 成分の合成 \eqref{eq:se-composite}。
+    $\qhat$ と SSC 最悪層は試行平均。出典：\texttt{results/e3\_marginal.csv}}
+  \label{tab:e3-marginal}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    手法 & 平均被覆率 & SE & 平均幅 & $\qhat$ & SSC 最悪層 \\
+    \midrule
+    絶対残差 & 0.90052 & 0.000806 & 2.3103 & 1.1552 & — \\
+    正規化残差 & 0.90054 & 0.000785 & 2.1221 & 2.1502 & 0.8847 \\
+    CQR & 0.90122 & 0.000793 & 2.0381 & 0.0643 & 0.8840 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E3 の層別被覆率（上段。括弧内は試行間とテスト集合間を合成した $1.96\,\mathrm{SE}$、
+    層内は各約 $40{,}000$ 点）と層別の平均幅（下段）。層は $X_1$ の固定境界 $0.2/0.4/0.6/0.8$。
+    出典：\texttt{results/e3\_summary.csv}}
+  \label{tab:e3-stratified}
+  \footnotesize
+  \setlength{\tabcolsep}{2.2pt}
+  \begin{tabular}{lrrrrrrr}
+    \toprule
+    手法 & 層 1 & 層 2 & 層 3 & 層 4 & 層 5 & gap & 最悪層 \\
+    \midrule
+    絶対残差 & 0.9991 (0.0003) & 0.9903 (0.0010) & 0.9378 (0.0025) & 0.8413 (0.0039) & 0.7335 (0.0047) & 0.2656 & 0.7335 \\
+    正規化残差 & 0.9283 (0.0026) & 0.8833 (0.0033) & 0.9078 (0.0029) & 0.8970 (0.0031) & 0.8864 (0.0032) & 0.0449 & 0.8833 \\
+    CQR & 0.9431 (0.0026) & 0.9066 (0.0030) & 0.9091 (0.0029) & 0.8784 (0.0033) & 0.8691 (0.0034) & 0.0740 & 0.8691 \\
+    \bottomrule
+  \end{tabular}
+
+  \medskip
+  \begin{tabular}{lrrrrrrr}
+    \toprule
+    手法 & 層 1 & 層 2 & 層 3 & 層 4 & 層 5 & 幅の比（層 5/層 1） & Spearman \\
+    \midrule
+    絶対残差 & 2.3103 & 2.3103 & 2.3103 & 2.3103 & 2.3103 & 1.0000 & — \\
+    正規化残差 & 0.8816 & 1.3616 & 2.1405 & 2.7365 & 3.4916 & 3.9607 & 1.0 \\
+    CQR & 0.9719 & 1.4659 & 2.0990 & 2.5492 & 3.1044 & 3.1940 & 1.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/fig_e3_band.pdf}
+  \caption{E3：trial $0$ の予測区間の形（左：絶対残差、右：CQR）。横軸は $X_1$、縦軸は
+    $Y$ から区間の中心を引いた値（中心は $X_2$ にも依存するため、そのままでは帯にならない）。
+    点は $2{,}000$ 点の無作為抽出。点が帯の内側にあることと $Y\in C(X)$ は同値なので、
+    はみ出す点の割合がそのまま非被覆率である。出典：\texttt{results/e3\_band\_trial0.csv}}
+  \label{fig:e3-band}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{../figures/fig_e3_stratified.pdf}
+  \caption{E3：$X_1$ で層別した被覆率（$3$ 手法 $\times$ $5$ 層）。破線は名目値 $1-\alpha$。
+    誤差棒は試行間とテスト集合間の $2$ 成分を合成した $95\,\%$ 区間。
+    出典：\texttt{results/e3\_summary.csv}}
+  \label{fig:e3-stratified}
+\end{figure}
+
+%% ===== 著者執筆（考察） =====
+%% 論点：
+%%  - 周辺被覆という保証は守られている。破綻しているのは「どの集団でも同じ精度で当たってほしい」
+%%    という期待の方
+%%  - 例 3.24（ex:x-conditional-hetero）との対応：n=1000, α=0.10 で k=901、周辺被覆の理論値
+%%    901/1001 ≈ 0.90010、1−α との差 1/10010。絶対残差の最悪層 0.7335 の落ち込みはこれより
+%%    桁違いに大きい
+%%  - 層別が平らにならない理由の取り違え：不可能性定理が禁じるのは各点 x での条件付け。
+%%    (a)(b)(c) が平らにならないのは単一の共形分位点で周辺較正しているから（(b)(c) の正規化が
+%%    不完全なぶん残る）。層ごとの較正なら層別被覆は保証できる（prop:x-conditional-group）。
+%%    E3 の層別被覆は診断量
+%%  - (a) と (b) が同じ f̂ を共有するので、差は σ̂ の有無だけに帰属する。モデルの優劣ではなく
+%%    スコアの設計が条件付き妥当性を左右する
+%%  - 手法の順位：周辺的な効率（幅）では CQR、条件付きの妥当性（gap・最悪層）では正規化残差。
+%%    理由：本 DGP は位置尺度族で正規化残差の特定が正しい（E|ε| の定数は q̂ が吸収）、
+%%    分位点の推定は平均の推定より非効率で裾が不安定
+%%  - 「CQR より正規化残差が優れている」と一般化してはならない。非対称誤差や位置尺度族から
+%%    外れる設定では順序が入れ替わると予想（限界として明記するか E3b で確かめる。
+%%    rem:normalized-limits の 2 が動機）
+%%  - 固定ビンは実データでは使えない（第6章・今後の課題）
+%%  - SSC が絶対残差で潰れるのは欠陥ではない
+%%  - 交差率 0、クリップ 5e-5、空区間なしの位置づけ（後処理は保証に影響しない：rem:general-score の 2）
+%% 参照候補：\ref{ex:x-conditional-hetero}, \ref{thm:x-conditional-impossible},
+%%   \ref{prop:x-conditional-group}, \ref{rem:x-conditional-ch4}, \ref{def:x-conditional},
+%%   \ref{prop:general-score}, \ref{rem:general-score}, \ref{rem:normalized-reduction},
+%%   \ref{rem:normalized-limits}, \ref{rem:cqr-crossing}, \ref{rem:cqr-oracle}, \ref{rem:cqr-negative}
+%% =============================
 
 \subsection{E4：交換可能性が破れる場合}
 %% TODO: 共変量シフト下で被覆が名目値を下回ること。重み付きによる部分的回復。
