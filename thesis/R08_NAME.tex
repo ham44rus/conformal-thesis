@@ -388,7 +388,112 @@ $k\le n$ のときは命題~\ref{prop:emp-quantile} より $\qhat=\hat Q_n(k/n)$
 \end{remark}
 
 \subsection{回帰モデルと分位点回帰}
-%% TODO: 第4章のCQRで使うので、ここで分位点回帰（Koenker--Bassett）を導入。
+\label{sec:quantile-regression}
+%% 仕様書: thesis/drafts/chapter2_spec.md「2.4 回帰モデルと分位点回帰」に対応する。
+%% 第4章の CQR（sec:cqr）が前提とする。第3章からは参照されない。
+%% 実装: src/conformal/adaptive.py の fit_quantile_pair（pinball 損失を最小化する
+%% 回帰法を model_factory で受け取る。どのモデルを使うかは第5章の実験設定）。
+
+第\ref{sec:split-theory}章の点予測器 $\fhat$ は、$Y\mid X=x$ の分布の「中心」を
+推定するものであれば何でもよい（例えば最小二乗法による条件付き期待値の推定）。
+第4章の CQR（\ref{sec:cqr}節）では、中心ではなく $Y\mid X=x$ の分布の
+\textbf{分位点}を推定する回帰が要る。本節では、そのための損失関数（pinball 損失）と、
+分位点がその期待値の最小化元であることを述べる。
+
+\begin{definition}[分位点・条件付き分位点]
+  \label{def:cond-quantile}
+  実数値確率変数 $Y$ の分布関数を $F(t):=\Prob(Y\le t)$ とする。$\tau\in(0,1)$ に対し
+  \begin{equation*}
+    Q(\tau):=\min\{\,t\in\Real: F(t)\ge\tau\,\}
+  \end{equation*}
+  を $Y$ の \textbf{$\tau$ 分位点}という。$F$ は右連続で
+  $\lim_{t\to-\infty}F(t)=0<\tau<1=\lim_{t\to\infty}F(t)$ なので、この集合は
+  空でない下に有界な区間 $[Q(\tau),\infty)$ であり、最小値が存在する。
+  定義~\ref{def:emp-quantile} の経験分位点は、経験分布関数 $\hat F_n$ に対する
+  この定義である。
+
+  組 $(X,Y)$ について、$X=x$ を与えたときの $Y$ の条件付き分布関数を
+  $F(t\mid x):=\Prob(Y\le t\mid X=x)$ と書き\footnote{実数値の $Y$ には正則条件付き
+  分布が常に存在するので、$F(\cdot\mid x)$ を各 $x$ で分布関数になるようにとれる。
+  本論文ではこれ以上立ち入らない。}、
+  \begin{equation*}
+    q_\tau(x):=\min\{\,t\in\Real: F(t\mid x)\ge\tau\,\}
+  \end{equation*}
+  を\textbf{条件付き $\tau$ 分位点}という。$\tau=1/2$ なら条件付き中央値である。
+\end{definition}
+
+$\tau\in(0,1)$ に対し
+\begin{equation}
+  \label{eq:pinball}
+  \rho_\tau(u):=\begin{cases}\tau\,u & (u\ge0)\\ (\tau-1)\,u & (u<0)\end{cases}
+  \ =\ \max\{\tau u,\ (\tau-1)u\}\qquad(u\in\Real)
+\end{equation}
+を \textbf{pinball 損失}（check 損失）という。$\rho_\tau\ge0$、$\rho_\tau(0)=0$ で、
+$2$ つの $1$ 次関数の最大値なので凸であり、傾きの絶対値は $\max\{\tau,1-\tau\}\le1$
+である。$\tau=1/2$ のとき $\rho_{1/2}(u)=|u|/2$ で、絶対誤差の $1/2$ である。
+$\tau>1/2$ なら過小予測（$u>0$）の方が過大予測より重く罰せられ、最小化元は上側に寄る。
+
+\begin{proposition}[分位点は pinball 損失の期待値を最小化する]
+  \label{prop:pinball-quantile}
+  $\Exp|Y|<\infty$、$\tau\in(0,1)$ とし、$L(c):=\Exp[\rho_\tau(Y-c)]$（$c\in\Real$）
+  とおく。このとき $c=Q(\tau)$ は $L$ を最小化する。
+
+  さらに、$(X,Y)$ について $\Exp|Y|<\infty$ ならば、$\Exp|g(X)|<\infty$ を満たす
+  可測な $g\colon\mathcal{X}\to\Real$ の中で $g=q_\tau$ が
+  $\Exp[\rho_\tau(Y-g(X))]$ を最小化する。
+\end{proposition}
+
+\begin{proof}
+  \textbf{(1) $L$ は有限で凸である.}
+  $0\le\rho_\tau(Y-c)\le|Y|+|c|$ より $L(c)<\infty$。$\rho_\tau$ は凸なので、
+  各 $\omega$ で $c\mapsto\rho_\tau(Y-c)$ は凸であり、期待値をとっても凸である。
+
+  \textbf{(2) 片側微分.}
+  実数 $y$ を固定すると、$c\mapsto\rho_\tau(y-c)$ は区分的に $1$ 次で、
+  右微分係数は $\Ind\{y\le c\}-\tau$、左微分係数は $\Ind\{y<c\}-\tau$ である
+  （$y>c$ では傾き $-\tau$、$y<c$ では傾き $1-\tau$、$y=c$ では右が $1-\tau$、
+  左が $-\tau$）。差分商の絶対値は $\max\{\tau,1-\tau\}\le1$ で抑えられるので、
+  有界収束定理により期待値と極限を交換でき、
+  \begin{equation*}
+    L'_+(c)=\Prob(Y\le c)-\tau=F(c)-\tau,\qquad L'_-(c)=\Prob(Y<c)-\tau .
+  \end{equation*}
+
+  \textbf{(3) 凸関数の最小化.}
+  凸関数 $L$ について、$c'>c$ ならば差分商の単調性より
+  $\dfrac{L(c')-L(c)}{c'-c}\ge L'_+(c)$、$c'<c$ ならば
+  $\dfrac{L(c')-L(c)}{c'-c}\le L'_-(c)$ である。よって $L'_-(c)\le0\le L'_+(c)$
+  ならば、どちらの場合も $L(c')\ge L(c)$ であり、$c$ は $L$ を最小化する。
+
+  \textbf{(4) $q:=Q(\tau)$ が条件を満たす.}
+  定義より $F(q)\ge\tau$ なので $L'_+(q)\ge0$。$t<q$ では $q$ の最小性より
+  $F(t)<\tau$ であり、$\Prob(Y<q)=\lim_{t\uparrow q}F(t)\le\tau$ なので
+  $L'_-(q)\le0$。(3) より $q$ は $L$ を最小化する。
+
+  \textbf{(5) 条件付き版.}
+  $\Exp[\rho_\tau(Y-g(X))]=\Exp[h_g(X)]$、
+  $h_g(x):=\int\rho_\tau(y-g(x))\,F(dy\mid x)$ と書ける。各 $x$ で $h_g(x)$ は、
+  分布関数 $F(\cdot\mid x)$ をもつ確率変数について $L$ を $c=g(x)$ で評価したもの
+  なので、(1)〜(4) より $h_g(x)\ge h_{q_\tau}(x)$ である。$x$ について期待値を
+  とれば結論を得る。
+\end{proof}
+
+データ $(x_i',y_i')$（$i=1,\dots,N$）と、関数のクラス $\mathcal{G}$ が与えられたとき、
+\begin{equation}
+  \label{eq:quantile-regression}
+  \hat g_\tau\in\operatorname*{arg\,min}_{g\in\mathcal{G}}\
+  \frac1N\sum_{i=1}^{N}\rho_\tau\bigl(y_i'-g(x_i')\bigr)
+\end{equation}
+を水準 $\tau$ の\textbf{分位点回帰}という。命題~\ref{prop:pinball-quantile} の
+経験版であり、最小二乗法が条件付き期待値の経験版であるのと同じ関係にある。
+分位点回帰は Koenker and Bassett~\cite{koenker1978regression} が $\mathcal{G}$ を
+線形関数のクラスとして提案した。本論文では $\mathcal{G}$ を特定せず、pinball 損失を
+最小化する任意の回帰法を分位点回帰とよぶ（第\ref{sec:experiments}章で使うモデルは
+\ref{sec:exp-setup}節で述べる）。
+
+異なる水準 $\tau_1<\tau_2$ の分位点回帰は別々の最適化問題として解くので、
+$x$ によっては $\hat g_{\tau_1}(x)>\hat g_{\tau_2}(x)$ と推定値が\textbf{交差}しうる
+（真の分位点は $\tau$ について単調なので交差しない）。交差の扱いは
+\ref{sec:cqr}節（\eqref{eq:cqr-pair}・注意~\ref{rem:cqr-crossing}）で述べる。
 
 \subsection{等角予測の原型：full conformal prediction}
 %% TODO: 紹介のみ。計算量が重いことに触れ、次章の分割型へつなぐ。
@@ -1400,15 +1505,340 @@ $\Prob(Y_{n+1}\in C_G(X_{n+1})\mid L=\ell)\le1-\alpha+1/(n_g+1)$ が成り立つ
 %%=====================================================================
 \section{拡張}
 %%=====================================================================
+%% 仕様書: thesis/drafts/chapter4_sections_spec.md v1.1 に対応する。
+%% 論理を変えるときは仕様書を先に直すこと。
+%% 実装: src/conformal/scores.py（スコア）、src/conformal/adaptive.py（sigma と分位点回帰）。
+
+\subsection{一般のスコアに対する保証}
+\label{sec:general-score}
+%% 仕様書:「導入：一般のスコアに対する保証」に対応する。
+%% 検査: tests/test_coverage_theory.py（わざと外した固定の sigma・分位点関数でも
+%% 被覆率が Beta に従う）、tests/test_split_leakage.py（較正用データで学習すると崩れる）。
+
+第\ref{sec:split-theory}章のスコア $S_i=|Y_i-\fhat(X_i)|$（\eqref{eq:score}）は、
+区間の幅が $x$ によらず一定になる（例~\ref{ex:x-conditional-hetero}）。本章では、
+スコアを $x$ に応じて変えることで区間の幅を $x$ に適応させる $2$ つの手法を扱う。
+その前に、定理~\ref{thm:coverage} の証明がスコアの形 $|y-\fhat(x)|$ に依存していない
+ことを確かめ、一般のスコアに対する保証として述べ直す。以後、
+\ref{sec:normalized-score}節・\ref{sec:cqr}節の被覆保証はすべてこの命題から従う。
+
+学習用データ $d$ を受け取り、可測関数
+$\mathcal{S}(d)\colon\mathcal{X}\times\Real\to\Real$ を返す写像 $\mathcal{S}$ を
+\textbf{スコア関数の学習アルゴリズム}とよぶ。$\mathcal{A}$ と同じく、$\mathcal{S}$ が
+乱数を用いる場合はその乱数も $\Dtr$ に含めて考える。$s:=\mathcal{S}(\Dtr)$ とおき、
+\textbf{スコア}を
+\begin{equation}
+  \label{eq:general-score}
+  S_i:=s(X_i,Y_i)\qquad(i=1,\dots,n+1)
+\end{equation}
+と定める。第\ref{sec:split-theory}章は $\mathcal{S}(d)(x,y)=|y-\mathcal{A}(d)(x)|$
+の場合である。$k$ と $\qhat=S_{(k)}$ は \eqref{eq:khat} のとおりとする
+（$S_{(n+1)}=+\infty$ の規約を含む。スコアは負の値をとってもよい）。
+\textbf{予測集合}を
+\begin{equation}
+  \label{eq:general-set}
+  C(x):=\{\,y\in\Real:\ s(x,y)\le\qhat\,\}
+\end{equation}
+と定める。$\qhat=+\infty$ のときは $C(x)=\Real$ である（$s$ は実数値なので）。
+第\ref{sec:split-theory}章の \eqref{eq:interval} は、$s(x,y)=|y-\fhat(x)|$ のときの
+\eqref{eq:general-set} そのものである。
+
+仮定 (A1)(A2) は \ref{sec:coverage-guarantee}節と同じである。(A3) は $S_i$ を
+\eqref{eq:general-score} のスコアに読み替える：
+\begin{itemize}
+  \item[\textbf{(A3)}] $(\Dtr,Z_1,\dots,Z_{n+1})$ の同時分布のもとで、確率 $1$ で
+    $S_1,\dots,S_{n+1}$ は相異なる。
+\end{itemize}
+
+\begin{proposition}[一般のスコアに対する被覆保証]
+  \label{prop:general-score}
+  (A1)(A2) のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)\ \ge\ 1-\alpha .
+  \end{equation*}
+  さらに (A3) のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\frac{k}{n+1}\ \le\ 1-\alpha+\frac{1}{n+1}.
+  \end{equation*}
+\end{proposition}
+
+\begin{proof}
+  まず、\eqref{eq:general-set} の定義から直ちに
+  \begin{equation*}
+    Y_{n+1}\in C(X_{n+1})\iff s(X_{n+1},Y_{n+1})\le\qhat\iff S_{n+1}\le\qhat
+  \end{equation*}
+  である（$\qhat=+\infty$ のときは両辺とも常に成り立つ）。これは
+  \eqref{eq:cover-iff} にあたるが、第\ref{sec:split-theory}章と違って絶対値を
+  ほどく計算は要らない。
+
+  次に $(S_1,\dots,S_{n+1})$ が交換可能であることを示す。
+  補題~\ref{lem:score-exch} の証明で、写像 $G$ を
+  \begin{equation*}
+    G(d,z_1,\dots,z_{n+1})
+    :=\bigl(\mathcal{S}(d)(x_1,y_1),\ \dots,\ \mathcal{S}(d)(x_{n+1},y_{n+1})\bigr)
+  \end{equation*}
+  に置き換える。$G$ はランダム性を含まない固定された写像であり、各座標に同じ写像
+  $(x,y)\mapsto\mathcal{S}(d)(x,y)$ を適用しているので、置換 $\pi$ に対し
+  $(S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi)$ である。以下は
+  補題~\ref{lem:score-exch} の証明と同じである：(A2) と命題~\ref{prop:indep-pair} より
+  $(\Dtr,Z_\pi)\eqd(\Dtr,Z)$、命題~\ref{prop:image} より
+  $G(\Dtr,Z_\pi)\eqd G(\Dtr,Z)$。
+
+  補題~\ref{lem:quantile} は交換可能性しか使わないので、そのまま適用できる。
+  下界は (iii)（$\beta=1-\alpha$、$\lceil(n+1)\beta\rceil=k$）、(A3) のもとでの
+  等式は (ii)（$m=k$）から従い、上界は \eqref{eq:ceil-bounds} より
+  系~\ref{cor:upper} と同じ計算で得る。
+\end{proof}
+
+用いたのは、$s$ が $\Dtr$ のみから定まること、および較正用データとテスト点に同じ $s$
+を適用していることだけである。$\mathcal{S}$ の中身（どんな回帰を何回行うか）には
+何も仮定していない。
+
+\begin{remark}[仮定 (A2) の実装上の意味・後処理・空集合]
+  \label{rem:general-score}
+  \leavevmode
+  \begin{enumerate}
+    \item \textbf{$s$ を作るのに較正用データを使ってはならない.}
+      (A2) は $\Dtr$ が $(Z_1,\dots,Z_{n+1})$ と独立であることを要求する。
+      \ref{sec:normalized-score}節の $\hat\sigma$ や \ref{sec:cqr}節の分位点回帰を
+      較正用データも使って学習すると、$s$ が $Z_1,\dots,Z_n$ に依存し、
+      $Z_{n+1}$ とは対等でなくなるので、命題~\ref{prop:general-score} の証明は
+      通らない。このとき被覆は実際に大きく崩れる。
+    \item \textbf{後処理も $s$ の一部である.}
+      \ref{sec:normalized-score}節の下限クリップ $\max\{\cdot,\sigma_{\min}\}$ や
+      \ref{sec:cqr}節の分位点の交差の入れ替え $\min/\max$ のような操作は、
+      学習用データと $x$ だけで決まる固定の写像なので、$\mathcal{S}(d)$ の定義に
+      含めれば命題の仮定を満たす。したがって後処理は保証を壊さない。
+    \item \textbf{$C(x)$ は空になりうる.}
+      \eqref{eq:general-set} は集合として定義しており、区間であることも空でない
+      ことも要求していない。\ref{sec:normalized-score}節では常に $\fhat(x)\in C(x)$
+      だが、\ref{sec:cqr}節では $\qhat<0$ のとき空になりうる
+      （注意~\ref{rem:cqr-negative}）。空になった $x$ ではその点は覆われないが、
+      命題は平均としての被覆確率を保証しているので矛盾はない。
+    \item \textbf{保証されるのは周辺被覆だけである.}
+      適応的なスコアにしても、条件付き被覆は保証されない
+      （注意~\ref{rem:x-conditional-ch4} の 1）。
+  \end{enumerate}
+\end{remark}
+
+\begin{remark}[被覆率の分布も同じ]
+  \label{rem:general-score-beta}
+  \ref{sec:cond-coverage}節の (A3$'$) を、$\mathcal{S}(d)(X,Y)$ の分布関数
+  $F_d(s):=P(\mathcal{S}(d)(X,Y)\le s)$ がすべての $d$ で連続であることに
+  読み替えれば、定理~\ref{thm:cond-coverage-beta} も一般のスコアについて同じ証明で
+  成り立つ。実際、\eqref{eq:general-set} より学習用データ $d$ と較正用データを
+  固定したときの被覆率は $P(Y\in C(X))=P(\mathcal{S}(d)(X,Y)\le\qhat)=F_d(\qhat)$
+  であり、定理の証明はスコアの形を使わずに $F_d(\qhat)$ の分布だけを扱っている。
+\end{remark}
 
 \subsection{正規化残差スコア}
 \label{sec:normalized-score}
-%% TODO: S = |y - \fhat(x)| / \hat{\sigma}(x)。異分散への簡易な対処。
+%% 仕様書: thesis/drafts/chapter4_sections_spec.md「4.1」に対応する。
+%% 実装: src/conformal/scores.py の normalized_residual（eq:score-normalized）、
+%% src/conformal/adaptive.py の fit_sigma / SigmaEstimator（eq:sigma-hat）。
+%% 実装では 0 除算回避のため分母に 1e-8 を加える（付録A の注記候補。本文には書かない）。
+
+絶対残差の区間 \eqref{eq:interval} は $x$ によらず幅 $2\qhat$ で一定である。
+$Y\mid X=x$ の散らばりが $x$ によって変わるなら、散らばりの大きい $x$ では広く、
+小さい $x$ では狭くしたい。最も単純な方法は、残差を散らばりの推定値
+$\hat\sigma(x)$ で割ることである。
+
+学習用データから点予測器 $\fhat=\mathcal{A}(\Dtr)$ と、\textbf{尺度関数}
+$\hat\sigma\colon\mathcal{X}\to(0,\infty)$ を作る（作り方は \eqref{eq:sigma-hat}）。
+スコアを
+\begin{equation}
+  \label{eq:score-normalized}
+  S_i:=\frac{|Y_i-\fhat(X_i)|}{\hat\sigma(X_i)}\qquad(i=1,\dots,n+1)
+\end{equation}
+と定める。$\qhat=S_{(k)}$ を \eqref{eq:khat} のとおりとると、$\hat\sigma(x)>0$ より
+$s(x,y)\le\qhat\iff|y-\fhat(x)|\le\qhat\,\hat\sigma(x)$ なので、
+\eqref{eq:general-set} は区間
+\begin{equation}
+  \label{eq:interval-normalized}
+  C(x)=\bigl[\,\fhat(x)-\qhat\,\hat\sigma(x),\ \fhat(x)+\qhat\,\hat\sigma(x)\,\bigr]
+\end{equation}
+になる。$S_i\ge0$ より $\qhat\ge0$ であり、常に $\fhat(x)\in C(x)$ である。
+区間の幅 $2\qhat\,\hat\sigma(x)$ は $\hat\sigma(x)$ に比例して $x$ とともに変わる。
+
+\paragraph{被覆保証.}
+$(\fhat,\hat\sigma)$ は $\Dtr$ のみから決まるので、
+$\mathcal{S}(d)(x,y):=|y-\mathcal{A}(d)(x)|/\hat\sigma_d(x)$
+（$\hat\sigma_d$ は $d$ から作った尺度関数）とおけば
+命題~\ref{prop:general-score} の設定に含まれる。したがって (A1)(A2) のもとで
+被覆確率は $1-\alpha$ 以上であり、(A3) のもとで $k/(n+1)$ に等しい。
+\textbf{この保証は $\hat\sigma$ がどれだけ正確かによらない.}
+$\hat\sigma$ の質が効くのは区間の幅とその $x$ への適応の仕方だけである。
+
+\paragraph{$\hat\sigma$ の作り方.}
+学習用データ $\Dtr=((x_1',y_1'),\dots,(x_N',y_N'))$ から次のように作る。
+\begin{enumerate}
+  \item \textbf{out-of-fold 残差.}
+    分割番号 $\kappa\colon\{1,\dots,N\}\to\{1,\dots,K\}$ をとり（$K\ge2$。各 $i$ の
+    属する fold が $\kappa(i)$）、fold $k$ を除いた学習用データ
+    $\{(x_j',y_j'):\kappa(j)\ne k\}$ で $\mathcal{A}$ を学習した予測器を
+    $\fhat^{(-k)}$ とする。各 $i$ の out-of-fold 残差を
+    \begin{equation*}
+      r_i:=\bigl|\,y_i'-\fhat^{(-\kappa(i))}(x_i')\,\bigr|\qquad(i=1,\dots,N)
+    \end{equation*}
+    とおく。
+  \item \textbf{残差の大きさの回帰.}
+    $(x_i',r_i)$（$i=1,\dots,N$）に回帰法を当てはめ、
+    $\hat g\colon\mathcal{X}\to\Real$ を得る（回帰法は任意。$r_i$ の代わりに
+    $r_i^2$ を回帰して平方根をとってもよい）。
+  \item \textbf{下限クリップ.}
+    学習用データから決まる正の定数 $\sigma_{\min}$ を用いて
+    \begin{equation}
+      \label{eq:sigma-hat}
+      \hat\sigma(x):=\max\{\hat g(x),\ \sigma_{\min}\}.
+    \end{equation}
+\end{enumerate}
+$\kappa$ を決める乱数は $\Dtr$ に含めて考える（\ref{sec:split-algorithm}節の
+$\mathcal{A}$ と同じ扱い）。$\fhat$ 自身は学習用データ全体で学習したものを使う。
+
+\textbf{out-of-fold にする理由.}
+$\fhat$ を学習用データ全体で学習し、同じデータ上の残差 $|y_i'-\fhat(x_i')|$ を
+回帰の目的変数にすると、過学習のぶんだけ残差が真の誤差より小さく出る。
+縮み方が $x$ によらず一様なら定数倍として $\qhat$ に吸収されて害はない
+（注意~\ref{rem:normalized-reduction}）が、一般には一様ではなく（柔軟なモデルほど
+学習点の残差はほぼ $0$ になる）、$\hat\sigma$ の形が歪んで幅の適応が効かなくなる。
+$i$ を含まないデータで学習した $\fhat^{(-\kappa(i))}$ の残差なら、この問題を
+避けられる。被覆保証は命題~\ref{prop:general-score} によりどちらでも壊れない。
+
+\textbf{下限クリップの理由.}
+残差の大きさを回帰した $\hat g(x)$ は $0$ や負になりうる。$\hat\sigma(x)\le0$ では
+スコアが定義できず、$\hat\sigma(x)$ が極端に小さいと区間が $1$ 点に潰れる。
+$\sigma_{\min}$ は学習用データだけから決めるので、注意~\ref{rem:general-score} の 2
+により保証に影響しない。
+
+\begin{remark}[絶対残差への帰着]
+  \label{rem:normalized-reduction}
+  $\hat\sigma\equiv c$（定数 $c>0$）ならば、\eqref{eq:interval-normalized} は
+  \eqref{eq:interval} に一致する。実際、$S_i=|Y_i-\fhat(X_i)|/c$ は絶対残差スコア
+  $S_i^{\mathrm{abs}}$ の $1/c$ 倍であり、$t\mapsto t/c$ は非減少なので
+  補題~\ref{lem:beta-tools}~(ii) より $\qhat=S^{\mathrm{abs}}_{(k)}/c$、よって
+  $\qhat\,\hat\sigma(x)=S^{\mathrm{abs}}_{(k)}$ である。より一般に、$\hat\sigma$ を
+  定数倍しても区間は変わらない。正規化残差が第\ref{sec:split-theory}章と違う結果を
+  与えるのは、$\hat\sigma$ が $x$ とともに変わるときだけである。
+\end{remark}
+
+\begin{remark}[条件付き被覆・限界]
+  \label{rem:normalized-limits}
+  \leavevmode
+  \begin{enumerate}
+    \item \textbf{条件付き被覆.}
+      $\hat\sigma$ が真の条件付き標準偏差に一致する場合の条件付き被覆については、
+      注意~\ref{rem:x-conditional-ch4} の 2 を参照する。
+    \item \textbf{対称な区間しか作れない.}
+      \eqref{eq:interval-normalized} は常に $\fhat(x)$ を中心とする対称な区間である。
+      $Y\mid X=x$ の分布が非対称なら、片側が余り、片側が足りない区間になる。
+      この限界を克服するのが \ref{sec:cqr}節の CQR である。
+    \item \textbf{$\hat\sigma$ の質は幅にだけ効く.}
+      $\hat\sigma$ が散らばりを捉えられなければ、区間は絶対残差と同程度に $x$ に
+      よらないものに戻るだけで、被覆は失われない（命題~\ref{prop:general-score}）。
+  \end{enumerate}
+\end{remark}
 
 \subsection{Conformalized Quantile Regression (CQR)}
 \label{sec:cqr}
-%% TODO: スコア S = \max\{ \hat{q}_{lo}(x) - y, y - \hat{q}_{hi}(x) \}
-%%       区間 [\hat{q}_{lo}(x) - \qhat, \hat{q}_{hi}(x) + \qhat]
+%% 仕様書: thesis/drafts/chapter4_sections_spec.md「4.2」に対応する。
+%% 実装: src/conformal/scores.py の cqr_score（eq:cqr-score）・cqr_interval（eq:cqr-interval）、
+%% src/conformal/adaptive.py の fit_quantile_pair / QuantilePair（eq:cqr-pair。
+%% predict が min/max の入れ替え、crossing_rate_on が交差率）。
+
+正規化残差は $\fhat(x)$ を中心に対称に広げる。Romano, Patterson and
+Cand\`es~\cite{romano2019cqr} の Conformalized Quantile Regression（CQR）は、
+点予測器の代わりに \ref{sec:quantile-regression}節の分位点回帰で区間の下端と上端を
+別々に推定し、それを共形分位点で補正する。区間の位置と幅の両方が $x$ に適応し、
+非対称にもなれる。
+
+学習用データで \ref{sec:quantile-regression}節の分位点回帰
+\eqref{eq:quantile-regression} を水準 $\alpha/2$ と $1-\alpha/2$ について
+\textbf{別々に}行い、$\hat g_{\alpha/2}$、$\hat g_{1-\alpha/2}$ を得る。$2$ 本は
+別々の最適化問題の解なので $x$ によっては $\hat g_{\alpha/2}(x)>\hat g_{1-\alpha/2}(x)$
+と交差しうる（\ref{sec:quantile-regression}節）。そこで
+\begin{equation}
+  \label{eq:cqr-pair}
+  \qhat_{\mathrm{lo}}(x):=\min\{\hat g_{\alpha/2}(x),\ \hat g_{1-\alpha/2}(x)\},\qquad
+  \qhat_{\mathrm{hi}}(x):=\max\{\hat g_{\alpha/2}(x),\ \hat g_{1-\alpha/2}(x)\}
+\end{equation}
+と定める。常に $\qhat_{\mathrm{lo}}(x)\le\qhat_{\mathrm{hi}}(x)$ である。スコアを
+\begin{equation}
+  \label{eq:cqr-score}
+  S_i:=\max\bigl\{\qhat_{\mathrm{lo}}(X_i)-Y_i,\ \ Y_i-\qhat_{\mathrm{hi}}(X_i)\bigr\}
+  \qquad(i=1,\dots,n+1)
+\end{equation}
+と定める。$S_i$ は、$Y_i$ が区間 $[\qhat_{\mathrm{lo}}(X_i),\qhat_{\mathrm{hi}}(X_i)]$
+の外にあるときはそこからのはみ出しの長さ（正）、内側にあるときは近い方の端までの
+距離の $-1$ 倍（負）である。$\qhat=S_{(k)}$ を \eqref{eq:khat} のとおりとると、
+$\max\{a,b\}\le t\iff a\le t$ かつ $b\le t$ より
+\begin{equation}
+  \label{eq:cqr-interval}
+  C(x)=\bigl[\,\qhat_{\mathrm{lo}}(x)-\qhat,\ \qhat_{\mathrm{hi}}(x)+\qhat\,\bigr]
+\end{equation}
+となる。分位点回帰の区間を、両側に同じ量 $\qhat$ だけ広げた（$\qhat<0$ なら縮めた）
+ものである。
+
+\paragraph{被覆保証.}
+$(\qhat_{\mathrm{lo}},\qhat_{\mathrm{hi}})$ は $\Dtr$ のみから決まるので、
+命題~\ref{prop:general-score} により (A1)(A2) のもとで被覆確率は $1-\alpha$ 以上、
+(A3) のもとで $k/(n+1)$ である。分位点回帰の良し悪し（どのモデルを使うか、
+水準どおりに推定できているか）は保証に影響しない。
+
+\begin{remark}[スコアの符号と $\qhat$ の符号]
+  \label{rem:cqr-negative}
+  \leavevmode
+  \begin{enumerate}
+    \item 絶対残差・正規化残差と違い、\eqref{eq:cqr-score} は負の値をとる。
+      較正用データの多く（$k$ 個以上）が分位点回帰の区間の内側にあれば $\qhat<0$
+      となり、\eqref{eq:cqr-interval} は分位点回帰の区間より狭くなる。分位点回帰が
+      広すぎる区間を出したときに、共形分位点がそれを縮める方向に補正するということ
+      である。
+    \item $\qhat<0$ のときは $\qhat_{\mathrm{hi}}(x)-\qhat_{\mathrm{lo}}(x)<-2\qhat$
+      となる $x$ で $C(x)=\emptyset$ になりうる（注意~\ref{rem:general-score} の 3）。
+    \item スコアの符号を逆にする（$\max\{y-\qhat_{\mathrm{lo}},\qhat_{\mathrm{hi}}-y\}$
+      とする）と、区間の内側で正・外側で負になり、共形分位点が区間を広げる方向と
+      逆になる。実装ではこの符号ミスが典型的な誤りである。
+  \end{enumerate}
+\end{remark}
+
+\begin{remark}[分位点の交差]
+  \label{rem:cqr-crossing}
+  \eqref{eq:cqr-pair} の $\min$・$\max$ は、交差した $x$ で $2$ 本の推定値を
+  入れ替える操作である。交差は分位点回帰の既知の性質であって誤りではない。
+  入れ替えは学習用データと $x$ だけで決まる固定の操作なので、
+  注意~\ref{rem:general-score} の 2 により保証に影響しない。交差した点の割合は
+  分位点回帰の質の指標であり、実装はこれを記録して第\ref{sec:experiments}章で
+  報告する。
+\end{remark}
+
+\begin{remark}[分位点回帰が正確な場合]
+  \label{rem:cqr-oracle}
+  $\qhat_{\mathrm{lo}}$、$\qhat_{\mathrm{hi}}$ が真の条件付き分位点 $q_{\alpha/2}(x)$、
+  $q_{1-\alpha/2}(x)$（定義~\ref{def:cond-quantile}）に一致し、$F(\cdot\mid x)$ が
+  各 $x$ で連続ならば、$(X,Y)\sim P$ のスコア
+  $S:=\max\{q_{\alpha/2}(X)-Y,\ Y-q_{1-\alpha/2}(X)\}$ は
+  \begin{equation*}
+    P(S\le0)=P\bigl(q_{\alpha/2}(X)\le Y\le q_{1-\alpha/2}(X)\bigr)=1-\alpha
+  \end{equation*}
+  を満たす。実際、$X=x$ で条件付ければ、連続性より
+  $F(q_{1-\alpha/2}(x)\mid x)=1-\alpha/2$、$P(Y<q_{\alpha/2}(x)\mid x)=\alpha/2$
+  なので条件付き確率は $1-\alpha$ であり、$x$ について平均すればよい。
+  また $t<0$ では区間 $[q_{\alpha/2}(x)-t,\ q_{1-\alpha/2}(x)+t]$ が狭まるので
+  $P(S\le t)\le1-\alpha$ である。したがって $0$ は $S$ の $(1-\alpha)$ 分位点
+  （定義~\ref{def:cond-quantile} の意味で、$F(\cdot\mid x)$ が両端点の近傍で狭義に
+  増加するとき）であり、共形分位点 $\qhat$ はその標本版にあたる。共形分位点による
+  補正は、分位点回帰が不正確なぶんだけ働く。
+\end{remark}
+
+\begin{remark}[条件付き被覆について]
+  \label{rem:cqr-asymptotic}
+  有限標本で保証されるのは命題~\ref{prop:general-score} の周辺被覆だけであり、
+  条件付き被覆は保証されない（\ref{sec:x-conditional}節、
+  注意~\ref{rem:x-conditional-ch4} の 1・2）。区間の位置と幅が $x$ に適応するか
+  どうかは分位点回帰の正確さに依存する。第\ref{sec:experiments}章 E3
+  （\ref{sec:e3}節）では、不均一分散のデータで正規化残差と CQR の層別被覆が
+  絶対残差よりどれだけ平らになるかを測る。
+\end{remark}
 
 \subsection{jackknife+ と CV+}
 %% TODO: データ分割の無駄をなくす。保証が 1-2\alpha に緩むこと。
