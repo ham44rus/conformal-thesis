@@ -1107,7 +1107,9 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
       $1-\alpha-\varepsilon$ 以上」となる $n$ を選べる。例えば $n=999$ なら、
       確率およそ $0.98$ で被覆率は $0.88$ 以上である。
     \item 第\ref{sec:experiments}章 E1 では、被覆率の経験分布がこのベータ分布と
-      一致することを確かめる。
+      一致することを確かめる。ただし E1 では学習用データ $d$ を固定し、
+      $F_d(\qhat)$ を固定したテスト集合で推定した値を観測する
+      （詳細は \ref{sec:e1}節）。
   \end{enumerate}
 \end{remark}
 
@@ -1196,6 +1198,7 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 %%       仕様は specs/ の各実験仕様書に対応。
 
 \subsection{E1：有限標本被覆保証の検証}
+\label{sec:e1}
 %% TODO: 上下界に入ること。被覆率の分布がBeta分布と一致すること。
 %%       図: fig_e1_coverage_beta_alpha10.pdf, fig_e1_bounds.pdf
 
