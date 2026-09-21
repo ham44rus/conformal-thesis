@@ -27,8 +27,13 @@ THIS_FILE = Path(__file__).resolve()
 TEX = ROOT / "thesis" / "R08_NAME.tex"
 LABELS_SPEC = ROOT / "thesis" / "drafts" / "chapter4_5_labels_spec.md"
 
-# 「4.1 節」「5.5節」「5.1.1 項」。「第3章」のような章単位の参照は章番号がずれないので許す
-SECTION_NUMBER = re.compile(r"\d+\.\d+(?:\.\d+)? ?[節項]")
+# 「4.1 節」「5.5節」「5.1.1 項」「第3章6節」「第3章第6節」「§5.1」。
+# 「第3章」のような章単位の参照は章番号がずれないので許す
+SECTION_NUMBER = re.compile(
+    r"\d+\.\d+(?:\.\d+)? ?[節項]"        # 5.1節 / 5.1 節 / 5.1.1項
+    r"|第 ?\d+ ?章 ?第? ?\d+ ?[節項]"        # 第3章6節 / 第3章第6節
+    r"|§ ?\d+(?:\.\d+)*"                  # §5.1 / § 5.1.1
+)
 # 参照される可能性のあるラベル。eq: と sec: のみ検査する（thm: 等は数が少なく目視で足りる）
 LABEL_REF = re.compile(r"\b(eq|sec):[a-z0-9][a-z0-9-]*")
 TEX_LABEL = re.compile(r"\\label\{((?:eq|sec):[a-z0-9-]+)\}")
@@ -72,3 +77,15 @@ def test_参照ラベルがTeXか確定ラベル仕様書に存在する():
     assert not missing, "TeX にも確定ラベル仕様書にも無いラベルを参照している:\n" + "\n".join(
         f"  {lab}: {', '.join(locs)}" for lab, locs in sorted(missing.items())
     )
+
+
+@pytest.mark.parametrize(
+    "text", ["5.1節", "5.1 節", "5.1.1項", "5.1.1 項", "第3章6節", "第3章第6節", "§5.1", "§ 5.1.1"]
+)
+def test_検出パターンは番号による節参照を拾う(text):
+    assert SECTION_NUMBER.search(text), f"{text!r} を節参照として検出できない"
+
+
+@pytest.mark.parametrize("text", ["第3章", "第5章に書くこと", "alpha=0.1", "Beta(18,2)", "sec:e1", "n=1..3000"])
+def test_検出パターンは章参照や数値を拾わない(text):
+    assert not SECTION_NUMBER.search(text), f"{text!r} を誤検出した"

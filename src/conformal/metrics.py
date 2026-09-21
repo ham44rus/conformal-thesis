@@ -21,13 +21,13 @@ __all__ = [
 
 
 def coverage(y: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> float:
-    """周辺被覆率 (1/m) * sum 1[y_j in [lo_j, hi_j]]（卒論 sec:metrics。ラベルは仮に eq:coverage-rate）。"""
+    """周辺被覆率 (1/m) * sum 1[y_j in [lo_j, hi_j]]（卒論 eq:coverage-rate。ラベルは仮）。"""
     y, lo, hi = map(np.asarray, (y, lo, hi))
     return float(np.mean((y >= lo) & (y <= hi)))
 
 
 def mean_width(lo: np.ndarray, hi: np.ndarray) -> float:
-    """平均区間幅。被覆が同じなら狭いほど良い（卒論 sec:metrics。ラベルは仮に eq:mean-width）。"""
+    """平均区間幅。被覆が同じなら狭いほど良い（卒論 eq:mean-width。ラベルは仮）。"""
     return float(np.mean(np.asarray(hi) - np.asarray(lo)))
 
 

@@ -119,7 +119,7 @@ def evaluate_on_test(
 
 
 def coverage_from_sorted(sorted_res: np.ndarray, q: float) -> float:
-    r"""ソート済みテスト残差から被覆率 P(|Y - \hat{f}(X)| \le \hat{q}) を求める（卒論 sec:metrics。ラベルは仮に eq:coverage-rate）。
+    r"""ソート済みテスト残差から被覆率 P(|Y - \hat{f}(X)| \le \hat{q}) を求める（卒論 eq:coverage-rate。ラベルは仮）。
 
     `mean(res <= q)` と同値。テスト集合が20万点あるので searchsorted で数える。
     `side="right"` は「q 以下」を数えるため。`"left"` にすると「q 未満」になり、
