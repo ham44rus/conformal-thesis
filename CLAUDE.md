@@ -99,8 +99,9 @@ q_hat = sort(scores)[k - 1]         # k > n のときは +inf
 - Python 3.11。`numpy` / `scipy` / `scikit-learn` / `pandas` / `matplotlib` のみ使用
 - 外部の等角予測ライブラリ（MAPIE, crepes）は**自作実装の検証用としてのみ**使用可。
   本体の実装に使ってはいけない（卒論の中身がなくなる）
-- 関数には型ヒントと docstring をつける。**docstring には対応する論文の式番号を書く**
-  （付録A「数式と実装の対応表」を作るため）
+- 関数には型ヒントと docstring をつける。**docstring では対応する論文の式・節を
+  TeX の `\label` 名で参照する**（例：`eq:khat`、`sec:e3`。番号は章の追加でずれるため。
+  `tests/test_label_refs.py` が検査する）。付録A「数式と実装の対応表」はこのラベルから作る
 - `src/conformal/split.py` は論文第3章に対応する。**読んで理解できる長さを保つこと**
 - コメントは日本語で書く。提出時に「他人が見て理解できるか」を黒沢先生が確認するため
   （提出要領 04. データの提出を参照）
