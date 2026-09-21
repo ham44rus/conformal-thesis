@@ -1,0 +1,2 @@
+n_test,min_width_raw,x1_at_min,q_hat_min_cqr,n_trials_q_hat_negative,threshold_2abs_q_hat_min,n_test_points_width_below_threshold,empty_interval_occurred,crossing_rate_test,q_hat_reproduction_max_dev
+200000,0.10102294723824937,0.08526465192968868,-0.0055365526871677,2,0.0110731053743354,0,False,0.0,8.673617379884035e-17

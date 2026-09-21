@@ -222,6 +222,24 @@ E1・E2 と同じ作法だが、**層別ではビン内の点数が 1/5 にな�
 
 ---
 
+## 空区間の確認（`experiments/e3_empty_interval_check.py`、2026-09-21 追記）
+
+CQR の区間 `[q_lo(x) - q_hat, q_hi(x) + q_hat]` は `q_hat < 0` のとき `q_hi(x) - q_lo(x) < -2 q_hat`
+となる x で空になる（卒論 `rem:general-score` の 3、`rem:cqr-negative`）。`e3_marginal.csv` では
+CQR の `q_hat` が 500 試行中 2 試行で負（最小 −0.005537）なので、空区間の有無はテスト集合での
+分位点回帰の幅の最小値で確定する。
+
+- E3 と同じ seed・同じ引き順で学習集合・テスト集合・モデルを再構成し、最初の 3 試行の較正集合を
+  同じ引き順で引き直して 3 手法の `q_hat` が csv と一致する（最大差 8.7e-17）ことを確かめてから、
+  テスト集合 200,000 点での `min(q_hi - q_lo)`（交差の入れ替え後）を計算する
+- 出力：`results/e3_empty_interval_check.csv`（新規。既存の csv は変更しない）。
+  同じ seed で 2 回実行して一致することを確認済み
+- 実行：`python experiments/e3_empty_interval_check.py --seed 20260901`（約 3 秒）
+
+**結果.** `min(q_hi − q_lo) = 0.10102`（x1 = 0.085 の点）。閾値 `2·|min q_hat| = 0.01107` を
+上回り、幅が閾値を下回るテスト点は 0 点。**空区間は起きていない**と確定。
+テスト集合での交差率は 0.0（`e3_marginal.csv` の `crossing_rate` と一致）。
+
 ## 図
 
 ### 図1（本論文の顔）｜帯グラフ
