@@ -1,17 +1,20 @@
-# 第4章 仕様書（v1：導入・4.1 正規化残差スコア・4.2 CQR）
+# 第4章 仕様書（v1.1：導入・4.1 正規化残差スコア・4.2 CQR）
 
 > **この文書について（TeX 本文には含めない）**
 > - 第4章「拡張」のうち、導入（一般のスコアに対する保証）、4.1 正規化残差スコア（`sec:normalized-score`）、4.2 CQR（`sec:cqr`）の仕様書。論理の正典はこの文書とする。4.3 jackknife+・CV+ と 4.4 共変量シフト（`sec:covariate-shift`）は範囲外。
-> - 前提：第2章の仕様書（`chapter2_spec.md` v1.2 の 2.4 分位点回帰を含む）、主定理の仕様書（`main_theorem_spec.md` v3）、第3章 3.3〜3.6 の仕様書（`chapter3_sections_spec.md` v2.4）。
+> - v1.1 で著者の決定 12 件（末尾の「決定事項」）を反映した。TeX はこの版から書く。
+> - 前提：第2章の仕様書（`chapter2_spec.md` v1.3 の 2.4 分位点回帰を含む）、主定理の仕様書（`main_theorem_spec.md` v3）、第3章 3.3〜3.6 の仕様書（`chapter3_sections_spec.md` v2.4）。
 > - `chapter4_5_labels_spec.md` v1 で確定した第4章分の 4 ラベル（`eq:score-normalized`, `eq:sigma-hat`, `eq:cqr-score`, `eq:cqr-interval`）はこの文書に統合した。名前は変えない。
 > - 記号は TeX 本文に合わせる（$\hat f$、$\hat q$、$\mathcal{D}_{\mathrm{tr}}$、$\mathcal{D}_{\mathrm{cal}}$、$\mathbf{1}\{\cdot\}$）。
 > - 番号（命題 4.1 など）は骨組みの定理環境（section ごとの通し番号）で順に置いた場合の目安。TeX では提案ラベルで参照し、番号を直接書かない。
 > - **使用するモデル（GBM 等）は第5章の話であり、本章の本文はモデルによらない形で書く。** 実装の選択は末尾の「実装との対応メモ」に置き、本文には含めない。
-> - **TODO(著者)** の一覧は末尾にまとめた。
+> - 末尾の「決定事項」は v1 の TODO(著者) 12 件に対する著者の決定の記録（TeX 本文には含めない）。
 
 ---
 
 ## 導入：一般のスコアに対する保証　提案ラベル `sec:general-score`
+
+> 独立した subsection とする（決定事項 5）。`\section{拡張}` の直後、`sec:normalized-score` の前に置く。
 
 **本文の導入.** 第3章のスコア $S_i=|Y_i-\hat f(X_i)|$（`eq:score`）は、区間の幅が $x$ によらず一定になる（例 `ex:x-conditional-hetero`）。本章では、スコアを $x$ に応じて変えることで区間の幅を $x$ に適応させる 2 つの手法を扱う。その前に、定理 `thm:coverage` の証明がスコアの形 $|y-\hat f(x)|$ に依存していないことを確かめ、一般のスコアに対する保証として述べ直す。以後 4.1・4.2 の被覆保証はすべてこの命題から従う。
 
@@ -54,6 +57,12 @@ $$G(d,z_1,\dots,z_{n+1}):=\bigl(\mathcal{S}(d)(x_1,y_1),\ \dots,\ \mathcal{S}(d)
 3. **$C(x)$ は空になりうる.** `eq:general-set` は集合として定義しており、区間であることも空でないことも要求していない。4.1 では常に $\hat f(x)\in C(x)$ だが、4.2 では $\hat q<0$ のとき空になりうる（注意 `rem:cqr-negative`）。空になった $x$ ではその点は覆われないが、命題は平均としての被覆確率を保証しているので矛盾はない。
 4. **保証されるのは周辺被覆だけである.** 適応的なスコアにしても、条件付き被覆は保証されない（注意 `rem:x-conditional-ch4` の 1）。
 
+### 注意 4.3（被覆率の分布も同じ）　提案ラベル `rem:general-score-beta`
+
+`sec:cond-coverage` 節の (A3$'$) を、$\mathcal{S}(d)(X,Y)$ の分布関数 $F_d(s):=P(\mathcal{S}(d)(X,Y)\le s)$ がすべての $d$ で連続であることに読み替えれば、定理 `thm:cond-coverage-beta` も一般のスコアについて同じ証明で成り立つ。実際、`eq:general-set` より学習用データ $d$ と較正用データを固定したときの被覆率は $P(Y\in C(X))=P(\mathcal{S}(d)(X,Y)\le\hat q)=F_d(\hat q)$ であり、定理の証明はスコアの形を使わずに $F_d(\hat q)$ の分布だけを扱っている。
+
+（`tests/test_coverage_theory.py` の正規化残差・CQR の Beta 検定はこれを検査している。決定事項 6）
+
 ---
 
 ## 4.1 正規化残差スコア（`sec:normalized-score`）
@@ -74,24 +83,26 @@ $$C(x)=\bigl[\,\hat f(x)-\hat q\,\hat\sigma(x),\ \hat f(x)+\hat q\,\hat\sigma(x)
 
 学習用データ $\mathcal{D}_{\mathrm{tr}}=((x_1',y_1'),\dots,(x_N',y_N'))$ から次のように作る。
 
-1. **out-of-fold 残差.** $\{1,\dots,N\}$ を $K$ 個の fold に分け、各 $i$ について、$i$ の属する fold を除いた学習用データで $\mathcal{A}$ を学習した予測器を $\hat f^{(-i)}$ とし、$r_i:=|y_i'-\hat f^{(-i)}(x_i')|$ とおく。
+1. **out-of-fold 残差.** 分割番号 $\kappa\colon\{1,\dots,N\}\to\{1,\dots,K\}$ をとり（$K\ge2$。各 $i$ の属する fold が $\kappa(i)$）、fold $k$ を除いた学習用データ $\{(x_j',y_j'):\kappa(j)\ne k\}$ で $\mathcal{A}$ を学習した予測器を $\hat f^{(-k)}$ とする。各 $i$ の out-of-fold 残差を
+   $$r_i:=\bigl|\,y_i'-\hat f^{(-\kappa(i))}(x_i')\,\bigr|\qquad(i=1,\dots,N)$$
+   とおく（決定事項 7）。
 2. **残差の大きさの回帰.** $(x_i',r_i)$（$i=1,\dots,N$）に回帰法を当てはめ、$\hat g\colon\mathcal{X}\to\mathbb{R}$ を得る（回帰法は任意。$r_i$ の代わりに $r_i^2$ を回帰して平方根をとってもよい）。
-3. **下限クリップ.** 学習用データから決めた定数 $\sigma_{\min}>0$ を用いて
+3. **下限クリップ.** 学習用データから決まる正の定数 $\sigma_{\min}$ を用いて
    $$\hat\sigma(x):=\max\{\hat g(x),\ \sigma_{\min}\}.\tag{`eq:sigma-hat`}$$
 
-fold の分け方の乱数は $\mathcal{D}_{\mathrm{tr}}$ に含めて考える（`sec:split-algorithm` の $\mathcal{A}$ と同じ扱い）。$\hat f$ 自身は学習用データ全体で学習したものを使う。
+$\kappa$ を決める乱数は $\mathcal{D}_{\mathrm{tr}}$ に含めて考える（`sec:split-algorithm` の $\mathcal{A}$ と同じ扱い）。$\hat f$ 自身は学習用データ全体で学習したものを使う。$\sigma_{\min}$ の具体的な決め方は本文には書かない（決定事項 8。第5章・付録A の実装メモに回す）。
 
 **out-of-fold にする理由.** $\hat f$ を学習用データ全体で学習し、同じデータ上の残差 $|y_i'-\hat f(x_i')|$ を回帰の目的変数にすると、過学習のぶんだけ残差が真の誤差より小さく出る。縮み方が $x$ によらず一様なら定数倍として $\hat q$ に吸収されて害はない（注意 `rem:normalized-reduction`）が、一般には一様ではなく（柔軟なモデルほど学習点の残差はほぼ 0 になる）、$\hat\sigma$ の形が歪んで幅の適応が効かなくなる。$i$ を含まないデータで学習した $\hat f^{(-i)}$ の残差なら、この問題を避けられる。被覆保証は命題 `prop:general-score` によりどちらでも壊れない。
 
 **下限クリップの理由.** 残差の大きさを回帰した $\hat g(x)$ は 0 や負になりうる。$\hat\sigma(x)\le0$ ではスコアが定義できず、$\hat\sigma(x)$ が極端に小さいと区間が 1 点に潰れる。$\sigma_{\min}$ は学習用データだけから決めるので、注意 `rem:general-score` の 2 により保証に影響しない。
 
-### 注意 4.3（絶対残差への帰着）　提案ラベル `rem:normalized-reduction`
+### 注意 4.4（絶対残差への帰着）　提案ラベル `rem:normalized-reduction`
 
 $\hat\sigma\equiv c$（定数 $c>0$）ならば、`eq:interval-normalized` は `eq:interval` に一致する。実際、$S_i=|Y_i-\hat f(X_i)|/c$ は絶対残差スコア $S_i^{\mathrm{abs}}$ の $1/c$ 倍であり、$t\mapsto t/c$ は非減少なので補題 `lem:beta-tools` (ii) より $\hat q=S^{\mathrm{abs}}_{(k)}/c$、よって $\hat q\,\hat\sigma(x)=S^{\mathrm{abs}}_{(k)}$ である。より一般に、$\hat\sigma$ を定数倍しても区間は変わらない。正規化残差が第3章と違う結果を与えるのは、$\hat\sigma$ が $x$ とともに変わるときだけである。
 
 （この性質は `tests/test_adaptive.py` の「sigma が定数なら正規化残差は絶対残差と同じ区間を与える」で検査している。）
 
-### 注意 4.4（条件付き被覆・限界）　提案ラベル `rem:normalized-limits`
+### 注意 4.5（条件付き被覆・限界）　提案ラベル `rem:normalized-limits`
 
 1. **条件付き被覆.** $\hat\sigma$ が真の条件付き標準偏差に一致する場合の条件付き被覆については、注意 `rem:x-conditional-ch4` の 2 を参照する（本節では繰り返さない）。
 2. **対称な区間しか作れない.** `eq:interval-normalized` は常に $\hat f(x)$ を中心とする対称な区間である。$Y\mid X=x$ の分布が非対称なら、片側が余り、片側が足りない区間になる。この限界を克服するのが 4.2 の CQR である。
@@ -101,13 +112,13 @@ $\hat\sigma\equiv c$（定数 $c>0$）ならば、`eq:interval-normalized` は `
 
 ## 4.2 CQR（`sec:cqr`）
 
-**本文の導入.** 正規化残差は $\hat f(x)$ を中心に対称に広げる。Romano, Patterson and Candès (2019) の Conformalized Quantile Regression（CQR）は、点予測器の代わりに 2.4 節の分位点回帰で区間の下端と上端を別々に推定し、それを共形分位点で補正する。区間の位置と幅の両方が $x$ に適応し、非対称にもなれる。
+**本文の導入.** 正規化残差は $\hat f(x)$ を中心に対称に広げる。Romano, Patterson and Candès (2019) の Conformalized Quantile Regression（CQR。`romano2019cqr`。手法の出典としてのみ引く）は、点予測器の代わりに 2.4 節の分位点回帰で区間の下端と上端を別々に推定し、それを共形分位点で補正する。区間の位置と幅の両方が $x$ に適応し、非対称にもなれる。
 
 ### 定義（CQR）
 
-$\alpha_{\mathrm{lo}}:=\alpha/2$、$\alpha_{\mathrm{hi}}:=1-\alpha/2$ とし、学習用データで 2.4 節の分位点回帰（`eq:quantile-regression`）を水準 $\alpha_{\mathrm{lo}}$ と $\alpha_{\mathrm{hi}}$ について**別々に**行い、
-$$\hat q_{\mathrm{lo}}\colon\mathcal{X}\to\mathbb{R},\qquad \hat q_{\mathrm{hi}}\colon\mathcal{X}\to\mathbb{R}\tag{`eq:cqr-pair`}$$
-を得る。以後 $\hat q_{\mathrm{lo}}(x)\le\hat q_{\mathrm{hi}}(x)$ とする（交差する場合の扱いは注意 `rem:cqr-crossing`）。スコアを
+学習用データで 2.4 節の分位点回帰（`eq:quantile-regression`）を水準 $\alpha/2$ と $1-\alpha/2$ について**別々に**行い、$\hat g_{\alpha/2}$、$\hat g_{1-\alpha/2}$ を得る。2 本は別々の最適化問題の解なので $x$ によっては $\hat g_{\alpha/2}(x)>\hat g_{1-\alpha/2}(x)$ と交差しうる（`sec:quantile-regression` 節の注）。そこで
+$$\hat q_{\mathrm{lo}}(x):=\min\{\hat g_{\alpha/2}(x),\ \hat g_{1-\alpha/2}(x)\},\qquad \hat q_{\mathrm{hi}}(x):=\max\{\hat g_{\alpha/2}(x),\ \hat g_{1-\alpha/2}(x)\}\tag{`eq:cqr-pair`}$$
+と定める（決定事項 9）。常に $\hat q_{\mathrm{lo}}(x)\le\hat q_{\mathrm{hi}}(x)$ である。スコアを
 $$S_i:=\max\bigl\{\hat q_{\mathrm{lo}}(X_i)-Y_i,\ \ Y_i-\hat q_{\mathrm{hi}}(X_i)\bigr\}\qquad(i=1,\dots,n+1)\tag{`eq:cqr-score`}$$
 と定める。$S_i$ は、$Y_i$ が区間 $[\hat q_{\mathrm{lo}}(X_i),\hat q_{\mathrm{hi}}(X_i)]$ の外にあるときはそこからのはみ出しの長さ（正）、内側にあるときは近い方の端までの距離の $-1$ 倍（負）である。$\hat q=S_{(k)}$ を `eq:khat` のとおりとると、$\max\{a,b\}\le t\iff a\le t$ かつ $b\le t$ より
 $$C(x)=\bigl[\,\hat q_{\mathrm{lo}}(x)-\hat q,\ \hat q_{\mathrm{hi}}(x)+\hat q\,\bigr]\tag{`eq:cqr-interval`}$$
@@ -115,27 +126,29 @@ $$C(x)=\bigl[\,\hat q_{\mathrm{lo}}(x)-\hat q,\ \hat q_{\mathrm{hi}}(x)+\hat q\,
 
 **被覆保証.** $(\hat q_{\mathrm{lo}},\hat q_{\mathrm{hi}})$ は $\mathcal{D}_{\mathrm{tr}}$ のみから決まるので、命題 `prop:general-score` により (A1)(A2) のもとで被覆確率は $1-\alpha$ 以上、(A3) のもとで $k/(n+1)$ である。分位点回帰の良し悪し（どのモデルを使うか、水準どおりに推定できているか）は保証に影響しない。
 
-### 注意 4.5（スコアの符号と $\hat q$ の符号）　提案ラベル `rem:cqr-negative`
+### 注意 4.6（スコアの符号と $\hat q$ の符号）　提案ラベル `rem:cqr-negative`
 
 1. 絶対残差・正規化残差と違い、`eq:cqr-score` は負の値をとる。較正用データの多く（$k$ 個以上）が分位点回帰の区間の内側にあれば $\hat q<0$ となり、`eq:cqr-interval` は分位点回帰の区間より狭くなる。分位点回帰が広すぎる区間を出したときに、共形分位点がそれを縮める方向に補正するということである。
 2. $\hat q<0$ のときは $\hat q_{\mathrm{hi}}(x)-\hat q_{\mathrm{lo}}(x)<-2\hat q$ となる $x$ で $C(x)=\emptyset$ になりうる（注意 `rem:general-score` の 3）。
 3. スコアの符号を逆にする（$\max\{y-\hat q_{\mathrm{lo}},\hat q_{\mathrm{hi}}-y\}$ とする）と、区間の内側で正・外側で負になり、共形分位点が区間を広げる方向と逆になる。実装ではこの符号ミスが典型的な誤りである（CLAUDE.md「よくあるバグ」4。`tests/test_cqr_score.py` で手計算例と照合している）。
 
-### 注意 4.6（分位点の交差）　提案ラベル `rem:cqr-crossing`
+### 注意 4.7（分位点の交差）　提案ラベル `rem:cqr-crossing`
 
-$\hat q_{\mathrm{lo}}$ と $\hat q_{\mathrm{hi}}$ は別々に学習するので、$x$ によっては $\hat q_{\mathrm{lo}}(x)>\hat q_{\mathrm{hi}}(x)$ と**交差**することがある。これは分位点回帰の既知の性質であって誤りではない。本論文では、交差した $x$ で 2 つの値を入れ替え、$\tilde q_{\mathrm{lo}}(x):=\min\{\hat q_{\mathrm{lo}}(x),\hat q_{\mathrm{hi}}(x)\}$、$\tilde q_{\mathrm{hi}}(x):=\max\{\cdot\}$ を `eq:cqr-score`・`eq:cqr-interval` に用いる。入れ替えは学習用データと $x$ だけで決まる固定の操作なので、注意 `rem:general-score` の 2 により保証に影響しない。交差した点の割合は分位点回帰の質の指標なので、第5章では必ず報告する。
+`eq:cqr-pair` の $\min$・$\max$ は、交差した $x$ で 2 本の推定値を入れ替える操作である。交差は分位点回帰の既知の性質であって誤りではない。入れ替えは学習用データと $x$ だけで決まる固定の操作なので、注意 `rem:general-score` の 2 により保証に影響しない。交差した点の割合は分位点回帰の質の指標であり、実装はこれを記録して第5章で報告する。
 
-### 注意 4.7（分位点回帰が正確な場合）　提案ラベル `rem:cqr-oracle`
+### 注意 4.8（分位点回帰が正確な場合）　提案ラベル `rem:cqr-oracle`
 
-$\hat q_{\mathrm{lo}}$、$\hat q_{\mathrm{hi}}$ が真の条件付き分位点 $q_{\alpha/2}(x)$、$q_{1-\alpha/2}(x)$（定義 `def:cond-quantile`）に一致し、$Y\mid X=x$ の分布関数が各 $x$ で連続ならば、学習用データを固定したときのテスト点のスコア $S=\max\{q_{\alpha/2}(X)-Y,\ Y-q_{1-\alpha/2}(X)\}$ は
-$$\mathbb{P}(S\le0\mid\mathcal{D}_{\mathrm{tr}})=\mathbb{P}\bigl(q_{\alpha/2}(X)\le Y\le q_{1-\alpha/2}(X)\bigr)=1-\alpha$$
-を満たす（$X=x$ で条件付ければ $F_{Y\mid X}(q_{1-\alpha/2}(x)\mid x)-F_{Y\mid X}(q_{\alpha/2}(x)\mid x)=(1-\alpha/2)-\alpha/2$ であり、$x$ について平均する）。すなわちスコアの分布の $(1-\alpha)$ 分位点は 0 であり、較正用データが多ければ $\hat q\approx0$ で、`eq:cqr-interval` は分位点回帰の区間にほぼ一致する。共形分位点による補正は、分位点回帰が不正確なぶんだけ働く。
+$\hat q_{\mathrm{lo}}$、$\hat q_{\mathrm{hi}}$ が真の条件付き分位点 $q_{\alpha/2}(x)$、$q_{1-\alpha/2}(x)$（定義 `def:cond-quantile`）に一致し、$F(\cdot\mid x)$ が各 $x$ で連続ならば、$(X,Y)\sim P$ のスコア $S:=\max\{q_{\alpha/2}(X)-Y,\ Y-q_{1-\alpha/2}(X)\}$ は
+$$P(S\le0)=P\bigl(q_{\alpha/2}(X)\le Y\le q_{1-\alpha/2}(X)\bigr)=1-\alpha$$
+を満たす。実際、$X=x$ で条件付ければ、連続性より $F(q_{1-\alpha/2}(x)\mid x)=1-\alpha/2$、$P(Y<q_{\alpha/2}(x)\mid x)=\alpha/2$ なので条件付き確率は $1-\alpha$ であり、$x$ について平均すればよい。また $t<0$ では区間 $[q_{\alpha/2}(x)-t,\ q_{1-\alpha/2}(x)+t]$ が狭まるので $P(S\le t)\le1-\alpha$ である。したがって $0$ は $S$ の $(1-\alpha)$ 分位点（定義 `def:cond-quantile` の意味で、$F(\cdot\mid x)$ が両端点の近傍で狭義に増加するとき）であり、共形分位点 $\hat q$ はその標本版にあたる（決定事項 10。収束には触れない）。共形分位点による補正は、分位点回帰が不正確なぶんだけ働く。
 
 （`tests/test_cqr_score.py` の「真の条件付き分位点を与えれば $\hat q\approx0$」で検査している。）
 
-### 注意 4.8（条件付き被覆について）　提案ラベル `rem:cqr-asymptotic`
+### 注意 4.9（条件付き被覆について）　提案ラベル `rem:cqr-asymptotic`
 
-Romano et al. (2019) は、分位点回帰が真の条件付き分位点に一致する極限では CQR の区間が条件付き被覆をもつことを述べている（`romano2019cqr`。本論文では引用にとどめ、証明しない）。有限標本で保証されるのは命題 `prop:general-score` の周辺被覆だけであり、条件付き被覆は分位点回帰の正確さに依存する。これは注意 `rem:x-conditional-ch4` の 1・2 と同じ位置づけである。第5章 E3 では、不均一分散のデータで正規化残差と CQR の層別被覆が絶対残差よりどれだけ平らになるかを測る。
+有限標本で保証されるのは命題 `prop:general-score` の周辺被覆だけであり、条件付き被覆は保証されない（`sec:x-conditional` 節、注意 `rem:x-conditional-ch4` の 1・2）。区間の位置と幅が $x$ に適応するかどうかは分位点回帰の正確さに依存する。第5章 E3 では、不均一分散のデータで正規化残差と CQR の層別被覆が絶対残差よりどれだけ平らになるかを測る。
+
+（決定事項 11：原論文の該当箇所が確認できていないので、漸近的な条件付き被覆の主張は引かない。出典なし。）
 
 ---
 
@@ -175,22 +188,22 @@ Romano et al. (2019) は、分位点回帰が真の条件付き分位点に一�
 
 ---
 
-## TODO(著者) 一覧
+## 決定事項（v1 の TODO(著者) 12 件に対する著者の決定。TeX 本文には含めない）
 
-| # | 箇所 | 内容 |
-|---|---|---|
-| 1 | 2.4（`chapter2_spec.md`） | 命題 `prop:pinball-quantile`（条件付き分位点が pinball 損失の期待値を最小化する）の証明を本文に載せるか、主張と引用（`koenker1978regression`）だけにするか。証明の草案は `chapter2_spec.md` v1.2 に置いた |
-| 2 | 2.4 | `koenker1978regression` が支持する主張の範囲。同論文は線形モデルの回帰分位点を pinball 損失の最小化として定義した論文であり、母集団の命題 `prop:pinball-quantile` の出典としてよいか（本仕様書は指示どおり同論文を引いている） |
-| 3 | 2.4 | 条件付き分位点の定義 `def:cond-quantile` で、条件付き分布関数 $F_{Y\mid X}(\cdot\mid x)$ の存在をどの程度の厳密さで扱うか（「正則条件付き分布が存在すると仮定する」の 1 文で済ませる案） |
-| 4 | 導入 | 命題 `prop:general-score` の上界（(A3) のもとでの $k/(n+1)$）を本文に入れるか、下界だけにして上界は「系 `cor:upper` と同様」で済ませるか。本仕様書は入れる案で書いた |
-| 5 | 導入 | 導入を「4.0」相当の独立した subsection（`sec:general-score`）にするか、`\section{拡張}` 直後の節見出しなしの本文にするか。命題と注意を含むので subsection を推奨 |
-| 6 | 導入 | 3.5 節の被覆率のベータ分布（定理 `thm:cond-coverage-beta`）も (A3$'$) を一般のスコアに読み替えれば成り立つ。本文で 1 文触れるか（`tests/test_coverage_theory.py` の新しい 2 本はこれを検査している）、触れないか |
-| 7 | 4.1 | `eq:sigma-hat` で out-of-fold の手続きをどこまで式で書くか（fold の記法 $\hat f^{(-i)}$ を導入する案と、文章で済ませる案） |
-| 8 | 4.1 | $\sigma_{\min}$ の決め方を本文でどこまで言うか。本仕様書は「学習用データから決めた定数」とだけ書き、5% 分位点は実装メモに置いた |
-| 9 | 4.2 | 交差の入れ替え（注意 `rem:cqr-crossing`）を定義に組み込む（$\tilde q$ を定義に使う）か、本仕様書のように「以後 $\hat q_{\mathrm{lo}}\le\hat q_{\mathrm{hi}}$ とする」と断って注意で扱うか |
-| 10 | 4.2 | 注意 `rem:cqr-oracle` の $\hat q\approx0$ を、母集団の $(1-\alpha)$ 分位点が 0 という主張までで止めるか、$n\to\infty$ の収束まで言うか（収束を言うなら根拠が要る。本仕様書は分位点が 0 までで止めている） |
-| 11 | 4.2 | 注意 `rem:cqr-asymptotic` で Romano et al. (2019) の主張をどの文言で引くか。原論文の該当箇所（Theorem 1 の周辺か、Section の議論か）を著者が確認して文言を確定する。Claude は原論文を確認していない |
-| 12 | 全体 | 新しい提案ラベル（`sec:general-score`, `eq:general-score`, `eq:general-set`, `prop:general-score`, `rem:general-score`, `eq:interval-normalized`, `rem:normalized-reduction`, `rem:normalized-limits`, `eq:cqr-pair`, `rem:cqr-negative`, `rem:cqr-crossing`, `rem:cqr-oracle`, `rem:cqr-asymptotic`、2.4 の `sec:quantile-regression`, `eq:pinball`, `def:cond-quantile`, `prop:pinball-quantile`, `eq:quantile-regression`）の採否。TeX・仕様書・コードのいずれとも衝突しないことは確認済み |
+| # | 箇所 | 決定 | 反映箇所 |
+|---|---|---|---|
+| 1 | 2.4 | 命題 `prop:pinball-quantile` の証明を載せる。1 次元は凸性と片側微分、条件付き版は $x$ ごとに適用 | `chapter2_spec.md` v1.3 |
+| 2 | 2.4 | `koenker1978regression` は分位点回帰の提案の出典としてのみ引く。母集団の命題の根拠にはしない | 同上 |
+| 3 | 2.4 | 条件付き分位点は $F(t\mid x)$ から定義。脚注で「実数値の $Y$ には正則条件付き分布が常に存在する」と一言、それ以上は踏み込まない | 同上 |
+| 4 | 導入 | 命題 `prop:general-score` に上界（(A3) を一般のスコアに読み替えたもの）を入れる | 命題 `prop:general-score` |
+| 5 | 導入 | 独立した subsection `sec:general-score` にする | 導入の冒頭 |
+| 6 | 導入 | 注意を 1 つ足し、定理 `thm:cond-coverage-beta` も一般のスコアで同じ証明で成り立つことを一文で述べる | 注意 `rem:general-score-beta`（新ラベル。v1 の 18 個に追加） |
+| 7 | 4.1 | out-of-fold は分割番号 $\kappa(i)$ を使った一行の式で書く | `eq:sigma-hat` の 1 |
+| 8 | 4.1 | $\sigma_{\min}$ は本文では「学習用データから決まる正の定数」とだけ書く。5% 分位点は第5章・付録A の実装メモに回す | `eq:sigma-hat` の 3 |
+| 9 | 4.2 | 交差の入れ替えを定義に組み込む（$\hat q_{\mathrm{lo}}:=\min$、$\hat q_{\mathrm{hi}}:=\max$）。実装が交差率を記録していることは一文で添える | `eq:cqr-pair`、注意 `rem:cqr-crossing` |
+| 10 | 4.2 | 注意 `rem:cqr-oracle` は母集団の主張で止める。$P(S\le0)=1-\alpha$、$S$ の $(1-\alpha)$ 分位点が 0、$\hat q$ はその標本版。収束には触れない | 注意 `rem:cqr-oracle` |
+| 11 | 4.2 | 原論文の該当箇所は確認できず。出典を付けず「条件付き被覆は保証されない（`sec:x-conditional`）」とだけ書く | 注意 `rem:cqr-asymptotic` |
+| 12 | 全体 | 新ラベル 18 個をそのまま採用（`sec:general-score`, `eq:general-score`, `eq:general-set`, `prop:general-score`, `rem:general-score`, `eq:interval-normalized`, `rem:normalized-reduction`, `rem:normalized-limits`, `eq:cqr-pair`, `rem:cqr-negative`, `rem:cqr-crossing`, `rem:cqr-oracle`, `rem:cqr-asymptotic`, `sec:quantile-regression`, `eq:pinball`, `def:cond-quantile`, `prop:pinball-quantile`, `eq:quantile-regression`）。決定 6 で `rem:general-score-beta` を追加（19 個目。衝突なし） | — |
 
 ---
 
@@ -199,3 +212,4 @@ Romano et al. (2019) は、分位点回帰が真の条件付き分位点に一�
 | 版 | 内容 |
 |---|---|
 | v1 | 初版。`chapter4_5_labels_spec.md` v1 の第4章分 4 ラベルを統合 |
+| v1.1 | 著者の決定 12 件を反映。注意 `rem:general-score-beta` を追加、`eq:sigma-hat` を $\kappa(i)$ の式に、`eq:cqr-pair` に交差の入れ替えを組み込み、`rem:cqr-oracle` を母集団の主張に限定、`rem:cqr-asymptotic` から出典を外す。TODO 一覧を決定事項の表に置き換え |
