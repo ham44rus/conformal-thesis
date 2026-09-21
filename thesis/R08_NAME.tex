@@ -941,8 +941,210 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 \end{remark}
 
 \subsection{被覆率そのものの分布}
-%% TODO: 較正集合を固定したときの被覆率は Beta(n+1-l, l), l=\lfloor (n+1)\alpha \rfloor
-%%       （Vovk 2012）。第5章 E1 の検証対象。
+\label{sec:cond-coverage}
+%% 仕様書: thesis/drafts/chapter3_sections_spec.md「3.5」に対応する。
+%% 第5章 E1 の検証対象（experiments/e1_coverage.py: 学習用データを固定し、
+%% 較正用データを引き直した被覆率の経験分布を Beta(k, n+1-k) と比べる）。
+
+定理~\ref{thm:coverage}・系~\ref{cor:upper} は、較正用データの引き方についても
+平均した保証である（注意~\ref{rem:marginal}）。しかし実際に手元にあるのは $1$ 組の
+較正用データなので、\textbf{そのデータから作った区間が、これから来るデータを
+どれだけの割合で覆うか}が問題になる。本節では、i.i.d.\ と連続性を仮定すると、
+この割合（被覆率）がベータ分布に従うことを示す（Vovk~\cite{vovk2012conditional}）。
+この節の仮定は \ref{sec:coverage-guarantee}節の (A1)(A3) より強い。
+
+\paragraph{仮定.}
+\begin{itemize}
+  \item[\textbf{(A1$'$)}] \textbf{i.i.d.}
+    $Z_1,\dots,Z_{n+1}$ は i.i.d.\ で、共通の分布を $P$ とする。
+  \item[\textbf{(A2)}] \ref{sec:coverage-guarantee}節と同じ。
+  \item[\textbf{(A3$'$)}] \textbf{スコア分布の連続性.}
+    学習用データ $d$ ごとに、$(X,Y)\sim P$ に対する $|Y-\mathcal{A}(d)(X)|$ の分布関数
+    \begin{equation}
+      \label{eq:score-cdf}
+      F_d(s):=P\bigl(\,|Y-\mathcal{A}(d)(X)|\le s\,\bigr)\qquad(s\in\Real)
+    \end{equation}
+    がすべての $d$ で連続である。規約として $F_d(+\infty):=1$ とする。
+\end{itemize}
+命題~\ref{prop:iid-exch} より (A1$'$) は (A1) を導く。また (A1$'$)(A2)(A3$'$) のもとでは
+(A3) も成り立つ（学習用データを固定すればスコアは連続分布からの i.i.d.\ なので
+確率 $1$ で相異なり、独立性とフビニの定理で固定を外せる）。
+
+\begin{definition}[被覆率]
+  \label{def:cond-coverage}
+  \begin{equation}
+    \label{eq:cond-coverage}
+    \mathrm{Cov}:=F_{\Dtr}(\qhat)
+  \end{equation}
+  を\textbf{被覆率}という。これは学習用データと較正用データから決まる確率変数である。
+\end{definition}
+
+学習用データ $d$ と較正用データを固定すると、$\fhat=\mathcal{A}(d)$ と $\qhat$ は
+定数になり、$(X,Y)\sim P$ について
+\begin{equation*}
+  P\bigl(Y\in C(X)\bigr)=P\bigl(|Y-\mathcal{A}(d)(X)|\le\qhat\bigr)=F_d(\qhat).
+\end{equation*}
+つまり被覆率は、\textbf{手元のデータで作った区間が、新しいデータを覆う確率}である。
+定理~\ref{thm:coverage} の被覆確率はその平均にあたる（系~\ref{cor:cond-coverage-moments}）。
+
+\begin{lemma}[被覆率の計算に使う $3$ つの事実]
+  \label{lem:beta-tools}
+  \begin{enumerate}
+    \item[(i)] \textbf{確率積分変換.}
+      実数値確率変数 $S$ の分布関数 $F$ が連続ならば、$F(S)$ は一様分布
+      $\mathrm{U}(0,1)$ に従う。
+    \item[(ii)] \textbf{単調変換と順序統計量.}
+      $h\colon\Real\to\Real$ が非減少ならば、実数 $s_1,\dots,s_n$ について、
+      $h(s_1),\dots,h(s_n)$ の $l$ 番目の順序統計量は $h(s_{(l)})$ に等しい
+      （$l=1,\dots,n$）。
+    \item[(iii)] \textbf{一様分布の順序統計量.}
+      $V_1,\dots,V_n$ が i.i.d.\ で $\mathrm{U}(0,1)$ に従うならば、
+      $m\in\{1,\dots,n\}$、$u\in[0,1]$ に対し
+      \begin{equation}
+        \label{eq:uniform-order-stat}
+        \Prob(V_{(m)}\le u)=\sum_{j=m}^{n}\binom{n}{j}u^j(1-u)^{n-j}
+        =\int_0^u\frac{n!}{(m-1)!\,(n-m)!}\,t^{m-1}(1-t)^{n-m}\,dt
+      \end{equation}
+      であり、$V_{(m)}$ はベータ分布 $\mathrm{Beta}(m,\ n-m+1)$ に従う。
+  \end{enumerate}
+\end{lemma}
+
+\begin{proof}
+  (i) $u\in(0,1)$ とする。$F$ は連続で、$s\to-\infty$ で $0$、$s\to\infty$ で $1$ に
+  近づくので、中間値の定理より $A:=\{\,s: F(s)=u\,\}$ は空でない。$A$ は閉集合で
+  （$F$ の連続性）、上に有界である（十分大きい $s$ では $F(s)>u$）。よって
+  $s^*:=\max A$ が存在する。$F$ は非減少なので、$S\le s^*$ ならば $F(S)\le u$ であり、
+  $S>s^*$ ならば $F(S)\ge u$ かつ $S\notin A$ なので $F(S)>u$ である。したがって
+  $\Prob(F(S)\le u)=\Prob(S\le s^*)=F(s^*)=u$。$u=0$ のときは、$\{s:F(s)=0\}$ が
+  空なら確率は $0$、空でなければその最大元 $s_0$ について同様に
+  $\Prob(F(S)\le0)=F(s_0)=0$。$u\ge1$ では確率は $1$ である。
+
+  (ii) $\sigma$ を $s_1,\dots,s_n$ を小さい順に並べる置換とすると、$h$ は非減少なので
+  $h(s_{\sigma(1)})\le\cdots\le h(s_{\sigma(n)})$ であり、$\sigma$ は
+  $h(s_1),\dots,h(s_n)$ も小さい順に並べる。補題~\ref{lem:order-count} より
+  順序統計量は並べ方によらないので、$l$ 番目は $h(s_{\sigma(l)})=h(s_{(l)})$ である。
+
+  (iii) 補題~\ref{lem:order-count}~(i) より $V_{(m)}\le u\iff\#\{\,i: V_i\le u\,\}\ge m$
+  であり、$\#\{i: V_i\le u\}$ は二項分布 $\mathrm{Bin}(n,u)$ に従うので、
+  $1$ つ目の等号を得る。右辺を $G(u)$ とおくと $G(0)=0$ である（$m\ge1$）。
+  $j\binom{n}{j}=n\binom{n-1}{j-1}$、$(n-j)\binom{n}{j}=n\binom{n-1}{j}$ を用い、
+  $a_j(u):=\binom{n-1}{j}u^j(1-u)^{n-1-j}$（$a_n:=0$）とおくと
+  \begin{equation*}
+    G'(u)=n\sum_{j=m}^{n}\bigl(a_{j-1}(u)-a_j(u)\bigr)=n\,a_{m-1}(u)
+    =\frac{n!}{(m-1)!\,(n-m)!}\,u^{m-1}(1-u)^{n-m}
+  \end{equation*}
+  （和が隣どうしで打ち消し合う）。これを $0$ から $u$ まで積分して $2$ つ目の
+  等号を得る。
+\end{proof}
+
+\begin{theorem}[被覆率の分布]
+  \label{thm:cond-coverage-beta}
+  (A1$'$)(A2)(A3$'$) のもとで $\alpha\ge1/(n+1)$（すなわち $k\le n$）とすると、
+  被覆率 $\mathrm{Cov}$ はベータ分布 $\mathrm{Beta}(k,\ n+1-k)$ に従う。
+  $l:=\lfloor(n+1)\alpha\rfloor$ とおくと $k=n+1-l$（命題~\ref{prop:excess} の証明）
+  なので、これは $\mathrm{Beta}(n+1-l,\ l)$ とも書ける。
+\end{theorem}
+
+\begin{proof}
+  $G_k$ を $\mathrm{Beta}(k,\ n+1-k)$ の分布関数とする。
+
+  \textbf{学習用データを固定する.}
+  $d$ を固定し、$S_i^d:=|Y_i-\mathcal{A}(d)(X_i)|$（$i\le n$）とおく。(A1$'$) より
+  $S_1^d,\dots,S_n^d$ は i.i.d.\ で分布関数 $F_d$ をもつ。(A3$'$) と
+  補題~\ref{lem:beta-tools}~(i) より、$V_i:=F_d(S_i^d)$ は i.i.d.\ で $\mathrm{U}(0,1)$ に
+  従う。$F_d$ は非減少なので、補題~\ref{lem:beta-tools}~(ii) より
+  $F_d(S^d_{(k)})=V_{(k)}$。よって補題~\ref{lem:beta-tools}~(iii)（$m=k$）より
+  \begin{equation*}
+    \Prob\bigl(F_d(S^d_{(k)})\le u\bigr)=G_k(u)\qquad(u\in[0,1])
+  \end{equation*}
+  であり、右辺は $d$ によらない。
+
+  \textbf{固定を外す.}
+  $\mathrm{Cov}=F_{\Dtr}(S^{\Dtr}_{(k)})$ であり、(A2) より $\Dtr$ は
+  $(Z_1,\dots,Z_n)$ と独立である。独立な確率変数 $D,W$ と写像 $h$ について、
+  $\Prob(h(D,W)\in E)$ は、$d$ を固定して計算した $\Prob(h(d,W)\in E)$ を $D$ の分布で
+  平均したものに等しい（フビニの定理）。ここではそれが $d$ によらず $G_k(u)$ なので、
+  $\Prob(\mathrm{Cov}\le u)=G_k(u)$。
+\end{proof}
+
+\begin{corollary}[被覆率の平均と分散]
+  \label{cor:cond-coverage-moments}
+  定理~\ref{thm:cond-coverage-beta} の仮定のもとで
+  \begin{equation}
+    \label{eq:cond-coverage-moments}
+    \Exp[\mathrm{Cov}]=\frac{k}{n+1},\qquad
+    \mathrm{Var}[\mathrm{Cov}]=\frac{k\,(n+1-k)}{(n+1)^2(n+2)}
+  \end{equation}
+  であり、特に $(n+1)\alpha$ が整数なら $\mathrm{Var}[\mathrm{Cov}]=\alpha(1-\alpha)/(n+2)$
+  である。また $\Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\Exp[\mathrm{Cov}]$ であり、
+  系~\ref{cor:upper} と一致する。
+\end{corollary}
+
+\begin{proof}
+  $\mathrm{Beta}(a,b)$ の平均 $a/(a+b)$、分散 $ab/\{(a+b)^2(a+b+1)\}$ に $a=k$、
+  $b=n+1-k$ を代入する。$(n+1)\alpha$ が整数なら $k=(n+1)(1-\alpha)$、
+  $n+1-k=(n+1)\alpha$ である。最後の等式は、$Z_{n+1}$ が $(\Dtr,Z_1,\dots,Z_n)$ と
+  独立で分布 $P$ に従うことと、フビニの定理（定理~\ref{thm:cond-coverage-beta} の
+  証明と同じ形）による。
+\end{proof}
+
+\begin{remark}[数値例と較正用データの大きさ]
+  \label{rem:cond-coverage-size}
+  \leavevmode  % 見出しの行で箇条書きを始めない
+  表~\ref{tab:cond-coverage} に $\alpha=0.1$ の数値例を示す。
+  \begin{enumerate}
+    \item \textbf{平均だけでは足りない.}
+      $n=19$ では平均はちょうど $0.9$ だが、較正用データのおよそ $5$ 組に $1$ 組で、
+      被覆率が $0.85$ を下回る。定理~\ref{thm:coverage} は被覆率の\textbf{平均}に
+      ついての保証であり、定理~\ref{thm:cond-coverage-beta} はその\textbf{ばらつき}まで
+      述べている。
+    \item \textbf{較正用データの大きさの目安.}
+      標準偏差はおよそ $\sqrt{\alpha(1-\alpha)/(n+2)}$ で、$n$ の平方根に反比例して
+      小さくなる。例えば $\alpha=0.1$ で標準偏差を $0.01$ 程度にするには
+      $n\approx900$ が必要である。
+    \item \textbf{確率つきの保証.}
+      ベータ分布の下側確率から、「確率 $1-\delta$ 以上で被覆率が
+      $1-\alpha-\varepsilon$ 以上」となる $n$ を選べる。例えば $n=999$ なら、
+      確率およそ $0.98$ で被覆率は $0.88$ 以上である。
+    \item 第\ref{sec:experiments}章 E1 では、被覆率の経験分布がこのベータ分布と
+      一致することを確かめる。
+  \end{enumerate}
+\end{remark}
+
+\begin{table}[htbp]
+  \centering
+  \caption{被覆率 $\mathrm{Cov}$ の分布（$\alpha=0.1$）}
+  \label{tab:cond-coverage}
+  \begin{tabular}{rlrrrr}
+    \toprule
+    $n$ & 被覆率の分布 & 平均 & 標準偏差
+      & $\Prob(\mathrm{Cov}<0.85)$ & $\Prob(\mathrm{Cov}<0.88)$ \\
+    \midrule
+    19  & $\mathrm{Beta}(18,2)$    & 0.9 & 0.0655 & 0.1985 & 0.3165 \\
+    99  & $\mathrm{Beta}(90,10)$   & 0.9 & 0.0299 & 0.0595 & 0.2365 \\
+    999 & $\mathrm{Beta}(900,100)$ & 0.9 & 0.0095 & 約 $1.3\times10^{-6}$ & 0.0215 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{remark}[(A1$'$) と (A3$'$) が必要なこと]
+  \label{rem:cond-coverage-assumptions}
+  \leavevmode  % 見出しの行で箇条書きを始めない
+  \begin{enumerate}
+    \item \textbf{i.i.d.}
+      被覆率は「新しいデータが $P$ に従う」ことを前提にした量である。
+      交換可能性だけでは、較正用データを与えたときのテスト点の条件付き分布は
+      $P$ と一致するとは限らない。例~\ref{ex:without-replacement} で $N=n+1$ とすると、
+      較正用データが決まればテスト点も決まるので、手元のデータで作った区間が
+      テスト点を覆うかどうかは確定し、覆う条件付き確率は $0$ か $1$ になる。
+    \item \textbf{連続性.}
+      スコアが離散だと確率積分変換（補題~\ref{lem:beta-tools}~(i)）が成り立たず、
+      被覆率の分布は変わる。例~\ref{ex:binary} の $2$ 値データでは、$\qhat=0$ なら
+      被覆率は $F(0)=1/2$、$\qhat=1$ なら $1$ なので、被覆率は $\{1/2,\ 1\}$ の
+      $2$ 値しかとらない。$n=19$、$\alpha=0.5$ ではそれぞれ確率 $1/2$ であり、
+      平均 $3/4$ は例~\ref{ex:binary} の被覆確率に一致する。
+  \end{enumerate}
+\end{remark}
 
 \subsection{何を保証していないか：条件付き被覆}
 %% TODO: 周辺被覆と条件付き被覆の区別。注意 \ref{rem:marginal} から始める。
