@@ -1,11 +1,12 @@
 """同点（離散スコア）があるときの被覆保証の非対称性。
 
-対応箇所: 卒論 第3章 補題3.1・定理3.2 / CLAUDE.md「よくあるバグ」#5
+対応箇所: 卒論 第3章 補題 lem:quantile・定理 thm:coverage・系 cor:upper・3.4 節 sec:ties
+          （例 ex:binary、注意 rem:tiebreak-vs-det）/ CLAUDE.md「よくあるバグ」#5
 
 理論が言っていること:
-    下界 P(S_{n+1} <= S_(k)) >= 1-alpha は、順位が一様であることと切り上げの定義
-    だけから出るので、**同点があっても成り立つ**。同点は「順位が k 以下」の事象を
-    増やす方向にしか効かないためである。
+    下界 P(S_{n+1} <= S_(k)) >= 1-alpha は、最小順位による数え上げ（補題 lem:quantile (i)）
+    と切り上げの定義だけから出るので、**同点があっても成り立つ**。同点は「順位が k 以下」
+    の事象を増やす方向にしか効かないためである。
 
     一方 上界 <= 1-alpha + 1/(n+1) は、順位がちょうど k 以下である確率が
     k/(n+1) に「一致する」ことを使うので、**同点があると破れる**。
@@ -17,13 +18,16 @@
 であり、P(p <= alpha) <= alpha は保たれる（Lei et al. 2018）。
 """
 
+import itertools
+from fractions import Fraction
+
 import numpy as np
 import pytest
 
-from conformal import conformal_pvalue, conformal_quantile
+from conformal import conformal_index, conformal_pvalue, conformal_quantile
 
 N_CAL, ALPHA, N_TRIAL = 18, 0.10, 100_000
-K = int(np.ceil((N_CAL + 1) * (1 - ALPHA)))          # = 18
+K = conformal_index(N_CAL, ALPHA)                    # = 18
 LOWER, UPPER = 1 - ALPHA, 1 - ALPHA + 1 / (N_CAL + 1)
 
 
@@ -80,3 +84,21 @@ def test_共形p値は同点があっても超一様(rng, alpha):
     scores = rng.integers(0, 3, size=(20_000, N_CAL + 1)).astype(float)
     p = np.array([conformal_pvalue(row[:N_CAL], row[N_CAL]) for row in scores])
     assert np.mean(p <= alpha) <= alpha + 1e-12, "共形 p 値の超一様性が破れた"
+
+
+def test_2値データの被覆確率は厳密公式に一致する():
+    """例 ex:binary: S_i = Y_i ~ Bernoulli(1/2), f_hat = 0 のとき
+
+        P(被覆) = 1 - (1/2) P(Bin(n, 1/2) >= k)
+
+    n=9, alpha=0.2 (k=8) では 1 - 10/1024 = 507/512。2^10 通りを全列挙して厳密に確かめる。
+    連続スコアなら k/(n+1) = 0.8 のはずが 0.99 まで上がる、上界破れの最小例でもある。
+    """
+    n, alpha = 9, 0.2
+    assert conformal_index(n, alpha) == 8
+    covered = Fraction(0)
+    for bits in itertools.product((0.0, 1.0), repeat=n + 1):
+        scores = np.array(bits)
+        q = conformal_quantile(scores[:n], alpha)
+        covered += Fraction(int(scores[n] <= q), 2 ** (n + 1))
+    assert covered == Fraction(507, 512)

@@ -89,7 +89,8 @@ def conformal_pvalue(cal_scores: np.ndarray, test_score: float) -> float:
         p = \frac{1 + \#\{ i : S_i \ge S_{n+1} \}}{n+1}
 
     交換可能性の下で p は \{1/(n+1), 2/(n+1), ..., 1\} 上の離散一様分布に従う。
-    この性質は tests/test_pvalue_uniformity.py で実装全体の統合テストに使う。
+    この性質は tests/test_coverage_theory.py（連続スコアで離散一様）と
+    tests/test_ties_discrete.py（同点があっても超一様）で実装全体の統合テストに使う。
     """
     cal_scores = np.asarray(cal_scores, dtype=float)
     n = cal_scores.size

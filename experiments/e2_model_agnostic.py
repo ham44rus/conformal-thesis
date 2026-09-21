@@ -119,7 +119,7 @@ def evaluate_on_test(
 
 
 def coverage_from_sorted(sorted_res: np.ndarray, q: float) -> float:
-    r"""ソート済みテスト残差から被覆率 P(|Y - \hat{f}(X)| \le \hat{q}) を求める（卒論 式(5.1)）。
+    r"""ソート済みテスト残差から被覆率 P(|Y - \hat{f}(X)| \le \hat{q}) を求める（卒論 5.1.1 項。ラベルは仮に eq:coverage-rate）。
 
     `mean(res <= q)` と同値。テスト集合が20万点あるので searchsorted で数える。
     `side="right"` は「q 以下」を数えるため。`"left"` にすると「q 未満」になり、
@@ -139,7 +139,7 @@ def run_trials(
     較正集合は**全モデルで共有する**。モデルごとに引き直すと、モデル間の差に
     較正集合のサンプリング変動が上乗せされ、C1 の「モデル間の差」が見えなくなる。
 
-    区間は C(x) = \hat{f}(x) \pm \hat{q} なので幅は 2\hat{q}（卒論 式(3.5)）。
+    区間は C(x) = \hat{f}(x) \pm \hat{q} なので幅は 2\hat{q}（卒論 eq:interval）。
     """
     rows = []
     for trial in range(n_trial):

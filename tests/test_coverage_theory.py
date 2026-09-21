@@ -1,6 +1,6 @@
 """理論から導かれる性質による統合テスト。
 
-対応箇所: 卒論 第3章（定理3.1, 系3.2）, 実験E1
+対応箇所: 卒論 第3章（定理 thm:coverage, 系 cor:upper, 定理 thm:cond-coverage-beta）, 実験E1
 
 ここで検査するのは「実装がこう動く」ではなく「理論がこう言う」性質だけ。
 実装と独立に正しさを判定できるので、生成AIが書いたコードの検証に使える。
@@ -29,7 +29,7 @@ def fitted_model():
 
 
 def test_共形p値が離散一様分布に従う(fitted_model):
-    """交換可能性の下で p は {1/(n+1),...,1} 上の離散一様分布（卒論 補題3.1）。
+    """交換可能性の下で p は {1/(n+1),...,1} 上の離散一様分布（卒論 第3章。共形 p 値の式は本文に未掲載）。
 
     これが通れば実装はほぼ正しい、という最も強力な統合テスト。
     """
@@ -51,7 +51,7 @@ def test_共形p値が離散一様分布に従う(fitted_model):
 
 def test_被覆率がBeta分布に従う(fitted_model):
     """キャリブレーション集合を固定したときの被覆率は
-    Beta(n+1-l, l), l = floor((n+1)*alpha) に従う（Vovk 2012, 卒論 定理3.3）。
+    Beta(n+1-l, l), l = floor((n+1)*alpha) に従う（Vovk 2012, 卒論 定理 thm:cond-coverage-beta）。
 
     注意: テスト集合が小さいと二項ノイズが上乗せされて分散が理論より大きくなり、
     実装が正しくても棄却される。大きな固定テスト集合の残差を先に計算しておく。
@@ -77,7 +77,7 @@ def test_被覆率がBeta分布に従う(fitted_model):
 @pytest.mark.parametrize("n_cal", [20, 50, 200])
 @pytest.mark.parametrize("alpha", [0.05, 0.10, 0.20])
 def test_有限標本の上下界(fitted_model, n_cal, alpha):
-    """1-alpha <= P(Y in C(X)) <= 1-alpha + 1/(n+1)（卒論 定理3.2）。
+    """1-alpha <= P(Y in C(X)) <= 1-alpha + 1/(n+1)（卒論 系 cor:upper、式 eq:two-sided）。
 
     モンテカルロ誤差を見込んで両側に 0.005 の余裕を与える。
     """

@@ -72,7 +72,7 @@ def out_of_fold_predict(
 
 
 class SigmaEstimator:
-    """sigma(x) の推定器。predict(X) が正の尺度を返す（卒論 式(4.2)）。
+    """sigma(x) の推定器。predict(X) が正の尺度を返す（卒論 4.1 節。ラベルは仮に eq:sigma-hat）。
 
     正規化残差スコア S = |y - f(x)| / sigma(x) の分母を作る。
     区間は f(x) ± q_hat * sigma(x) になるので、sigma(x) が x に応じて動けば

@@ -184,7 +184,7 @@ def fig_e2_model_agnostic(summary: pd.DataFrame,
     x = np.arange(len(g))
 
     lower = 1 - E2_ALPHA                 # 名目値
-    band = 1 / (E2_N_CAL + 1)            # 理論の上下界の幅（第2章 定理2.1）
+    band = 1 / (E2_N_CAL + 1)            # 理論の上下界の幅（卒論 系 cor:upper、式 eq:two-sided）
     upper = lower + band
 
     fig, (ax_cov, ax_w) = plt.subplots(
