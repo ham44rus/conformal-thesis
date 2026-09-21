@@ -16,6 +16,8 @@ thesis/*.toc
 thesis/*.bbl
 thesis/*.blg
 thesis/*.synctex.gz
+# コンパイル済み pdf は提出不要（thesis/README.md）
+thesis/*.pdf
 
 # 大きな生データは追跡しない（入手手順を docs/データの入手方法.md に書く）
 data/raw/
