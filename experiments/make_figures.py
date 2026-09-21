@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from conformal import conformal_index
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
@@ -85,7 +87,7 @@ def fig_coverage_beta(df: pd.DataFrame, alpha: float = 0.10) -> None:
         cov = df[(df.n_cal == n_cal) & (df.alpha == alpha)]["coverage"].to_numpy()
         if cov.size == 0:
             continue
-        l = int(np.floor((n_cal + 1) * alpha))
+        l = n_cal + 1 - conformal_index(n_cal, alpha)  # floor((n+1)*alpha) を厳密に
         a_par, b_par = n_cal + 1 - l, l
 
         ax.hist(cov, bins=30, density=True, color=BLUE, alpha=0.75,

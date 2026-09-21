@@ -23,7 +23,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.linear_model import Ridge
 
-from conformal import absolute_residual, conformal_quantile
+from conformal import absolute_residual, conformal_index, conformal_quantile
 from conformal.datasets import homoscedastic
 
 N_CALS = (20, 50, 100, 500, 2000)
@@ -68,7 +68,9 @@ def main(seed: int) -> None:
     # --- 要約: 理論の上下界と Beta 分布への適合 ---
     summary = []
     for (n_cal, alpha), g in df.groupby(["n_cal", "alpha"]):
-        l = int(np.floor((n_cal + 1) * alpha))
+        # l = floor((n+1)*alpha) は k = ceil((n+1)(1-alpha)) から l = n+1-k で求める。
+        # float の floor だと alpha によっては 1 ずれる（例: n=89, alpha=0.7）。
+        l = n_cal + 1 - conformal_index(n_cal, alpha)
         a_par, b_par = n_cal + 1 - l, l
         cov = g["coverage"].to_numpy()
         # 被覆率の平均に付ける区間は2成分の合成（CLAUDE.md「報告の作法」）。

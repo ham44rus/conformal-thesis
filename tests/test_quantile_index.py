@@ -101,3 +101,28 @@ def test_kは有理数演算の厳密値と一致する(alpha):
         k_exact = math.ceil((n + 1) * (1 - alpha_exact))
         q = conformal_quantile(np.arange(1.0, n + 1.0), alpha)
         assert q == (np.inf if k_exact > n else float(k_exact))
+
+
+# ---------------------------------------------------------------------------
+# ベータ分布のパラメータ l = floor((n+1)*alpha) は k から l = n+1-k で求める
+# （卒論 定理 thm:cond-coverage-beta。E1 と make_figures がこの式を使う）。
+# float の floor だと alpha によっては 1 ずれる（chapter3_sections_spec.md 実装メモ 5）。
+# ---------------------------------------------------------------------------
+
+
+def test_n89_alpha07_のlは63():
+    """n=89, alpha=0.7 -> (n+1)*alpha = 63 ちょうど -> l = 63。
+
+    float では 90*0.7 = 62.99999999999999 となり、素朴な floor は 62 を返す。
+    """
+    n, alpha = 89, 0.7
+    assert n + 1 - conformal_index(n, alpha) == 63
+
+
+@pytest.mark.parametrize("alpha", [0.05, 0.10, 0.20, 1 / 3, 0.7, 0.45, 0.95])
+def test_lは有理数演算の厳密値と一致する(alpha):
+    """n=1..3000 で n+1-k が Fraction で厳密に計算した floor((n+1)*alpha) と一致すること。"""
+    alpha_exact = Fraction(alpha).limit_denominator(10**9)
+    for n in range(1, 3001):
+        l_exact = math.floor((n + 1) * alpha_exact)
+        assert n + 1 - conformal_index(n, alpha) == l_exact
