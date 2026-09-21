@@ -8,7 +8,8 @@
 このテストはその約束が守られているかを機械的に確かめる。
 
 1. 「4.1 節」「5.5節」のような番号による節参照が残っていないこと
-2. 参照している eq: / sec: ラベルが、TeX の \\label か、第4・5章のラベル仕様書で
+2. 参照している eq: / sec: / def: / thm: / prop: / lem: / cor: / rem: / ex: / tab: ラベルが、
+   TeX の \\label か、第4・5章のラベル仕様書で
    確定したラベルのどちらかに存在すること
 """
 
@@ -34,10 +35,11 @@ SECTION_NUMBER = re.compile(
     r"|第 ?\d+ ?章 ?第? ?\d+ ?[節項]"        # 第3章6節 / 第3章第6節
     r"|§ ?\d+(?:\.\d+)*"                  # §5.1 / § 5.1.1
 )
-# 参照される可能性のあるラベル。eq: と sec: のみ検査する（thm: 等は数が少なく目視で足りる）
-LABEL_REF = re.compile(r"\b(eq|sec):[a-z0-9][a-z0-9-]*")
-TEX_LABEL = re.compile(r"\\label\{((?:eq|sec):[a-z0-9-]+)\}")
-SPEC_LABEL = re.compile(r"`((?:eq|sec):[a-z0-9-]+)`")
+# 参照される可能性のあるラベルの接頭辞（式・節・定義・定理・命題・補題・系・注意・例・表）
+PREFIXES = r"(?:eq|sec|def|thm|prop|lem|cor|rem|ex|tab)"
+LABEL_REF = re.compile(r"\b" + PREFIXES + r":[a-z0-9][a-z0-9-]*")
+TEX_LABEL = re.compile(r"\\label\{(" + PREFIXES + r":[a-z0-9-]+)\}")
+SPEC_LABEL = re.compile(r"`(" + PREFIXES + r":[a-z0-9-]+)`")
 
 
 def _scan_files() -> list[Path]:
