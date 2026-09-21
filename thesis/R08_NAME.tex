@@ -214,11 +214,13 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   \label{lem:quantile}
   $S_1,\dots,S_{n+1}$ を交換可能な実数値確率変数とし、
   $S_{(1)}\le\cdots\le S_{(n)}$ を $S_1,\dots,S_n$ の順序統計量、
-  $S_{(n+1)}:=+\infty$ とする。$m\in\{1,\dots,n+1\}$ に対し、次が成り立つ。
+  $S_{(n+1)}:=+\infty$ とする。このとき次が成り立つ。
   \begin{enumerate}
-    \item[(i)] $\displaystyle \Prob\bigl(S_{n+1}\le S_{(m)}\bigr)\ \ge\ \frac{m}{n+1}$.
-    \item[(ii)] さらに確率 $1$ で $S_1,\dots,S_{n+1}$ が相異なるならば、(i) は等号で成り立つ。
-    \item[(iii)] $\beta\in(0,1)$ に対し
+    \item[(i)] 任意の $m\in\{1,\dots,n+1\}$ に対し
+      $\displaystyle \Prob\bigl(S_{n+1}\le S_{(m)}\bigr)\ \ge\ \frac{m}{n+1}$.
+    \item[(ii)] さらに確率 $1$ で $S_1,\dots,S_{n+1}$ が相異なるならば、
+      任意の $m\in\{1,\dots,n+1\}$ について (i) は等号で成り立つ。
+    \item[(iii)] 任意の $\beta\in(0,1)$ に対し
       $\displaystyle \Prob\bigl(S_{n+1}\le S_{(\lceil(n+1)\beta\rceil)}\bigr)\ \ge\ \beta$.
   \end{enumerate}
 \end{lemma}
@@ -229,7 +231,7 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
     \label{eq:min-rank}
     R_j:=1+\#\{\,i\in\{1,\dots,n+1\}: S_i<S_j\,\}
   \end{equation}
-  で定める。
+  で定める。(a)〜(d) では $m\in\{1,\dots,n+1\}$ を固定して (i)(ii) を示す。
 
   \textbf{(a) 事象の書き換え.}
   $\{S_{n+1}\le S_{(m)}\}=\{R_{n+1}\le m\}$ が成り立つことを示す。
