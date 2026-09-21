@@ -38,12 +38,14 @@
 \newtheorem{proposition}[definition]{命題}
 \theoremstyle{remark}
 \newtheorem{remark}[definition]{注意}
+\renewcommand{\proofname}{証明}
 
 %% 本論文で使う記法（第2章で定義する）
 \newcommand{\Prob}{\mathbb{P}}
 \newcommand{\Exp}{\mathbb{E}}
 \newcommand{\Real}{\mathbb{R}}
-\newcommand{\Ind}{\mathbb{1}}
+\newcommand{\Ind}{\mathbf{1}}                  % 指示関数（\mathbb{1} は amssymb に無い）
+\newcommand{\eqd}{\overset{d}{=}}               % 分布が等しい
 \newcommand{\Dtr}{\mathcal{D}_{\mathrm{tr}}}     % 学習用データ
 \newcommand{\Dcal}{\mathcal{D}_{\mathrm{cal}}}   % 較正用データ
 \newcommand{\qhat}{\hat{q}}
@@ -109,40 +111,318 @@
 %% 本論文の中核。実装は src/conformal/split.py に対応する。
 
 \subsection{アルゴリズムの定式化}
-%% TODO: 学習用／較正用への分割、非適合度スコア、共形分位点、予測区間。
-%%       k = \lceil (n+1)(1-\alpha) \rceil であることを強調する。
+\label{sec:split-algorithm}
+%% 仕様書: thesis/drafts/main_theorem_spec.md「設定と記号」に対応する。
+%% 実装は src/conformal/split.py。式番号は付録Aの対応表で使う。
+
+入力空間を $\mathcal{X}$ とし、データ点を $Z_i=(X_i,Y_i)\in\mathcal{X}\times\Real$ と書く。
+分割等角予測では、手元のデータを\textbf{学習用データ} $\Dtr$ と
+\textbf{較正用データ} $\Dcal=(Z_1,\dots,Z_n)$ に分け、これから予測したい
+\textbf{テスト点}を $Z_{n+1}=(X_{n+1},Y_{n+1})$ とする。$Y_{n+1}$ は未知である。
+以下、$n$ は常に較正用データの個数を表す。
+
+\textbf{学習アルゴリズム} $\mathcal{A}$ は、学習用データ $d$ を受け取り
+関数 $\mathcal{A}(d)\colon\mathcal{X}\to\Real$ を返す写像であり、点予測器を
+$\fhat:=\mathcal{A}(\Dtr)$ とおく。$\mathcal{A}$ が乱数を用いる場合は、
+その乱数も $\Dtr$ に含めて考える。
+
+\textbf{非適合度スコア}を
+\begin{equation}
+  \label{eq:score}
+  S_i := |Y_i-\fhat(X_i)| \qquad (i=1,\dots,n+1)
+\end{equation}
+と定める。$S_{(1)}\le\cdots\le S_{(n)}$ を較正用データのスコア $S_1,\dots,S_n$ の
+順序統計量（重複を込めて小さい順に並べたもの）とし、規約として
+$S_{(n+1)}:=+\infty$ とおく。
+
+誤り率 $\alpha\in(0,1)$ に対し、\textbf{共形分位点}を
+\begin{equation}
+  \label{eq:khat}
+  k:=\bigl\lceil (n+1)(1-\alpha)\bigr\rceil, \qquad \qhat:=S_{(k)}
+\end{equation}
+で定める。掛ける数が $n$ ではなく $n+1$ であることに注意する。
+$0<(n+1)(1-\alpha)<n+1$ より $k\in\{1,\dots,n+1\}$ である。
+\textbf{予測区間}は
+\begin{equation}
+  \label{eq:interval}
+  C(x):=\bigl[\,\fhat(x)-\qhat,\ \fhat(x)+\qhat\,\bigr]
+\end{equation}
+とする（$\qhat=+\infty$ のときは $C(x)=\Real$）。
+
+以下、確率変数 $A,B$ について $A\eqd B$ は $A$ と $B$ の分布が等しいことを表す。
+$\#E$ は有限集合 $E$ の要素数、$\Ind\{\cdot\}$ は指示関数とする。
+本章に現れる写像はすべて可測であるとする。
 
 \subsection{被覆保証}
+\label{sec:coverage-guarantee}
+%% 仕様書: thesis/drafts/main_theorem_spec.md「仮定」〜「注意」に対応する。
+%% 論理構成は 補題1（スコアの交換可能性）→ 補題2（順序統計量の補題）
+%% → 定理3（下界）→ 系4（上界）。論理を変えるときは仕様書を先に直すこと。
 
-\begin{lemma}[順序統計量の補題]
-%% TODO: 交換可能な S_1,...,S_{n+1} に対し
-%%   \Prob( S_{n+1} \le S_{(\lceil (n+1)\beta \rceil)} ) \ge \beta
+本章の主定理は次の仮定のもとで述べる。
+\begin{itemize}
+  \item[\textbf{(A1)}] \textbf{交換可能性.}
+    $\{1,\dots,n+1\}$ の任意の置換 $\pi$ について
+    \begin{equation*}
+      (Z_{\pi(1)},\dots,Z_{\pi(n+1)}) \eqd (Z_1,\dots,Z_{n+1}).
+    \end{equation*}
+  \item[\textbf{(A2)}] \textbf{学習用データの独立性.}
+    $\Dtr$ は $(Z_1,\dots,Z_{n+1})$ と独立である。
+  \item[\textbf{(A3)}] \textbf{スコアの非重複.}
+    $(\Dtr,Z_1,\dots,Z_{n+1})$ の同時分布のもとで、確率 $1$ で
+    $S_1,\dots,S_{n+1}$ は相異なる。
+\end{itemize}
+$Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も仮定しない。
+(A3) は上界（系~\ref{cor:upper}）でのみ用いる。
+
+\begin{lemma}[スコアの交換可能性]
+  \label{lem:score-exch}
+  (A1)(A2) のもとで、$(S_1,\dots,S_{n+1})$ は交換可能である。
 \end{lemma}
 
 \begin{proof}
-%% TODO: 交換可能性より S_{n+1} の順位は一様。それだけで示せる。
+  $z_i=(x_i,y_i)$ として、写像 $G$ を
+  \begin{equation*}
+    G(d,z_1,\dots,z_{n+1})
+    :=\bigl(\,|y_1-\mathcal{A}(d)(x_1)|,\ \dots,\ |y_{n+1}-\mathcal{A}(d)(x_{n+1})|\,\bigr)
+  \end{equation*}
+  で定める。$G$ はランダム性を含まない固定された写像であり、
+  $Z:=(Z_1,\dots,Z_{n+1})$ とおけば $(S_1,\dots,S_{n+1})=G(\Dtr,Z)$ である。
+
+  置換 $\pi$ を任意にとり、$Z_\pi:=(Z_{\pi(1)},\dots,Z_{\pi(n+1)})$ とおく。
+  $G$ は各座標に同じ写像 $(x,y)\mapsto|y-\mathcal{A}(d)(x)|$ を適用するので
+  \begin{equation*}
+    (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi).
+  \end{equation*}
+  (A2) より $\Dtr$ は $Z$ と独立であり、$Z_\pi$ は $Z$ の関数だから
+  $\Dtr$ は $Z_\pi$ とも独立である。独立な確率変数の組の同時分布は
+  それぞれの分布だけで定まり、(A1) より $Z_\pi\eqd Z$ であるから
+  \begin{equation*}
+    (\Dtr,Z_\pi)\eqd(\Dtr,Z).
+  \end{equation*}
+  同分布な確率変数に同じ固定された写像を適用したものは同分布なので
+  \begin{equation*}
+    (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi)\eqd G(\Dtr,Z)=(S_1,\dots,S_{n+1}).
+    \qedhere
+  \end{equation*}
 \end{proof}
 
+用いたのは、$\fhat$ が $\Dtr$ のみから定まること、および全座標に同じ
+スコア関数を適用していることだけである。条件付き確率は用いない。
+
+\begin{lemma}[順序統計量の補題]
+  \label{lem:quantile}
+  $S_1,\dots,S_{n+1}$ を交換可能な実数値確率変数とし、
+  $S_{(1)}\le\cdots\le S_{(n)}$ を $S_1,\dots,S_n$ の順序統計量、
+  $S_{(n+1)}:=+\infty$ とする。$m\in\{1,\dots,n+1\}$ に対し、次が成り立つ。
+  \begin{enumerate}
+    \item[(i)] $\displaystyle \Prob\bigl(S_{n+1}\le S_{(m)}\bigr)\ \ge\ \frac{m}{n+1}$.
+    \item[(ii)] さらに確率 $1$ で $S_1,\dots,S_{n+1}$ が相異なるならば、(i) は等号で成り立つ。
+    \item[(iii)] $\beta\in(0,1)$ に対し
+      $\displaystyle \Prob\bigl(S_{n+1}\le S_{(\lceil(n+1)\beta\rceil)}\bigr)\ \ge\ \beta$.
+  \end{enumerate}
+\end{lemma}
+
+\begin{proof}
+  各 $j\in\{1,\dots,n+1\}$ に対し、$S_j$ の順位（同順位には最小の順位を与える）を
+  \begin{equation}
+    \label{eq:min-rank}
+    R_j:=1+\#\{\,i\in\{1,\dots,n+1\}: S_i<S_j\,\}
+  \end{equation}
+  で定める。
+
+  \textbf{(a) 事象の書き換え.}
+  $\{S_{n+1}\le S_{(m)}\}=\{R_{n+1}\le m\}$ が成り立つことを示す。
+
+  $m=n+1$ のときは、$S_{(n+1)}=+\infty$ であり、$R_{n+1}\le n+1$ も常に成り立つので、
+  両辺とも全事象である。
+
+  $m\le n$ とする。$N:=\#\{\,i\le n: S_i<S_{n+1}\,\}$ とおくと、
+  $S_{n+1}<S_{n+1}$ は成り立たないので $R_{n+1}=N+1$ である。まず
+  \begin{equation}
+    \label{eq:order-vs-count}
+    S_{(m)}<S_{n+1}\iff N\ge m
+  \end{equation}
+  を示す。$\sigma$ を $S_{(l)}=S_{\sigma(l)}$（$l=1,\dots,n$）となる
+  $\{1,\dots,n\}$ の置換とする。
+
+  ($\Rightarrow$) $S_{(m)}<S_{n+1}$ ならば、$l\le m$ に対し
+  $S_{\sigma(l)}=S_{(l)}\le S_{(m)}<S_{n+1}$ である。
+  $\sigma(1),\dots,\sigma(m)$ は相異なる $m$ 個の添字なので $N\ge m$。
+
+  ($\Leftarrow$) $B:=\{\,i\le n: S_i<S_{n+1}\,\}$ とおく。
+  $i\in B$ かつ $l\in\{1,\dots,n\}\setminus B$ ならば $S_i<S_{n+1}\le S_l$ であるから、
+  $B$ に属する添字の値は、属さない添字の値のいずれよりも真に小さい。
+  よって小さい方から $\#B=N$ 個の順序統計量 $S_{(1)},\dots,S_{(N)}$ は
+  すべて $S_{n+1}$ より小さい。$m\le N$ より $S_{(m)}<S_{n+1}$。
+
+  \eqref{eq:order-vs-count} の両辺の否定をとれば
+  $S_{n+1}\le S_{(m)}\iff N\le m-1\iff R_{n+1}\le m$ を得る。
+
+  \textbf{(b) 対称性.}
+  各 $j$ について $R_j\eqd R_{n+1}$ である。
+
+  $j=n+1$ のときは自明なので、$j\le n$ とする。
+  写像 $\rho\colon\Real^{n+1}\to\mathbb{N}$ を
+  \begin{equation*}
+    \rho(t_1,\dots,t_{n+1}):=1+\#\{\,i: t_i<t_{n+1}\,\}
+  \end{equation*}
+  で定める（最後の座標の順位を返す固定された写像）。
+  $\tau$ を $j$ と $n+1$ を入れ替える互換とし、
+  $T:=(S_{\tau(1)},\dots,S_{\tau(n+1)})$ とおく。
+  交換可能性より $T\eqd(S_1,\dots,S_{n+1})$ である。
+  $T$ の最後の座標は $S_{\tau(n+1)}=S_j$ であり、$\tau$ は全単射だから
+  \begin{equation*}
+    \rho(T)=1+\#\{\,i: S_{\tau(i)}<S_j\,\}=1+\#\{\,i': S_{i'}<S_j\,\}=R_j.
+  \end{equation*}
+  一方 $\rho(S_1,\dots,S_{n+1})=R_{n+1}$ である。
+  同分布なものに同じ固定された写像を適用したので $R_j\eqd R_{n+1}$。
+
+  \textbf{(c) 数え上げ.}
+  常に
+  \begin{equation}
+    \label{eq:rank-count}
+    \sum_{j=1}^{n+1}\Ind\{R_j\le m\}\ \ge\ m
+  \end{equation}
+  が成り立ち、$S_1,\dots,S_{n+1}$ が相異なるときは等号が成り立つ。
+
+  $\{1,\dots,n+1\}$ の置換 $\sigma'$ を
+  $S_{\sigma'(1)}\le\cdots\le S_{\sigma'(n+1)}$ となるようにとる。
+  $S_i<S_{\sigma'(l)}$ を満たす $i$ は $i=\sigma'(l')$（$l'<l$）の形に限られる
+  （$l'\ge l$ ならば $S_{\sigma'(l')}\ge S_{\sigma'(l)}$ だから）。
+  よって $R_{\sigma'(l)}\le l$ であり、$\sigma'(1),\dots,\sigma'(m)$ の $m$ 個の添字は
+  すべて $R_j\le m$ を満たす。相異なるときは
+  $S_{\sigma'(1)}<\cdots<S_{\sigma'(n+1)}$ より $R_{\sigma'(l)}=l$ となるので、
+  $R_j\le m$ を満たす添字はちょうど $m$ 個である。
+
+  \textbf{(d) 結論.}
+  \eqref{eq:rank-count} の両辺の期待値をとると、期待値の線形性と
+  $\Exp[\Ind\{E\}]=\Prob(E)$ より
+  \begin{equation*}
+    \sum_{j=1}^{n+1}\Prob(R_j\le m)\ \ge\ m.
+  \end{equation*}
+  (b) より左辺の各項は $\Prob(R_{n+1}\le m)$ に等しいので、
+  $(n+1)\,\Prob(R_{n+1}\le m)\ge m$。(a) と合わせて (i) を得る。
+  確率 $1$ で相異なるときは \eqref{eq:rank-count} の等号が確率 $1$ で成り立つので、
+  同じ計算で (ii) を得る。
+
+  最後に $\beta\in(0,1)$ とし、$m:=\lceil(n+1)\beta\rceil$ とおく。
+  $0<(n+1)\beta<n+1$ より $m\in\{1,\dots,n+1\}$ であり、$m\ge(n+1)\beta$ である。
+  (i) より $\Prob(S_{n+1}\le S_{(m)})\ge m/(n+1)\ge\beta$ となり、(iii) を得る。
+\end{proof}
+
+本補題は交換可能性のみを用い、スコアの分布の形には依存しない。
+相異なることは (ii) でのみ用いる。
+
 \begin{theorem}[有限標本被覆保証]
-%% TODO: 1-\alpha \le \Prob(Y_{n+1} \in C(X_{n+1})) \le 1-\alpha+1/(n+1)
+  \label{thm:coverage}
+  (A1)(A2) のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)\ \ge\ 1-\alpha.
+  \end{equation*}
 \end{theorem}
 
 \begin{proof}
-%% TODO:
+  まず
+  \begin{equation}
+    \label{eq:cover-iff}
+    Y_{n+1}\in C(X_{n+1})\iff S_{n+1}\le\qhat
+  \end{equation}
+  を示す。$\qhat=+\infty$ のときは両辺とも常に成り立つ。$\qhat<\infty$ のときは
+  \begin{equation*}
+    Y_{n+1}\in C(X_{n+1})
+    \iff -\qhat\le Y_{n+1}-\fhat(X_{n+1})\le\qhat
+    \iff |Y_{n+1}-\fhat(X_{n+1})|\le\qhat
+    \iff S_{n+1}\le\qhat.
+  \end{equation*}
+
+  補題~\ref{lem:score-exch} より $(S_1,\dots,S_{n+1})$ は交換可能である。
+  $\beta:=1-\alpha\in(0,1)$ とおくと $\lceil(n+1)\beta\rceil=k$ であるから、
+  \eqref{eq:cover-iff} と補題~\ref{lem:quantile}~(iii) より
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)
+    =\Prob\bigl(S_{n+1}\le S_{(k)}\bigr)\ \ge\ 1-\alpha.
+    \qedhere
+  \end{equation*}
 \end{proof}
+
+\begin{corollary}[上界]
+  \label{cor:upper}
+  (A1)(A2)(A3) のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\frac{k}{n+1}
+  \end{equation*}
+  であり、特に
+  \begin{equation}
+    \label{eq:two-sided}
+    1-\alpha\ \le\ \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)\ \le\ 1-\alpha+\frac{1}{n+1}.
+  \end{equation}
+\end{corollary}
+
+\begin{proof}
+  \eqref{eq:cover-iff}、補題~\ref{lem:score-exch}、および
+  補題~\ref{lem:quantile}~(ii)（$m=k$）より
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\Prob\bigl(S_{n+1}\le S_{(k)}\bigr)=\frac{k}{n+1}.
+  \end{equation*}
+  $u:=(n+1)(1-\alpha)$ とおくと、天井関数の定義より $u\le\lceil u\rceil=k<u+1$ である。
+  これを $n+1$ で割れば
+  \begin{equation*}
+    1-\alpha\ \le\ \frac{k}{n+1}\ <\ 1-\alpha+\frac{1}{n+1}
+  \end{equation*}
+  となり、\eqref{eq:two-sided} を得る。
+\end{proof}
+
+証明から分かるように、上界は実際には狭義の不等号 $<$ で成り立つ。
+\eqref{eq:two-sided} では文献に合わせて $\le$ で述べた。
+
+\begin{remark}[周辺的な保証]
+  \label{rem:marginal}
+  定理~\ref{thm:coverage}・系~\ref{cor:upper} の確率は
+  $(\Dtr,Z_1,\dots,Z_{n+1})$ の同時分布に関するものである。
+  $X_{n+1}=x$ で条件づけた被覆
+  $\Prob(Y_{n+1}\in C(x)\mid X_{n+1}=x)\ge1-\alpha$ や、
+  較正用データで条件づけた被覆は保証しない。
+\end{remark}
+
+\begin{remark}[(A3) の必要性]
+  \label{rem:a3}
+  (A3) がなければ系~\ref{cor:upper} は一般に成り立たない。
+  例えばスコアが確率 $1$ ですべて等しい場合
+  （ノイズのないデータを誤差なく予測するモデルなど）、被覆確率は $1$ であり、
+  $\alpha>1/(n+1)$ ならば上界 $1-\alpha+1/(n+1)$ を超える。
+\end{remark}
+
+\begin{remark}[仮定の使用箇所]
+  \label{rem:assumptions}
+  (A1)(A2) は補題~\ref{lem:score-exch} でのみ、(A3) は
+  補題~\ref{lem:quantile}~(ii) を通じて系~\ref{cor:upper} でのみ用いる。
+  予測モデルの作り方 $\mathcal{A}$ と $Z_i$ の分布には、どこでも条件を課していない。
+\end{remark}
+
+\begin{remark}[$\alpha<1/(n+1)$ の場合]
+  \label{rem:small-alpha}
+  $k=n+1$、$\qhat=+\infty$ となり $C(x)=\Real$ である。
+  被覆確率は $1$ であり、定理~\ref{thm:coverage}・系~\ref{cor:upper} は
+  この場合も含めて成り立つ。
+\end{remark}
 
 \subsection{上界の意味：保証は保守的すぎない}
 %% TODO: 下界だけでなく上界も効いていること。同点が確率0であることの仮定。
+%%       系 \ref{cor:upper} と注意 \ref{rem:a3} を受けて書く。
 
 \subsection{同点の扱い}
 %% TODO: 離散スコアの場合のtie-breaking。
+%%       下界は同点があっても成り立つ（補題 \ref{lem:quantile} (i) は最小順位で
+%%       (A3) なしに示してある）。崩れるのは上界（系 \ref{cor:upper}）だけ。
+%%       tests/test_ties_discrete.py がこれを固定している。
 
 \subsection{被覆率そのものの分布}
 %% TODO: 較正集合を固定したときの被覆率は Beta(n+1-l, l), l=\lfloor (n+1)\alpha \rfloor
 %%       （Vovk 2012）。第5章 E1 の検証対象。
 
 \subsection{何を保証していないか：条件付き被覆}
-%% TODO: 周辺被覆と条件付き被覆の区別。
+%% TODO: 周辺被覆と条件付き被覆の区別。注意 \ref{rem:marginal} から始める。
 %%       Barber et al. (2021) の不可能性定理を紹介する。
 %%       ★ここが本論文の深さを出す節。第5章E3と第7章に接続する。
 
