@@ -7,9 +7,12 @@
 周辺被覆が 1-alpha を満たしていても、部分集団ごとの被覆は大きく割れる。
 その割れを正規化残差スコアと CQR がどこまで均せるかを測る。
 
-Barber et al. (2021) の不可能性定理により、分布に仮定を置かない限り条件付き被覆は
-原理的に達成できない。したがって (b)(c) でも層別被覆は平らにならない。
-この実験が測るのは「ゼロになるか」ではなく「どこまで縮むか」である。
+(a)(b)(c) はいずれも単一の共形分位点で周辺較正する手法なので、層別被覆は
+平らにならない（(b)(c) の改善が近似的なのはスコアの正規化が不完全なため）。
+不可能性定理（卒論 thm:x-conditional-impossible）が禁じるのは各点 x での条件付けであり、
+事前に固定した層ごとの被覆は層ごとに較正すれば保証できる（prop:x-conditional-group）。
+この実験は、周辺較正の手法について層別被覆を診断量として測るものであり、
+測るのは「ゼロになるか」ではなく「どこまで縮むか」である。
 
 実行:
     python experiments/e3_conditional.py --seed 20260901
@@ -406,7 +409,7 @@ def judge(summary: pd.DataFrame, marg: pd.DataFrame) -> None:
         print(f"    {LABELS[key]:12} gap {gaps[key]:.4f} "
               f"({gaps[key] / gaps['abs']:.0%} に縮小)  {ok if shrink[key] else ng}"
               f"   最悪層 {worst[key]:.4f}  {ok if improved[key] else ng}")
-    print("  ※ 不可能性定理により平らにはならない。どこまで縮むかを測る実験である")
+    print("  ※ 周辺較正なので平らにはならない（正規化が不完全なぶん残る）。どこまで縮むかを測る実験である")
 
     # --- C4: (c) の区間が適応的である ---
     rho_cqr = float(summary[summary["method"] == "cqr"]["spearman_bin_width"].iloc[0])
