@@ -31,6 +31,7 @@
 
 \theoremstyle{definition}
 \newtheorem{definition}{定義}[section]
+\newtheorem{example}[definition]{例}
 \theoremstyle{plain}
 \newtheorem{lemma}[definition]{補題}
 \newtheorem{theorem}[definition]{定理}
@@ -92,12 +93,299 @@
 %%=====================================================================
 
 \subsection{記法}
+\label{sec:notation}
+%% 仕様書: thesis/drafts/chapter2_spec.md「2.1 記法」に対応する。
+
+確率空間 $(\Omega,\mathcal{F},\Prob)$ を固定し、確率変数はすべてその上で
+定義されているとする。期待値を $\Exp$ と書く。「確率変数」という語は、
+実数値のものに限らず、ベクトルやデータ点の有限列に値をとるもの（確率要素）にも用いる。
+\textbf{本論文に現れる写像はすべて可測であるとする。}
+i.i.d.\ は「独立かつ同分布」の略である。
+
+\begin{definition}[同分布]
+  \label{def:eqd}
+  同じ空間に値をとる確率変数 $A,B$ について、任意の可測集合 $E$ に対し
+  $\Prob(A\in E)=\Prob(B\in E)$ が成り立つとき、$A$ と $B$ は\textbf{同分布}であるといい、
+  $A\eqd B$ と書く。これは $A=B$（値として等しい）とは異なる。
+\end{definition}
+
+\begin{proposition}[同分布の像]
+  \label{prop:image}
+  $A\eqd B$ であり、$g$ がランダム性を含まない写像ならば、$g(A)\eqd g(B)$ である。
+\end{proposition}
+
+\begin{proof}
+  任意の可測集合 $E$ について
+  \begin{equation*}
+    \Prob(g(A)\in E)=\Prob(A\in g^{-1}(E))=\Prob(B\in g^{-1}(E))=\Prob(g(B)\in E).
+    \qedhere
+  \end{equation*}
+\end{proof}
+
+\begin{proposition}[独立な組の同分布]
+  \label{prop:indep-pair}
+  $A$ と $B$ が独立、$A$ と $B'$ が独立で、$B\eqd B'$ ならば、$(A,B)\eqd(A,B')$ である。
+\end{proposition}
+
+\begin{proof}
+  任意の可測集合 $E,F$ について
+  \begin{equation*}
+    \Prob(A\in E,\ B\in F)=\Prob(A\in E)\,\Prob(B\in F)
+    =\Prob(A\in E)\,\Prob(B'\in F)=\Prob(A\in E,\ B'\in F).
+  \end{equation*}
+  直積集合 $E\times F$ の全体は共通部分について閉じており（$\pi$ 系）、
+  組の値の空間の積 $\sigma$-加法族を生成する。よって測度の一意性定理
+  （$\pi$-$\lambda$ 定理）より、$(A,B)$ と $(A,B')$ の同時分布は一致する。
+\end{proof}
+
+\paragraph{天井関数と床関数.}
+$u\in\Real$ に対し $\lceil u\rceil:=\min\{\,m\in\mathbb{Z}: m\ge u\,\}$、
+$\lfloor u\rfloor:=\max\{\,m\in\mathbb{Z}: m\le u\,\}$ とする。このとき
+\begin{equation}
+  \label{eq:ceil-bounds}
+  u\ \le\ \lceil u\rceil\ <\ u+1
+\end{equation}
+が成り立つ。左の不等式は定義から従う。右は、$\lceil u\rceil\ge u+1$ ならば
+$\lceil u\rceil-1$ も $u$ 以上の整数となり、最小性に反することから従う。
+また整数 $c$ と実数 $x$ について $c\ge x\iff c\ge\lceil x\rceil$ である。
+
+\paragraph{その他の記法.}
+$\#E$ は有限集合 $E$ の要素数、$\Ind\{\cdot\}$ は指示関数
+（条件が成り立てば $1$、成り立たなければ $0$）とする。
+$\Exp[\Ind\{E\}]=\Prob(E)$ である。
+$\{1,\dots,N\}$ から自分自身への全単射を\textbf{置換}といい、その全体を
+$\mathfrak{S}_N$ と書く。$2$ つの元だけを入れ替えて他を動かさない置換を
+\textbf{互換}という。列 $w=(w_1,\dots,w_N)$ と $\pi\in\mathfrak{S}_N$ に対し、
+$w_\pi:=(w_{\pi(1)},\dots,w_{\pi(N)})$ と書く。
 
 \subsection{交換可能性}
-%% TODO: 定義。i.i.d. より真に弱いことを例で示す（有限母集団からの非復元抽出）。
+\label{sec:exchangeability}
+%% 仕様書: thesis/drafts/chapter2_spec.md「2.2 交換可能性」に対応する。
+
+\begin{definition}[交換可能性]
+  \label{def:exch}
+  同じ空間に値をとる確率変数の列 $W=(W_1,\dots,W_N)$ が\textbf{交換可能}であるとは、
+  任意の $\pi\in\mathfrak{S}_N$ について $W_\pi\eqd W$、すなわち
+  \begin{equation*}
+    (W_{\pi(1)},\dots,W_{\pi(N)})\eqd(W_1,\dots,W_N)
+  \end{equation*}
+  が成り立つことをいう。
+\end{definition}
+
+並び順を入れ替えても同時分布が変わらない、という性質である。
+
+\begin{proposition}[i.i.d.\ ならば交換可能]
+  \label{prop:iid-exch}
+  $W_1,\dots,W_N$ が i.i.d.\ ならば、$(W_1,\dots,W_N)$ は交換可能である。
+\end{proposition}
+
+\begin{proof}
+  共通の分布を $\mu$ とする。$\pi\in\mathfrak{S}_N$ と可測集合 $E_1,\dots,E_N$ について、
+  $W_{\pi(1)},\dots,W_{\pi(N)}$ も独立なので
+  \begin{equation*}
+    \Prob(W_{\pi(1)}\in E_1,\dots,W_{\pi(N)}\in E_N)
+    =\prod_{l=1}^{N}\mu(E_l)
+    =\Prob(W_1\in E_1,\dots,W_N\in E_N).
+  \end{equation*}
+  直積集合の上で同時分布が一致するので、命題~\ref{prop:indep-pair} の証明と同じく
+  一意性定理より $W_\pi\eqd W$ である。
+\end{proof}
+
+逆は成り立たない（例~\ref{ex:without-replacement}）。
+
+\begin{proposition}[部分列と周辺分布]
+  \label{prop:subvector}
+  $(W_1,\dots,W_N)$ が交換可能ならば、次が成り立つ。
+  \begin{enumerate}
+    \item[(i)] 任意の $M\le N$ について、$(W_1,\dots,W_M)$ も交換可能である。
+    \item[(ii)] 任意の $i$ について $W_i\eqd W_1$ である。
+  \end{enumerate}
+\end{proposition}
+
+\begin{proof}
+  (i) $\sigma\in\mathfrak{S}_M$ を、$M+1,\dots,N$ を動かさない $\pi\in\mathfrak{S}_N$ に
+  延長すると $W_\pi\eqd W$。最初の $M$ 座標を取り出す写像に命題~\ref{prop:image} を
+  適用すれば $(W_{\sigma(1)},\dots,W_{\sigma(M)})\eqd(W_1,\dots,W_M)$ を得る。
+  (ii) $\pi$ を $1$ と $i$ の互換とすると $W_\pi$ の最初の座標は $W_i$ である。
+  最初の座標を取り出す写像に命題~\ref{prop:image} を適用すれば $W_i\eqd W_1$ を得る。
+\end{proof}
+
+\begin{example}[非復元抽出]
+  \label{ex:without-replacement}
+  値 $a_1,\dots,a_N$（重複してもよい）が書かれた $N$ 枚のカードを、$1$ 枚ずつ
+  非復元で引く。これは $\mathfrak{S}_N$ 上の一様分布に従う置換 $\Pi$ を用いて、
+  $W_i:=a_{\Pi(i)}$（$i=1,\dots,N$）と表せる。
+
+  \textbf{交換可能である.}
+  $h(\psi):=(a_{\psi(1)},\dots,a_{\psi(N)})$ とおくと、$\sigma\in\mathfrak{S}_N$ に対し
+  $W_\sigma=h(\Pi\circ\sigma)$ である。$\psi\mapsto\psi\circ\sigma$ は
+  $\mathfrak{S}_N$ 上の全単射なので $\Pi\circ\sigma$ も一様分布に従い、
+  $\Pi\circ\sigma\eqd\Pi$。命題~\ref{prop:image} より
+  $W_\sigma=h(\Pi\circ\sigma)\eqd h(\Pi)=W$ である。
+  命題~\ref{prop:subvector}~(i) より、最初の $M$ 回の結果 $(W_1,\dots,W_M)$
+  （$M\le N$）も交換可能である。
+
+  \textbf{独立ではない.}
+  $N=2$、$(a_1,a_2)=(0,1)$ とすると常に $W_1+W_2=1$ なので
+  \begin{equation*}
+    \Prob(W_1=1,\ W_2=1)=0\ \ne\ \frac14=\Prob(W_1=1)\,\Prob(W_2=1).
+  \end{equation*}
+
+  したがって交換可能性は i.i.d.\ より真に弱い。さらに $N=n+1$ とすると、
+  $W_1,\dots,W_n$ が決まれば残りの $1$ 枚 $W_{n+1}$ も決まる。交換可能であっても、
+  最初の $n$ 個を与えたときの $W_{n+1}$ の条件付き分布は、i.i.d.\ の場合とは
+  大きく異なりうる。
+\end{example}
+
+\begin{remark}[交換可能性が破れる典型例]
+  \label{rem:exch-violation}
+  第\ref{sec:split-theory}章の保証は、較正用データとテスト点を合わせた列の
+  交換可能性に依存する。次のような場合には、一般に交換可能性は成り立たない。
+  \begin{itemize}
+    \item \textbf{時系列.} トレンドや自己相関があると、後から来るデータほど分布がずれ、
+      並び順に意味が生じる。
+    \item \textbf{共変量シフト.} テスト点の入力の分布が較正用データと異なる場合
+      （\ref{sec:covariate-shift}節、第\ref{sec:experiments}章 E4）。
+    \item \textbf{並び順やデータに依存する選び方.} 例えば、較正用データを予測がよく
+      当たった点から選ぶと、較正用データとテスト点は対等でなくなる。
+  \end{itemize}
+\end{remark}
 
 \subsection{順序統計量と経験分位点}
-%% TODO: 経験分位点の定義に注意。線形補間ではなく順序統計量を使う。
+\label{sec:order-statistics}
+%% 仕様書: thesis/drafts/chapter2_spec.md「2.3 順序統計量と経験分位点」に対応する。
+%% 実装: src/conformal/split.py の conformal_quantile は np.sort(scores)[k-1] で
+%% 定義 2.9 の順序統計量を直接取る（注意 rem:quantile-types の補間を使わない）。
+
+この節では実数の組 $s_1,\dots,s_n$（$n\ge1$）について定義し、確率変数の組には
+各 $\omega\in\Omega$ ごとに適用する。
+
+\begin{definition}[順序統計量]
+  \label{def:order-stat}
+  $s_{\sigma(1)}\le\cdots\le s_{\sigma(n)}$ となる $\sigma\in\mathfrak{S}_n$
+  （小さい順に並べる置換）をとり、
+  \begin{equation*}
+    s_{(l)}:=s_{\sigma(l)}\quad(l=1,\dots,n),\qquad s_{(n+1)}:=+\infty
+  \end{equation*}
+  と定める。$s_{(l)}$ を $l$ 番目の\textbf{順序統計量}という。
+  同点があれば同じ値が重複して並ぶ。
+\end{definition}
+
+このような $\sigma$ は常に存在するが、同点があると一意ではない。
+$s_{(l)}$ が $\sigma$ の選び方によらないことは補題~\ref{lem:order-count} で示す。
+規約 $s_{(n+1)}:=+\infty$ は第\ref{sec:split-theory}章の共形分位点で用いる
+（命題~\ref{prop:aug-quantile} の後の注を参照）。
+
+\begin{lemma}[数え上げによる特徴づけ]
+  \label{lem:order-count}
+  $l\in\{1,\dots,n\}$、$t\in\Real$ に対し、次が成り立つ。
+  \begin{enumerate}
+    \item[(i)] $s_{(l)}\le t\iff\#\{\,i: s_i\le t\,\}\ge l$
+    \item[(ii)] $s_{(l)}<t\iff\#\{\,i: s_i<t\,\}\ge l$
+  \end{enumerate}
+  特に $s_{(l)}=\min\{\,t\in\Real:\#\{i: s_i\le t\}\ge l\,\}$ であり、
+  $s_{(l)}$ は $\sigma$ の選び方によらない。
+\end{lemma}
+
+\begin{proof}
+  $\sigma$ を定義~\ref{def:order-stat} の置換とする。
+
+  (i) ($\Rightarrow$) $j\le l$ ならば $s_{\sigma(j)}=s_{(j)}\le s_{(l)}\le t$ なので、
+  相異なる $l$ 個の添字 $\sigma(1),\dots,\sigma(l)$ が $s_i\le t$ を満たす。
+  ($\Leftarrow$) 対偶を示す。$s_{(l)}>t$ ならば、$j\ge l$ について
+  $s_{\sigma(j)}\ge s_{(l)}>t$ なので、$s_i\le t$ を満たす添字は
+  $\sigma(1),\dots,\sigma(l-1)$ の中にしかなく、高々 $l-1$ 個である。
+
+  (ii) (i) の証明で「$\le t$」を「$<t$」に、「$>t$」を「$\ge t$」に置き換えればよい。
+
+  最後の主張について、(i) より
+  $\{\,t:\#\{i: s_i\le t\}\ge l\,\}=[\,s_{(l)},\infty)$ であり、左辺は $\sigma$ によらない。
+\end{proof}
+
+確率変数 $S_1,\dots,S_n$ については、(i) より
+\begin{equation*}
+  \{S_{(l)}\le t\}=\bigcup_{I}\ \bigcap_{i\in I}\{S_i\le t\}
+\end{equation*}
+（$I$ は $\{1,\dots,n\}$ の $l$ 元部分集合を動く）が事象となるので、
+$S_{(l)}$ は確率変数である。同点があっても、この補題は添字の個数を数えているので
+成り立つ。
+
+\begin{definition}[経験分布関数と経験分位点]
+  \label{def:emp-quantile}
+  \begin{equation*}
+    \hat F_n(t):=\frac1n\,\#\{\,i: s_i\le t\,\}\qquad(t\in\Real)
+  \end{equation*}
+  を\textbf{経験分布関数}という。$\beta\in(0,1]$ に対し
+  \begin{equation*}
+    \hat Q_n(\beta):=\min\{\,t\in\Real:\hat F_n(t)\ge\beta\,\}
+  \end{equation*}
+  を\textbf{経験 $\beta$ 分位点}という
+  （最小値の存在は命題~\ref{prop:emp-quantile} で示す）。
+\end{definition}
+
+\begin{proposition}[経験分位点は順序統計量]
+  \label{prop:emp-quantile}
+  $\beta\in(0,1]$ に対し $\hat Q_n(\beta)=s_{(\lceil n\beta\rceil)}$ である。
+\end{proposition}
+
+\begin{proof}
+  $0<n\beta\le n$ より $\lceil n\beta\rceil\in\{1,\dots,n\}$。
+  $\#\{i: s_i\le t\}$ は整数なので、\ref{sec:notation}節の天井関数の性質と
+  補題~\ref{lem:order-count}~(i) より
+  \begin{equation*}
+    \hat F_n(t)\ge\beta
+    \iff\#\{i: s_i\le t\}\ge n\beta
+    \iff\#\{i: s_i\le t\}\ge\lceil n\beta\rceil
+    \iff s_{(\lceil n\beta\rceil)}\le t.
+  \end{equation*}
+  よって $\{\,t:\hat F_n(t)\ge\beta\,\}=[\,s_{(\lceil n\beta\rceil)},\infty)$ であり、
+  その最小値は $s_{(\lceil n\beta\rceil)}$ である。
+\end{proof}
+
+\begin{proposition}[$+\infty$ を加えた経験分位点]
+  \label{prop:aug-quantile}
+  $s_1,\dots,s_n$ と $+\infty$ にそれぞれ確率 $1/(n+1)$ を置いた分布を考え、
+  その分布関数を
+  \begin{equation*}
+    \tilde F(t):=\frac{1}{n+1}\,\#\{\,i\le n: s_i\le t\,\}\quad(t\in\Real),\qquad
+    \tilde F(+\infty):=1
+  \end{equation*}
+  とする。$\beta\in(0,1)$ に対し
+  $\tilde Q(\beta):=\min\{\,t\in\Real\cup\{+\infty\}:\tilde F(t)\ge\beta\,\}$ とおくと、
+  \begin{equation*}
+    \tilde Q(\beta)=s_{(\lceil(n+1)\beta\rceil)}
+  \end{equation*}
+  である（$s_{(n+1)}=+\infty$ の規約のもとで）。
+\end{proposition}
+
+\begin{proof}
+  $m:=\lceil(n+1)\beta\rceil$ とおくと、$0<(n+1)\beta<n+1$ より $m\in\{1,\dots,n+1\}$。
+  $t\in\Real$ については、命題~\ref{prop:emp-quantile} の証明と同様に
+  $\tilde F(t)\ge\beta\iff\#\{i\le n: s_i\le t\}\ge m$ である。
+  $m\le n$ ならば、補題~\ref{lem:order-count}~(i) よりこれは $s_{(m)}\le t$ と同値なので、
+  最小値は $s_{(m)}$ である。$m=n+1$ ならば、これを満たす $t\in\Real$ は存在せず
+  （左辺は高々 $n$）、$\tilde F(+\infty)=1\ge\beta$ なので、
+  最小値は $+\infty=s_{(n+1)}$ である。
+\end{proof}
+
+\ref{sec:split-algorithm}節の共形分位点 $\qhat=S_{(k)}$、$k=\lceil(n+1)(1-\alpha)\rceil$ は、
+この命題で $\beta=1-\alpha$ としたもの、すなわち\textbf{較正用スコアに、テスト点のための
+席として $+\infty$ を $1$ つ加えた分布の $(1-\alpha)$ 分位点}である。
+$k\le n$ のときは命題~\ref{prop:emp-quantile} より $\qhat=\hat Q_n(k/n)$ でもあり、
+通常の経験分位点を、$1-\alpha$ より少し大きい水準 $k/n$ で取ったものにあたる。
+
+\begin{remark}[分位点の定義の違い]
+  \label{rem:quantile-types}
+  標本分位点には複数の定義があり、Hyndman and Fan~\cite{hyndman1996sample} は
+  $9$ 通りを整理している。統計ソフトウェアの既定は、隣り合う順序統計量を線形補間する
+  ものが多い（例えば \texttt{numpy.quantile} の既定）。本論文の
+  定義~\ref{def:emp-quantile} はその第 $1$ の定義（経験分布関数の逆関数）にあたり、
+  値は常にいずれかの順序統計量になる。
+
+  第\ref{sec:split-theory}章の保証は順序統計量 $S_{(k)}$ そのものについてのものである。
+  補間で得た値や、補正前の水準 $1-\alpha$ で計算した値は定理~\ref{thm:coverage} の
+  対象外であり、$S_{(k)}$ より小さい値になれば、被覆確率は $1-\alpha$ を下回りうる。
+\end{remark}
 
 \subsection{回帰モデルと分位点回帰}
 %% TODO: 第4章のCQRで使うので、ここで分位点回帰（Koenker--Bassett）を導入。
@@ -107,6 +395,7 @@
 
 %%=====================================================================
 \section{分割等角予測の理論}
+\label{sec:split-theory}
 %%=====================================================================
 %% 本論文の中核。実装は src/conformal/split.py に対応する。
 
@@ -132,8 +421,7 @@ $\fhat:=\mathcal{A}(\Dtr)$ とおく。$\mathcal{A}$ が乱数を用いる場合
   S_i := |Y_i-\fhat(X_i)| \qquad (i=1,\dots,n+1)
 \end{equation}
 と定める。$S_{(1)}\le\cdots\le S_{(n)}$ を較正用データのスコア $S_1,\dots,S_n$ の
-順序統計量（重複を込めて小さい順に並べたもの）とし、規約として
-$S_{(n+1)}:=+\infty$ とおく。
+順序統計量とする（定義~\ref{def:order-stat}。規約 $S_{(n+1)}:=+\infty$ を含む）。
 
 誤り率 $\alpha\in(0,1)$ に対し、\textbf{共形分位点}を
 \begin{equation}
@@ -142,6 +430,8 @@ $S_{(n+1)}:=+\infty$ とおく。
 \end{equation}
 で定める。掛ける数が $n$ ではなく $n+1$ であることに注意する。
 $0<(n+1)(1-\alpha)<n+1$ より $k\in\{1,\dots,n+1\}$ である。
+命題~\ref{prop:aug-quantile} より、$\qhat$ は $S_1,\dots,S_n$ と $+\infty$ に
+それぞれ確率 $1/(n+1)$ を置いた分布の $(1-\alpha)$ 分位点に等しい。
 \textbf{予測区間}は
 \begin{equation}
   \label{eq:interval}
@@ -149,9 +439,8 @@ $0<(n+1)(1-\alpha)<n+1$ より $k\in\{1,\dots,n+1\}$ である。
 \end{equation}
 とする（$\qhat=+\infty$ のときは $C(x)=\Real$）。
 
-以下、確率変数 $A,B$ について $A\eqd B$ は $A$ と $B$ の分布が等しいことを表す。
-$\#E$ は有限集合 $E$ の要素数、$\Ind\{\cdot\}$ は指示関数とする。
-本章に現れる写像はすべて可測であるとする。
+記法（$\eqd$、$\#$、$\Ind\{\cdot\}$、天井関数、置換）と可測性の約束は
+\ref{sec:notation}節に従う。
 
 \subsection{被覆保証}
 \label{sec:coverage-guarantee}
@@ -162,10 +451,7 @@ $\#E$ は有限集合 $E$ の要素数、$\Ind\{\cdot\}$ は指示関数とす�
 本章の主定理は次の仮定のもとで述べる。
 \begin{itemize}
   \item[\textbf{(A1)}] \textbf{交換可能性.}
-    $\{1,\dots,n+1\}$ の任意の置換 $\pi$ について
-    \begin{equation*}
-      (Z_{\pi(1)},\dots,Z_{\pi(n+1)}) \eqd (Z_1,\dots,Z_{n+1}).
-    \end{equation*}
+    $(Z_1,\dots,Z_{n+1})$ は交換可能である（定義~\ref{def:exch}）。
   \item[\textbf{(A2)}] \textbf{学習用データの独立性.}
     $\Dtr$ は $(Z_1,\dots,Z_{n+1})$ と独立である。
   \item[\textbf{(A3)}] \textbf{スコアの非重複.}
@@ -195,12 +481,12 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
     (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi).
   \end{equation*}
   (A2) より $\Dtr$ は $Z$ と独立であり、$Z_\pi$ は $Z$ の関数だから
-  $\Dtr$ は $Z_\pi$ とも独立である。独立な確率変数の組の同時分布は
-  それぞれの分布だけで定まり、(A1) より $Z_\pi\eqd Z$ であるから
+  $\Dtr$ は $Z_\pi$ とも独立である。(A1) より $Z_\pi\eqd Z$ であるから、
+  命題~\ref{prop:indep-pair} より
   \begin{equation*}
     (\Dtr,Z_\pi)\eqd(\Dtr,Z).
   \end{equation*}
-  同分布な確率変数に同じ固定された写像を適用したものは同分布なので
+  $G$ は固定された写像なので、命題~\ref{prop:image} より
   \begin{equation*}
     (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi)\eqd G(\Dtr,Z)=(S_1,\dots,S_{n+1}).
     \qedhere
@@ -212,9 +498,9 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 
 \begin{lemma}[順序統計量の補題]
   \label{lem:quantile}
-  $S_1,\dots,S_{n+1}$ を交換可能な実数値確率変数とし、
-  $S_{(1)}\le\cdots\le S_{(n)}$ を $S_1,\dots,S_n$ の順序統計量、
-  $S_{(n+1)}:=+\infty$ とする。このとき次が成り立つ。
+  $(S_1,\dots,S_{n+1})$ を交換可能（定義~\ref{def:exch}）な実数値確率変数の列とし、
+  $S_{(1)}\le\cdots\le S_{(n)}$ を $S_1,\dots,S_n$ の順序統計量
+  （定義~\ref{def:order-stat}。$S_{(n+1)}=+\infty$）とする。このとき次が成り立つ。
   \begin{enumerate}
     \item[(i)] 任意の $m\in\{1,\dots,n+1\}$ に対し
       $\displaystyle \Prob\bigl(S_{n+1}\le S_{(m)}\bigr)\ \ge\ \frac{m}{n+1}$.
@@ -240,24 +526,14 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   両辺とも全事象である。
 
   $m\le n$ とする。$N:=\#\{\,i\le n: S_i<S_{n+1}\,\}$ とおくと、
-  $S_{n+1}<S_{n+1}$ は成り立たないので $R_{n+1}=N+1$ である。まず
+  $S_{n+1}<S_{n+1}$ は成り立たないので $R_{n+1}=N+1$ である。
+  補題~\ref{lem:order-count}~(ii) を $s_i=S_i$（$i\le n$）、$l=m$、$t=S_{n+1}$ として
+  適用すると
   \begin{equation}
     \label{eq:order-vs-count}
     S_{(m)}<S_{n+1}\iff N\ge m
   \end{equation}
-  を示す。$\sigma$ を $S_{(l)}=S_{\sigma(l)}$（$l=1,\dots,n$）となる
-  $\{1,\dots,n\}$ の置換とする。
-
-  ($\Rightarrow$) $S_{(m)}<S_{n+1}$ ならば、$l\le m$ に対し
-  $S_{\sigma(l)}=S_{(l)}\le S_{(m)}<S_{n+1}$ である。
-  $\sigma(1),\dots,\sigma(m)$ は相異なる $m$ 個の添字なので $N\ge m$。
-
-  ($\Leftarrow$) $B:=\{\,i\le n: S_i<S_{n+1}\,\}$ とおく。
-  $i\in B$ かつ $l\in\{1,\dots,n\}\setminus B$ ならば $S_i<S_{n+1}\le S_l$ であるから、
-  $B$ に属する添字の値は、属さない添字の値のいずれよりも真に小さい。
-  よって小さい方から $\#B=N$ 個の順序統計量 $S_{(1)},\dots,S_{(N)}$ は
-  すべて $S_{n+1}$ より小さい。$m\le N$ より $S_{(m)}<S_{n+1}$。
-
+  を得る（同点があってもよい）。
   \eqref{eq:order-vs-count} の両辺の否定をとれば
   $S_{n+1}\le S_{(m)}\iff N\le m-1\iff R_{n+1}\le m$ を得る。
 
@@ -278,7 +554,7 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
     \rho(T)=1+\#\{\,i: S_{\tau(i)}<S_j\,\}=1+\#\{\,i': S_{i'}<S_j\,\}=R_j.
   \end{equation*}
   一方 $\rho(S_1,\dots,S_{n+1})=R_{n+1}$ である。
-  同分布なものに同じ固定された写像を適用したので $R_j\eqd R_{n+1}$。
+  $\rho$ は固定された写像なので、命題~\ref{prop:image} より $R_j\eqd R_{n+1}$。
 
   \textbf{(c) 数え上げ.}
   常に
@@ -367,7 +643,8 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   \begin{equation*}
     \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\Prob\bigl(S_{n+1}\le S_{(k)}\bigr)=\frac{k}{n+1}.
   \end{equation*}
-  $u:=(n+1)(1-\alpha)$ とおくと、天井関数の定義より $u\le\lceil u\rceil=k<u+1$ である。
+  $u:=(n+1)(1-\alpha)$ とおくと、\ref{sec:notation}節の天井関数の不等式
+  \eqref{eq:ceil-bounds} より $u\le\lceil u\rceil=k<u+1$ である。
   これを $n+1$ で割れば
   \begin{equation*}
     1-\alpha\ \le\ \frac{k}{n+1}\ <\ 1-\alpha+\frac{1}{n+1}
@@ -443,10 +720,12 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 %% TODO: データ分割の無駄をなくす。保証が 1-2\alpha に緩むこと。
 
 \subsection{共変量シフトと重み付き等角予測}
+\label{sec:covariate-shift}
 %% TODO: 尤度比による重み付け。第5章E4に対応。
 
 %%=====================================================================
 \section{数値実験}
+\label{sec:experiments}
 %%=====================================================================
 
 \subsection{評価指標と不確実性の報告}
