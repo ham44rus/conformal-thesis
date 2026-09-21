@@ -1,18 +1,28 @@
 # 実験環境の記録（卒論 付録B「実験環境と再現手順」に転記する）
 #
 # Python   : 3.11.4  (CPython)
-# OS       : macOS 26.6.2 / arm64
-# 実行日   : 2026-09-09
+# OS       : macOS 27.0 / arm64
+# 実行日   : 2026-09-21（results/ の csv と figures/ はこの環境で生成）
 # venv     : .venv
 #            python3 -m venv --system-site-packages .venv
 #            .venv/bin/python -m pip install -e ".[dev]"
+#            .venv/bin/python -m pip install -U scipy "numpy==1.26.4"   # 下記の注を参照
 #
 # 【付録Bにはこの節をそのまま載せる】
-# 本研究が直接使用するパッケージ。バージョンは pyproject.toml の下限と一致する
+# 本研究が直接使用するパッケージ。scipy 以外は pyproject.toml の下限と一致する
 # （下限は「実際に検証した最も古い環境」に合わせてあるため）。
+#
+# 注（scipy）：初回の環境構築（2026-09-09, macOS 26.6.2）では scipy==1.15.3 を
+# 使った。macOS 27.0 への更新後、1.15.3 の wheel（PROPACK の共有ライブラリ）が
+# dyld に拒否されて import できなくなったため、1.17.1 に上げた。
+# 1.15.3 と 1.17.1 で全実験を回し直して比較したところ、被覆率の列は完全に一致し、
+# 区間幅と KS 検定の p 値が末尾桁（1e-15 程度）で異なるだけだった
+# （scipy 同梱の LAPACK が変わり、最小二乗と検定統計量の丸めが変わるため）。
+# 現在 git 管理下にある csv・図は 1.17.1 で生成したものであり、同一環境で
+# 2 回実行してバイト単位で一致することを確認済み。
 
 numpy==1.26.4
-scipy==1.15.3
+scipy==1.17.1
 scikit-learn==1.3.0
 pandas==1.5.3
 matplotlib==3.7.1
@@ -424,7 +434,7 @@ safetensors==0.4.4
 schedule==1.2.2
 scikit-image @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_12rg0hdzgk/croot/scikit-image_1682528304529/work
 scikit-learn @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_75x_mwrnoj/croot/scikit-learn_1690978919744/work
-scipy==1.15.3
+scipy==1.17.1
 Scrapy @ file:///Users/cbousseau/work/recipes/ci_py311/scrapy_1678002824834/work
 seaborn @ file:///Users/cbousseau/work/recipes/ci_py311/seaborn_1677961968762/work
 selenium==4.31.0
