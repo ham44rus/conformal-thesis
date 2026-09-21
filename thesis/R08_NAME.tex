@@ -942,6 +942,7 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 
 \subsection{被覆率そのものの分布}
 \label{sec:cond-coverage}
+% cond = 較正データで条件付けた被覆（training-conditional）。X で条件付ける方は sec:x-conditional
 %% 仕様書: thesis/drafts/chapter3_sections_spec.md「3.5」に対応する。
 %% 第5章 E1 の検証対象（experiments/e1_coverage.py: 学習用データを固定し、
 %% 較正用データを引き直した被覆率の経験分布を Beta(k, n+1-k) と比べる）。
@@ -1149,6 +1150,7 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 \end{remark}
 
 \subsection{何を保証していないか：条件付き被覆}
+\label{sec:x-conditional}
 %% TODO: 周辺被覆と条件付き被覆の区別。注意 \ref{rem:marginal} から始める。
 %%       Barber et al. (2021) の不可能性定理を紹介する。
 %%       ★ここが本論文の深さを出す節。第5章E3と第7章に接続する。
@@ -1158,9 +1160,11 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 %%=====================================================================
 
 \subsection{正規化残差スコア}
+\label{sec:normalized-score}
 %% TODO: S = |y - \fhat(x)| / \hat{\sigma}(x)。異分散への簡易な対処。
 
 \subsection{Conformalized Quantile Regression (CQR)}
+\label{sec:cqr}
 %% TODO: スコア S = \max\{ \hat{q}_{lo}(x) - y, y - \hat{q}_{hi}(x) \}
 %%       区間 [\hat{q}_{lo}(x) - \qhat, \hat{q}_{hi}(x) + \qhat]
 
@@ -1177,6 +1181,7 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 %%=====================================================================
 
 \subsection{評価指標と不確実性の報告}
+\label{sec:metrics}
 %% 下書き: thesis/drafts/5.1_評価指標と不確実性の報告.md
 %% 数値はすべて results/*.csv から引くこと。csv を再生成したら本文の数値も更新する。
 
@@ -1194,6 +1199,7 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 %%       SSC は区間幅が定数だと層が1つに潰れる（絶対残差スコアが該当）。
 
 \subsection{実験設定}
+\label{sec:exp-setup}
 %% TODO: データ生成過程、下敷きモデル、試行回数、乱数シード。
 %%       仕様は specs/ の各実験仕様書に対応。
 
@@ -1203,13 +1209,16 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 %%       図: fig_e1_coverage_beta_alpha10.pdf, fig_e1_bounds.pdf
 
 \subsection{E1b：検証の水準と誤りの検出力}
+\label{sec:e1b}
 %% TODO: 平均で捉えられる誤り（off-by-one）と、分布でしか捉えられない誤り
 %%       （分散のずれ）の切り分け。
 
 \subsection{E2：下敷きモデルへの非依存性}
+\label{sec:e2}
 %% TODO: 被覆率は不変、区間幅は変わる。この対比自体が結論。
 
 \subsection{E3：異分散データと条件付き被覆の破綻}
+\label{sec:e3}
 %% TODO: ★本論文の見せ場。周辺被覆は保たれるが層別被覆が割れること。
 %%       CQRによる改善。
 
