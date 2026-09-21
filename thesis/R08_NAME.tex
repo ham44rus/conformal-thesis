@@ -1151,9 +1151,245 @@ $U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $
 
 \subsection{何を保証していないか：条件付き被覆}
 \label{sec:x-conditional}
-%% TODO: 周辺被覆と条件付き被覆の区別。注意 \ref{rem:marginal} から始める。
-%%       Barber et al. (2021) の不可能性定理を紹介する。
-%%       ★ここが本論文の深さを出す節。第5章E3と第7章に接続する。
+%% 仕様書: thesis/drafts/chapter3_sections_spec.md「3.6」（v2.3）に対応する。
+%% 第5章 E3（sec:e3）と第4章の適応的スコアはこの節の枠組みで位置づける。
+%% x-conditional = X=x で条件付けた被覆。較正データで条件付ける方は sec:cond-coverage。
+
+注意~\ref{rem:marginal} で述べたとおり、定理~\ref{thm:coverage} の確率は
+$(\Dtr,Z_1,\dots,Z_{n+1})$ のすべてについて平均した\textbf{周辺的な}保証であり、
+入力 $X_{n+1}=x$ を固定したときの被覆は保証していない。本節ではこの
+「$X$ で条件付けた被覆」を定義し、(i) 周辺被覆が成り立っていても各 $x$ での被覆は
+大きく崩れうること、(ii) 分布によらずにそれを保証することは原理的に不可能であること、
+(iii) ただし事前に固定した有限個の層ごとの被覆なら保証できること、を述べる。
+第\ref{sec:experiments}章 E3（\ref{sec:e3}節）と第4章の適応的なスコアは
+この節の枠組みで位置づける。
+
+\paragraph{設定.}
+\ref{sec:coverage-guarantee}節と同じく、学習用データ $\Dtr$、較正用データ
+$\Dcal=(Z_1,\dots,Z_n)$、テスト点 $Z_{n+1}=(X_{n+1},Y_{n+1})$ をとり、(A1)(A2) を仮定する。
+予測区間 $C(x)$ は $\Dtr$ と $\Dcal$ から作られる（\ref{sec:split-algorithm}節の $C$ に限らず、
+この $2$ つから作る任意の区間値写像を許す）。$X_{n+1}$ の分布を $P_X$ と書く。
+
+\begin{definition}[$X$ で条件付けた被覆]
+  \label{def:x-conditional}
+  予測区間 $C$ が水準 $1-\alpha$ の \textbf{$X$ で条件付けた被覆}をもつとは、
+  \begin{equation}
+    \label{eq:x-conditional}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\ \bigm|\ X_{n+1}\bigr)\ \ge\ 1-\alpha
+    \qquad\text{a.s.}
+  \end{equation}
+  が成り立つことをいう\footnote{\eqref{eq:x-conditional} は「$P_X$-ほとんど全ての $x$ について
+  $\Prob(Y_{n+1}\in C(X_{n+1})\mid X_{n+1}=x)\ge1-\alpha$」と言い換えられる。例外集合が
+  $P_X$-測度 $0$ であることを要求するのは、条件付き確率が確率 $0$ の集合上で一意に
+  定まらないためである。}。左辺は $X_{n+1}$ で条件付けた被覆確率であり、$X_{n+1}$ の関数として
+  確率 $1$ で $1-\alpha$ 以上であることを要求している。
+\end{definition}
+
+\paragraph{何について確率をとっているか.}
+\eqref{eq:x-conditional} の左辺の確率は、$X_{n+1}$ を与えたもとで、\textbf{学習用データ $\Dtr$、
+較正用データ $\Dcal$、および $Y_{n+1}$ のすべて}についてとる。すなわち較正用データでは
+条件付けない。\ref{sec:cond-coverage}節の被覆率 $\mathrm{Cov}$ は逆に $(\Dtr,\Dcal)$ で
+条件付けて $Z_{n+1}$ について確率をとる量であり、\ref{sec:cond-coverage}節と本節の違いは
+ここにある（注意~\ref{rem:x-conditional-three} の表）。
+
+\begin{remark}[$3$ 種類の被覆]
+  \label{rem:x-conditional-three}
+  \leavevmode
+  本論文で扱う被覆は、\textbf{何を固定して確率をとるか}が異なる $3$ 種類である。
+  \begin{center}
+    \small
+    \begin{tabular}{p{9.5em}p{5.5em}p{7.5em}p{12.5em}}
+      \toprule
+      被覆 & 固定するもの（条件） & 確率をとる対象 & 本論文での扱い \\
+      \midrule
+      周辺被覆 & なし & $(\Dtr,\Dcal,Z_{n+1})$ すべて
+        & 定理~\ref{thm:coverage}・系~\ref{cor:upper} で保証 \\
+      較正用データで条件付けた被覆 $\mathrm{Cov}$ & $(\Dtr,\Dcal)$ & $Z_{n+1}$
+        & \ref{sec:cond-coverage}節（定義~\ref{def:cond-coverage}）。保証ではなく分布を与える \\
+      $X$ で条件付けた被覆 & $X_{n+1}=x$ & $(\Dtr,\Dcal,Y_{n+1})$
+        & 本節。分布によらない保証は不可能（定理~\ref{thm:x-conditional-impossible}） \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \textbf{含意関係.} $X$ で条件付けた被覆 \eqref{eq:x-conditional} が成り立てば、両辺を
+  $P_X$ で平均して（全確率の公式）周辺被覆 $\Prob(Y_{n+1}\in C(X_{n+1}))\ge1-\alpha$ を得る。
+  逆は成り立たない：周辺被覆は $x$ についての平均が $1-\alpha$ 以上であることしか言わず、
+  ある領域の $x$ で被覆が低く、別の領域で高い、という状況を排除しない
+  （例~\ref{ex:x-conditional-hetero}）。
+\end{remark}
+
+\begin{example}[不均一分散と幅一定の区間]
+  \label{ex:x-conditional-hetero}
+  $Y=f(X)+\sigma(X)\,\varepsilon$ とする。ここで $f\colon\mathcal{X}\to\Real$、
+  $\sigma\colon\mathcal{X}\to(0,\infty)$ は固定された関数、$\varepsilon$ は $X$ と独立な
+  実数値確率変数で、$|\varepsilon|$ の分布関数を $F_{|\varepsilon|}(t):=\Prob(|\varepsilon|\le t)$ と
+  書く。予測器は $\fhat=f$ とする。これは\textbf{モデルが完璧であっても}条件付き被覆が
+  崩れることを示すための仮定であり、不均一分散の効果だけを取り出すために置く。
+  絶対残差スコアで作った幅一定の区間
+  \begin{equation*}
+    C(x)=[\,f(x)-q,\ f(x)+q\,]\qquad(q\ge0)
+  \end{equation*}
+  を考える。$q$ は \ref{sec:split-algorithm}節の $\qhat$ のように較正用データから決めた値で
+  よいが、以下では $\Dtr,\Dcal$ を固定して $q$ を定数とみなす。
+
+  \textbf{条件付き被覆.} $X=x$ を与えると $Y-f(x)=\sigma(x)\varepsilon$ なので
+  \begin{equation*}
+    \Prob\bigl(Y\in C(X)\ \bigm|\ X=x\bigr)
+    =\Prob\bigl(|\varepsilon|\le q/\sigma(x)\bigr)
+    =F_{|\varepsilon|}\bigl(q/\sigma(x)\bigr).
+  \end{equation*}
+  $1$ つ目の等号は $\varepsilon$ と $X$ の独立性による。$F_{|\varepsilon|}$ は非減少なので、
+  右辺は \textbf{$\sigma(x)$ について非増加}である（$|\varepsilon|$ の密度が正の範囲では
+  真に減少）。
+
+  \textbf{意味.} 幅 $2q$ が $x$ によらず一定なので、$\sigma(x)$ が小さい領域では条件付き被覆が
+  高く、大きい領域では低い。周辺被覆 $\Prob(Y\in C(X))=\Exp[F_{|\varepsilon|}(q/\sigma(X))]$
+  はこれらを $P_X$ で平均した値であり、較正によって $1-\alpha$ 以上に保たれる。したがって、
+  周辺被覆が $1-\alpha$ を大きく超えていない限り、\textbf{$\sigma$ の大きい側では条件付き被覆が
+  $1-\alpha$ を下回る}。実際、条件付き被覆が $x$ について一定でなく周辺被覆がちょうど
+  $1-\alpha$ なら、$1-\alpha$ を下回る $x$ が正の $P_X$-確率で存在し（平均に等しい定数でない
+  関数は、平均を下回る点を正の確率でもつ）、単調性よりそれは $\sigma(x)$ の大きい側にある。
+  周辺被覆は領域ごとの過不足が打ち消し合った結果にすぎない。
+
+  \textbf{E3 との対応.} 第\ref{sec:experiments}章 E3（\ref{sec:e3}節）のデータ生成では
+  $\sigma(X_1)$ が $X_1$ の端点間で $11$ 倍変化し、絶対残差スコアの層別被覆がこの例のとおり
+  $\sigma$ の大きい層で割れることを数値的に確かめる。
+\end{example}
+
+\begin{theorem}[分布によらない条件付き被覆の不可能性]
+  \label{thm:x-conditional-impossible}
+  予測区間の構成法 $C$（学習用データと較正用データから $C(x)$ を作る任意の手続き）が、
+  $(\Dtr,Z_1,\dots,Z_{n+1})$ が i.i.d.\ である\textbf{任意の分布 $P$ について}、
+  定義~\ref{def:x-conditional} の意味で水準 $1-\alpha$ の $X$ で条件付けた被覆をもつとする。
+  このとき任意の $P$ について、$P_X$ のアトム（$P_X(\{x\})>0$ となる点）を除く
+  $P_X$-ほとんど全ての点 $x$ で
+  \begin{equation*}
+    \Exp\bigl[\operatorname{leb}\bigl(C(x)\bigr)\bigr]=\infty
+  \end{equation*}
+  である。ここで $\operatorname{leb}$ はルベーグ測度（区間の長さ）、期待値は $(\Dtr,\Dcal)$ に
+  ついてとる。
+\end{theorem}
+
+すなわち、分布によらずに $X$ で条件付けた被覆を保証する区間は、アトムでない点では
+期待長さが無限大であり、自明な区間 $\Real$ と実質的に変わらない。この結果は
+Vovk~\cite{vovk2012conditional} によるもので、ここでは Barber, Cand\`es, Ramdas,
+Tibshirani~\cite{barber2021limits} の命題 1 の形で述べた。本論文では証明を載せず、
+直観の説明にとどめる。
+
+\paragraph{直観.}
+$x_0$ を $P_X$ のアトムでない点とする。$x_0$ の近傍 $B$ で $Y\mid X$ の条件付き分布だけを
+書き換えた分布 $P'$ を考える。$P_X(B)$ はいくらでも小さくとれるので、$n$ 個のデータの
+同時分布は $P$ のもとと $P'$ のもとで全変動距離の意味でほとんど変わらず、どんな手法も
+この $2$ つの分布を区別できない。一方 $C$ は $P'$ のもとでも $x_0$ で条件付き被覆を
+もたなければならず、$P'$ における $Y\mid X=x_0$ の分布は任意に選べるので、$C(x_0)$ は
+どんな値も覆えるだけ長くなければならない。これが期待長さを無限大にする。アトム $x_0$ では
+$P_X(\{x_0\})>0$ なので $B=\{x_0\}$ の書き換えはデータの分布を目に見えて変え、この議論は
+通らない（命題~\ref{prop:x-conditional-group} の層ごとの被覆はこの場合にあたる）。
+
+\begin{proposition}[事前に固定した層ごとの被覆]
+  \label{prop:x-conditional-group}
+  $G\colon\mathcal{X}\to\{1,\dots,m\}$ を、\textbf{$X$ だけの関数で、データを見る前に固定した}
+  写像とし、$G(x)=g$ となる $x$ の集合を層 $g$ と呼ぶ。較正用データのうち層 $g$ に属するものの
+  添字集合を $I_g:=\{\,i\le n: G(X_i)=g\,\}$、その個数を $n_g:=\#I_g$ とする。層ごとの
+  共形分位点を
+  \begin{equation*}
+    k_g:=\lceil (n_g+1)(1-\alpha)\rceil,\qquad
+    \qhat_g:=\{S_i: i\in I_g\}\ \text{の第 $k_g$ 順序統計量}\quad(k_g>n_g \text{ のとき }+\infty)
+  \end{equation*}
+  とし（$n_g=0$ のときは $k_g=1>0$ なので $\qhat_g=+\infty$）、層ごとに較正した予測区間を
+  \begin{equation}
+    \label{eq:x-conditional-group}
+    C_G(x):=\bigl[\,\fhat(x)-\qhat_{G(x)},\ \fhat(x)+\qhat_{G(x)}\,\bigr]
+  \end{equation}
+  で定める（$\qhat_{G(x)}=+\infty$ のときは $C_G(x)=\Real$）。
+  (A1)(A2) のもとで、$\Prob(G(X_{n+1})=g)>0$ となる各 $g$ について
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C_G(X_{n+1})\ \bigm|\ G(X_{n+1})=g\bigr)\ \ge\ 1-\alpha .
+  \end{equation*}
+\end{proposition}
+
+\begin{proof}
+  $L_i:=G(X_i)$（$i\le n+1$）とおき、ラベル列 $L:=(L_1,\dots,L_{n+1})$ で条件付ける。
+  $L$ は有限個の値しかとらないので、条件付き確率は
+  $\Prob(\cdot\mid L=\ell)=\Prob(\cdot,\ L=\ell)/\Prob(L=\ell)$ の初等的な意味でよい。
+
+  \textbf{(1) ラベルで条件付けても層内は交換可能.}
+  $L_i$ は $Z_i$ の固定された関数なので、補題~\ref{lem:score-exch} と同じ論法で
+  $(Z_i,L_i)_{i\le n+1}$ は交換可能である。$\ell$ を $\Prob(L=\ell)>0$ なるラベル列、
+  $\pi$ を $\ell$ を保つ置換（$\ell_{\pi(i)}=\ell_i$）とすると、$\{L=\ell\}=\{L_\pi=\ell\}$
+  なので、任意の可測集合 $A$ について
+  \begin{align*}
+    \Prob(Z_\pi\in A,\ L=\ell)
+    &=\Prob(Z_\pi\in A,\ L_\pi=\ell)
+     =\Prob\bigl((Z,L)_\pi\in A\times\{\ell\}\bigr)\\
+    &=\Prob\bigl((Z,L)\in A\times\{\ell\}\bigr)
+     =\Prob(Z\in A,\ L=\ell).
+  \end{align*}
+  よって $L=\ell$ で条件付けた $Z$ の分布は、$\ell$ を保つ置換で不変である。とくに、
+  $\ell_{n+1}=g$ のとき、層 $g$ に属する添字 $I_g\cup\{n+1\}$ 上の $(Z_i)$ は条件付きで
+  交換可能である（層内の任意の置換は $\ell$ を保つ）。
+
+  \textbf{(2) (A2) は条件付けで壊れない.}
+  $L$ は $Z$ の関数なので、$\Dtr$ は $(Z,L)$ と独立であり、$L=\ell$ で条件付けても
+  $\Dtr$ と $Z$ の独立性は保たれる。
+
+  \textbf{(3) 定理~\ref{thm:coverage} の適用.}
+  $\ell_{n+1}=g$ とし、$\Prob_\ell(\cdot):=\Prob(\cdot\mid L=\ell)$ とおく。$\Prob_\ell$ のもとで、
+  層 $g$ の較正点 $(Z_i)_{i\in I_g}$（$n_g$ 個。$I_g$ は $\ell$ で定まる）とテスト点 $Z_{n+1}$ は
+  交換可能 (1) で、$\Dtr$ はそれらと独立 (2)。したがって補題~\ref{lem:score-exch} の証明を
+  $\Prob_\ell$ のもとで繰り返せば、スコア $(S_i)_{i\in I_g\cup\{n+1\}}$ は $\Prob_\ell$ のもとで
+  交換可能である（補題~\ref{lem:score-exch} が用いたのは命題~\ref{prop:image} と
+  命題~\ref{prop:indep-pair} だけで、どちらも確率測度 $\Prob_\ell$ に対してそのまま成り立つ）。
+  $C_G(X_{n+1})=[\fhat(X_{n+1})\pm\qhat_g]$ は層 $g$ の較正点だけから作った
+  \ref{sec:split-algorithm}節の予測区間そのものなので、\eqref{eq:cover-iff} と
+  補題~\ref{lem:quantile}~(iii)（$\Prob_\ell$ のもとで $n$ を $n_g$、$\beta=1-\alpha$ として
+  適用）より
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C_G(X_{n+1})\ \bigm|\ L=\ell\bigr)
+    =\Prob_\ell\bigl(S_{n+1}\le\qhat_g\bigr)\ \ge\ 1-\alpha .
+  \end{equation*}
+  $n_g=0$ のときは $C_G=\Real$ で左辺は $1$ であり、この場合も含めて成り立つ。
+
+  \textbf{(4) ラベルで平均する.}
+  $\{G(X_{n+1})=g\}$ は $\ell_{n+1}=g$ なる $\ell$ についての $\{L=\ell\}$ の非交和なので、
+  (3) の両辺を $\Prob(L=\ell\mid G(X_{n+1})=g)$ で重みづけて足せば主張を得る。
+\end{proof}
+
+主張を「$n_g$ で条件付けた被覆」の形で述べたければ、$\{n_g=m,\ G(X_{n+1})=g\}$ も
+$\{L=\ell\}$ の非交和なので、(3) を同じように平均すれば
+$\Prob(Y_{n+1}\in C_G(X_{n+1})\mid n_g=m,\ G(X_{n+1})=g)\ge1-\alpha$ が得られる。
+層 $G$ をデータを見てから決める（例えば較正用データの分位点で境界を切る）と、$G$ が $Z$ の
+固定された関数でなくなり (1) が崩れる。E3（\ref{sec:e3}節）の層は真の分位点で事前に固定して
+いるのでこの前提を満たすが、E3 の手法はいずれも層ごとに較正しておらず（単一の $\qhat$ で
+周辺較正）、\eqref{eq:x-conditional-group} の $C_G$ ではない。E3 の層別被覆はあくまで
+診断量である。上界については、層 $g$ 内のスコアが確率 $1$ で相異なるなら、各 $\ell$ について
+系~\ref{cor:upper} と同様に
+$\Prob(Y_{n+1}\in C_G(X_{n+1})\mid L=\ell)\le1-\alpha+1/(n_g+1)$ が成り立つ
+（証明は系~\ref{cor:upper} と同じなので省く）。
+
+\begin{remark}[第4章への位置づけ]
+  \label{rem:x-conditional-ch4}
+  \leavevmode
+  \begin{enumerate}
+    \item 第4章の正規化残差スコア（\ref{sec:normalized-score}節）と CQR（\ref{sec:cqr}節）は、
+      スコアを $x$ に応じて変えることで区間の幅を $x$ に適応させる。しかしどちらも
+      \textbf{単一の共形分位点で周辺較正}する手法であり、保証されるのは
+      定理~\ref{thm:coverage} の周辺被覆だけである。$X$ で条件付けた被覆は保証しない
+      （定理~\ref{thm:x-conditional-impossible} により、分布によらずには保証できない）。
+    \item 適応的なスコアが条件付き被覆をどこまで改善するかは、$\hat\sigma(x)$ や分位点回帰が
+      どれだけ正確に $Y\mid X$ の散らばりを捉えるかに依存する。
+      例~\ref{ex:x-conditional-hetero} の設定で $\hat\sigma=\sigma$ なら正規化残差の
+      条件付き被覆は $x$ によらず一定になるが、推定誤差のぶんだけ崩れが残る。
+    \item 事前に固定した層ごとの保証（命題~\ref{prop:x-conditional-group}）は、層の内部での
+      崩れは防げないが、層ごとの被覆を保証する。適応的なスコアと層ごとの較正は独立に
+      組み合わせられる。
+    \item 第\ref{sec:experiments}章 E3（\ref{sec:e3}節）では、不均一分散のデータで
+      (a) 絶対残差、(b) 正規化残差、(c) CQR の層別被覆を比べ、(a) が
+      例~\ref{ex:x-conditional-hetero} のとおり割れること、(b)(c) が割れを縮めるが平らには
+      ならないことを確かめる。E3 の層別被覆は命題~\ref{prop:x-conditional-group} の層ごとの
+      較正ではなく、周辺較正の手法の診断量である。
+  \end{enumerate}
+\end{remark}
 
 %%=====================================================================
 \section{拡張}
