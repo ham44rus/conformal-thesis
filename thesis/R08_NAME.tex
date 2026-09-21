@@ -687,14 +687,258 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 \end{remark}
 
 \subsection{上界の意味：保証は保守的すぎない}
-%% TODO: 下界だけでなく上界も効いていること。同点が確率0であることの仮定。
-%%       系 \ref{cor:upper} と注意 \ref{rem:a3} を受けて書く。
+\label{sec:upper-meaning}
+%% 仕様書: thesis/drafts/chapter3_sections_spec.md「3.3」に対応する。
+%% 第5章 E1 が数値的に確かめる対象（results/e1_summary.csv の in_bounds 列）。
+
+定理~\ref{thm:coverage} の下界だけなら、自明な予測区間 $C(x)=\Real$ も満たす
+（被覆確率は $1$）。分割等角予測の価値は、系~\ref{cor:upper} により、被覆確率が
+$1-\alpha$ を\textbf{ほとんど超えない}ことまで保証される点にある。
+本節ではその超過を正確に評価する。
+
+\begin{proposition}[被覆確率の超過]
+  \label{prop:excess}
+  (A1)(A2)(A3) のもとで、被覆確率の超過を
+  $e_n:=\Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)-(1-\alpha)$ とおくと、
+  \begin{equation*}
+    e_n=\frac{\{(n+1)\alpha\}}{n+1},\qquad 0\ \le\ e_n\ <\ \frac{1}{n+1}
+  \end{equation*}
+  が成り立つ。ここで $\{x\}:=x-\lfloor x\rfloor$ は $x$ の小数部分である。
+  特に、$e_n=0$ となるのは $(n+1)\alpha$ が整数のときに限り、
+  $\alpha$ を固定して $n\to\infty$ とすると $e_n\to0$ である。
+\end{proposition}
+
+\begin{proof}
+  系~\ref{cor:upper} より $\Prob(Y_{n+1}\in C(X_{n+1}))=k/(n+1)$。
+  整数 $N$ と実数 $x$ について $\lceil N-x\rceil=N-\lfloor x\rfloor$ であるから
+  （$\lceil -x\rceil=-\lfloor x\rfloor$ による）、
+  \begin{equation*}
+    k=\lceil (n+1)-(n+1)\alpha\rceil=(n+1)-\lfloor (n+1)\alpha\rfloor .
+  \end{equation*}
+  よって
+  \begin{equation*}
+    e_n=\frac{k-(n+1)(1-\alpha)}{n+1}
+    =\frac{(n+1)\alpha-\lfloor(n+1)\alpha\rfloor}{n+1}
+    =\frac{\{(n+1)\alpha\}}{n+1}.
+  \end{equation*}
+  $0\le\{x\}<1$ より $0\le e_n<1/(n+1)$ であり、$\{x\}=0$ となるのは
+  $x$ が整数のときに限る。
+\end{proof}
+
+表~\ref{tab:excess} に $\alpha=0.1$ の場合の数値例を示す。
+$(n+1)\alpha$ が整数になるように $n$ を選ぶと（$\alpha=0.1$ なら $n=19,\ 99,\ 999,\dots$）、
+被覆確率はちょうど $1-\alpha$ になる。整数にならない場合でも、超過は上限 $1/(n+1)$
+よりずっと小さいことが多い。
+
+\begin{table}[htbp]
+  \centering
+  \caption{被覆確率の超過 $e_n$（$\alpha=0.1$、(A3) のもと）}
+  \label{tab:excess}
+  \begin{tabular}{rrrrr}
+    \toprule
+    $n$ & $k$ & 被覆確率 $k/(n+1)$ & 超過 $e_n$ & $1/(n+1)$ \\
+    \midrule
+    19  & 18 & 0.900000 & 0        & 0.050000 \\
+    20  & 19 & 0.904762 & 0.004762 & 0.047619 \\
+    99  & 90 & 0.900000 & 0        & 0.010000 \\
+    100 & 91 & 0.900990 & 0.000990 & 0.009901 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{remark}[上界が保証すること・しないこと]
+  \label{rem:upper-meaning}
+  \leavevmode  % 見出しの行で箇条書きを始めない
+  \begin{enumerate}
+    \item \textbf{下界は改善できない.}
+      (A3) のもとで $(n+1)\alpha$ が整数なら、被覆確率はちょうど $1-\alpha$ である。
+      したがって、定理~\ref{thm:coverage} の下界 $1-\alpha$ を、(A1)(A2)
+      （に (A3) を加えても）だけから、これより大きい定数に置き換えることはできない。
+    \item \textbf{自明な区間との違い.}
+      $C(x)=\Real$ も下界を満たすが、被覆確率は $1$ である。分割等角予測の超過は
+      $1/(n+1)$ 未満に抑えられる。第\ref{sec:experiments}章 E1 では、被覆率が
+      この上下界の間に入ることを数値的に確かめる。
+    \item \textbf{幅は保証しない.}
+      上界は被覆\textbf{確率}についての保証であり、区間の\textbf{幅}が小さいことは
+      保証しない。幅は予測器 $\fhat$ とスコアの選び方に依存する
+      （第\ref{sec:experiments}章 E2）。
+    \item \textbf{(A3) が必要.}
+      上界には (A3) が必要である（注意~\ref{rem:a3}）。同点があると、超過は
+      $1/(n+1)$ を大きく超えうる（\ref{sec:ties}節の例~\ref{ex:binary}）。
+  \end{enumerate}
+\end{remark}
 
 \subsection{同点の扱い}
-%% TODO: 離散スコアの場合のtie-breaking。
-%%       下界は同点があっても成り立つ（補題 \ref{lem:quantile} (i) は最小順位で
-%%       (A3) なしに示してある）。崩れるのは上界（系 \ref{cor:upper}）だけ。
-%%       tests/test_ties_discrete.py がこれを固定している。
+\label{sec:ties}
+%% 仕様書: thesis/drafts/chapter3_sections_spec.md「3.4」に対応する。
+%% tests/test_ties_discrete.py が「下界は保たれ上界は破れる」を固定している。
+%% 無作為タイブレーク（定義 def:random-tiebreak）は src/ には未実装（理論のみ）。
+
+スコアに同点が生じるのは、例えば $Y$ が離散値（個数や評点）をとる場合、予測が観測値に
+ちょうど一致する点が多い場合、測定値が丸められている場合である。このとき (A3) は
+成り立たない。定理~\ref{thm:coverage} の下界は (A3) を仮定していないので同点があっても
+成り立つが（補題~\ref{lem:quantile}~(i) は最小順位により (A3) なしで示した）、
+系~\ref{cor:upper} の上界は成り立たなくなりうる。本節では、その具体例と、無作為に
+タイを崩すことで被覆確率をちょうど $k/(n+1)$ にする方法を述べる。
+
+\begin{example}[$2$ 値データ]
+  \label{ex:binary}
+  $Y_1,\dots,Y_{n+1}$ は i.i.d.\ で $\Prob(Y_i=0)=\Prob(Y_i=1)=1/2$ とし、
+  予測器は $\fhat\equiv0$ とする（$\mathcal{A}$ が常に零関数を返す）。
+  このとき $S_i=Y_i\in\{0,1\}$ であり、$B:=\#\{\,i\le n: S_i=0\,\}$ は
+  二項分布 $\mathrm{Bin}(n,1/2)$ に従う。被覆確率は
+  \begin{equation}
+    \label{eq:binary-coverage}
+    \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=1-\frac12\,\Prob(B\ge k)
+  \end{equation}
+  である。
+\end{example}
+
+\begin{proof}
+  $k=n+1$ のときは両辺とも $1$ である。$k\le n$ とする。$S_{(k)}\in\{0,1\}$ であり、
+  補題~\ref{lem:order-count}~(i) を $t=0$ として適用すると $S_{(k)}=0\iff B\ge k$。
+  $S_{(k)}=1$ のときは $S_{n+1}\le1$ なので常に被覆される。$S_{(k)}=0$ のときは
+  $S_{n+1}=0$ のときに限り被覆され、$S_{n+1}$ は較正用データと独立なので、
+  その確率は $1/2$ である。よって被覆確率は
+  $\Prob(B<k)+\frac12\Prob(B\ge k)=1-\frac12\Prob(B\ge k)$。
+\end{proof}
+
+表~\ref{tab:binary} に $n=19$ の場合の数値例を示す。$\alpha=0.5$ では
+$\Prob(B\ge10)=1/2$（$n=19$ が奇数なので二項分布の対称性から）。
+いずれも上界を大きく超える。
+
+\begin{table}[htbp]
+  \centering
+  \caption{例~\ref{ex:binary} の被覆確率（$n=19$）}
+  \label{tab:binary}
+  \begin{tabular}{rrlrr}
+    \toprule
+    $\alpha$ & $k$ & 被覆確率（厳密値） & 系~\ref{cor:upper} の上界
+      & 無作為タイブレーク（命題~\ref{prop:random-tiebreak}） \\
+    \midrule
+    0.5 & 10 & $3/4=0.75$ & 0.55 & 0.5 \\
+    0.1 & 18 & $1-20/2^{20}\approx0.99998$ & 0.95 & 0.9 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{remark}[全順序集合への拡張]
+  \label{rem:total-order}
+  定義~\ref{def:order-stat}、補題~\ref{lem:order-count}、補題~\ref{lem:quantile} と
+  それらの証明は、実数の大小関係について「全順序である（任意の $2$ 元が比較でき、
+  推移律が成り立つ）」ことと、添字の個数の数え上げしか用いていない。したがって、
+  値が任意の全順序集合（に最大元 $+\infty$ を付け加えたもの）にある場合にも、
+  $\le$ と $<$ をその全順序に読み替えて、そのまま成り立つ。ただし確率を扱う
+  補題~\ref{lem:quantile} では、$\{W_i\prec W_j\}$ の形の集合が事象であることも要る
+  （以下の辞書式順序ではこれが成り立つ）。
+\end{remark}
+
+\begin{definition}[無作為タイブレーク付き予測区間]
+  \label{def:random-tiebreak}
+  $U_1,\dots,U_{n+1}$ を、$(\Dtr,Z_1,\dots,Z_{n+1})$ と独立な i.i.d.\ の
+  一様分布 $\mathrm{U}(0,1)$ に従う確率変数とする。$\Real\times[0,1]$ に
+  \textbf{辞書式順序}
+  \begin{equation*}
+    (s,u)\prec(s',u')\ :\iff\ s<s'\ \text{または}\ (s=s'\ \text{かつ}\ u<u')
+  \end{equation*}
+  を入れ、$\preceq$ を「$\prec$ または等しい」とする。これは全順序である。
+
+  $P_i:=(S_i,U_i)$ とおき、注意~\ref{rem:total-order} の意味で $P_1,\dots,P_n$ の
+  順序統計量を $P_{(1)}\preceq\cdots\preceq P_{(n)}$、$P_{(n+1)}$ を最大元とする。
+  \textbf{無作為タイブレーク付き予測区間}を
+  \begin{equation}
+    \label{eq:random-tiebreak}
+    C^U(x):=\bigl\{\,y\in\Real:\ (|y-\fhat(x)|,\ U_{n+1})\preceq P_{(k)}\,\bigr\}
+  \end{equation}
+  で定める。これは Vovk, Gammerman and Shafer~\cite{vovk2005algorithmic} の
+  smoothed conformal predictor にあたる。
+\end{definition}
+
+$k\le n$ のとき $P_{(k)}=(\qhat,\hat u)$ と書くと、$\qhat$ は
+\ref{sec:split-algorithm}節の $\qhat=S_{(k)}$ に一致し、
+\begin{equation*}
+  C^U(x)=\begin{cases}
+    [\,\fhat(x)-\qhat,\ \fhat(x)+\qhat\,] & (U_{n+1}\le\hat u),\\[2pt]
+    (\,\fhat(x)-\qhat,\ \fhat(x)+\qhat\,) & (U_{n+1}>\hat u)
+  \end{cases}
+\end{equation*}
+である。$k=n+1$ のときは $C^U(x)=\Real$ である。
+
+\paragraph{$\qhat=S_{(k)}$ であることの確認.}
+ペアを辞書式順序で小さい順に並べる置換 $\sigma$ をとると、$P\preceq P'$ ならば
+第 $1$ 成分について $s\le s'$ なので、$S_{\sigma(1)}\le\cdots\le S_{\sigma(n)}$ である。
+つまり $\sigma$ は $S_1,\dots,S_n$ を小さい順に並べる置換でもあり、
+補題~\ref{lem:order-count} より順序統計量は並べ方によらないので、
+$P_{(l)}$ の第 $1$ 成分は $S_{(l)}$ に等しい。
+
+\paragraph{区間の形の確認.}
+定義より、$y\in C^U(x)$ は「$|y-\fhat(x)|<\qhat$、または $|y-\fhat(x)|=\qhat$ かつ
+$U_{n+1}\le\hat u$」と同値である。端点を含むかどうかだけが $U_{n+1}$ で決まる。
+
+\begin{proposition}[無作為タイブレークによる正確な被覆]
+  \label{prop:random-tiebreak}
+  (A1)(A2) のもとで（(A3) は仮定しない）
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C^U(X_{n+1})\bigr)=\frac{k}{n+1}
+  \end{equation*}
+  であり、特に
+  $1-\alpha\le\Prob\bigl(Y_{n+1}\in C^U(X_{n+1})\bigr)<1-\alpha+\dfrac{1}{n+1}$ である。
+\end{proposition}
+
+\begin{proof}
+  $S:=(S_1,\dots,S_{n+1})$、$U:=(U_1,\dots,U_{n+1})$ とおく。
+
+  \textbf{(i) ペアの交換可能性.}
+  補題~\ref{lem:score-exch} より $S$ は交換可能であり、命題~\ref{prop:iid-exch} より
+  $U$ も交換可能である。$S$ は $(\Dtr,Z)$ の関数なので $U$ は $S$ と独立であり、
+  置換 $\pi$ について $S_\pi$ と $U_\pi$ も独立である。命題~\ref{prop:indep-pair} を
+  $(A,B,B')=(S_\pi,U_\pi,U)$ に適用して $(S_\pi,U_\pi)\eqd(S_\pi,U)$、
+  $(A,B,B')=(U,S_\pi,S)$ に適用し成分の順序を入れ替えて（命題~\ref{prop:image}）
+  $(S_\pi,U)\eqd(S,U)$ を得る。よって $(S_\pi,U_\pi)\eqd(S,U)$。
+  $(S,U)$ からペアの列 $(P_1,\dots,P_{n+1})$ を作る固定された写像は、
+  $(S_\pi,U_\pi)$ を $(P_{\pi(1)},\dots,P_{\pi(n+1)})$ に写すので、
+  命題~\ref{prop:image} より $(P_1,\dots,P_{n+1})$ は交換可能である。
+
+  \textbf{(ii) 非重複.}
+  $i\ne j$ について $\Prob(P_i=P_j)\le\Prob(U_i=U_j)=0$。
+  よって確率 $1$ で $P_1,\dots,P_{n+1}$ は相異なる。
+
+  \textbf{(iii) 被覆事象の書き換え.}
+  $|Y_{n+1}-\fhat(X_{n+1})|=S_{n+1}$ なので、定義より
+  $Y_{n+1}\in C^U(X_{n+1})\iff P_{n+1}\preceq P_{(k)}$
+  （$k=n+1$ のときは両辺とも常に成り立つ）。
+
+  \textbf{(iv) 結論.}
+  注意~\ref{rem:total-order} により、補題~\ref{lem:quantile}~(ii) は辞書式順序の値を
+  とる $P_1,\dots,P_{n+1}$ にも適用でき、(i)(ii) より
+  $\Prob(P_{n+1}\preceq P_{(k)})=k/(n+1)$。不等式は系~\ref{cor:upper} の証明と同じく
+  \eqref{eq:ceil-bounds} から従う。
+\end{proof}
+
+\begin{remark}[決定的な手続きとの関係]
+  \label{rem:tiebreak-vs-det}
+  \leavevmode  % 見出しの行で箇条書きを始めない
+  \begin{enumerate}
+    \item \textbf{包含関係と下界の別証明.}
+      常に $C^U(x)\subseteq C(x)$ である（$\qhat$ は共通で、$C^U$ は端点を除くことが
+      あるだけ）。よって
+      $\Prob(Y_{n+1}\in C(X_{n+1}))\ge\Prob(Y_{n+1}\in C^U(X_{n+1}))=k/(n+1)\ge1-\alpha$
+      となり、最小順位を使わない定理~\ref{thm:coverage} の別証明が得られる。
+    \item \textbf{(A3) のもとでは一致する.}
+      $C(x)\setminus C^U(x)$ は端点 $\fhat(x)\pm\qhat$ の高々 $2$ 点なので、
+      $Y_{n+1}$ がそこに入るのは $S_{n+1}=S_{(k)}$、すなわち同点のときに限る。
+      (A3) のもとでその確率は $0$ なので、両者の被覆確率は等しく、
+      命題~\ref{prop:random-tiebreak} と系~\ref{cor:upper} は一致する。
+    \item \textbf{例~\ref{ex:binary} では.}
+      無作為タイブレークの被覆確率はちょうど $k/(n+1)$（$\alpha=0.5$ で $0.5$、
+      $\alpha=0.1$ で $0.9$）であり、決定的な手続きの $0.75$、$0.99998$ から
+      大きく下がって、上界の範囲に収まる。
+    \item \textbf{代償.}
+      出力が追加の乱数 $U_{n+1}$、$\hat u$ に依存するので、同じデータから端点を含む
+      区間と含まない区間のどちらも出うる。再現性のためには乱数の種を固定する必要がある。
+      決定的な手続きは同点があると保守的になるが、データだけで区間が決まる。
+  \end{enumerate}
+\end{remark}
 
 \subsection{被覆率そのものの分布}
 %% TODO: 較正集合を固定したときの被覆率は Beta(n+1-l, l), l=\lfloor (n+1)\alpha \rfloor
