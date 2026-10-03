@@ -455,12 +455,12 @@ def fig_e3_stratified(summary: pd.DataFrame) -> None:
 
     # 縦軸は名目値をはさんで、割れの大きさがそのまま高さに出る範囲にする
     ax.set_ylim(0.70, 1.01)
-    ax.set_xticks(x, [f"層{b}\n$X_1$ {0.2 * b:.1f}–{0.2 * (b + 1):.1f}" for b in x],
+    ax.set_xticks(x, [f"層{b + 1}\n$X_1$ {0.2 * b:.1f}–{0.2 * (b + 1):.1f}" for b in x],
                   fontsize=8)
     ax.set_ylabel("被覆率")
     ax.grid(axis="y")
     ax.set_axisbelow(True)
-    # 層3・層4 の棒は 0.90 を超えないので、右上が空く
+    # 層4・層5 の棒は 0.90 を超えないので、右上が空く
     ax.legend(loc="upper right", fontsize=7.5, ncol=1)
     fig.suptitle(r"$X_1$ で層別した被覆率（誤差棒は試行間＋テスト集合間 95%）",
                  y=0.99, fontsize=11, color=INK)

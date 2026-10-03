@@ -369,7 +369,7 @@ def judge(summary: pd.DataFrame, marg: pd.DataFrame) -> None:
 
     # --- 層別被覆の表 ---
     print("\n【層別被覆】X1 の固定境界 0.2/0.4/0.6/0.8 で5層に分割")
-    print(f"  {'手法':12}" + "".join(f"{f'層{b}':>11}" for b in range(N_BINS))
+    print(f"  {'手法':12}" + "".join(f"{f'層{b + 1}':>11}" for b in range(N_BINS))
           + f"{'gap':>9}{'最悪層':>9}")
     for key in METHOD_KEYS:
         g = summary[summary["method"] == key].sort_values("bin")
@@ -377,7 +377,7 @@ def judge(summary: pd.DataFrame, marg: pd.DataFrame) -> None:
         print(f"  {LABELS[key]:12}{cells}{g['gap'].iloc[0]:>9.4f}"
               f"{g['worst_bin_coverage'].iloc[0]:>9.4f}")
 
-    print(f"\n  {'手法':12}" + "".join(f"{f'層{b}の幅':>11}" for b in range(N_BINS))
+    print(f"\n  {'手法':12}" + "".join(f"{f'層{b + 1}の幅':>11}" for b in range(N_BINS))
           + f"{'幅の比':>9}")
     for key in METHOD_KEYS:
         g = summary[summary["method"] == key].sort_values("bin")
