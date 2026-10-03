@@ -545,6 +545,40 @@ $0<(n+1)(1-\alpha)<n+1$ より $k\in\{1,\dots,n+1\}$ である。
 \end{equation}
 とする（$\qhat=+\infty$ のときは $C(x)=\Real$）。
 
+%% 記号の一覧（指導教員から記号の説明を求められたため置く）。
+%% 表番号をずらさないよう、番号なし（\caption・\label なし）にしている。
+本節で定めた記号をまとめると、次のとおりである。
+\begin{center}
+  \begin{tabular}{lp{0.82\textwidth}}
+    \toprule
+    記号 & 意味 \\
+    \midrule
+    $n$ & 較正用データの個数（テスト点を入れると $n+1$ 個） \\
+    $\alpha$ & 外れてよい割合。$1-\alpha$ が当てたい確率 \\
+    $\fhat$ & 学習用データから作った予測モデル \\
+    $S_i$ & $i$ 番目のデータの残差（スコア）$|Y_i-\fhat(X_i)|$ \\
+    $S_{(k)}$ & $k\le n$ のときは、較正用データ $n$ 個の残差のうち $k$ 番目に小さいもの。$k=n+1$ のときは $+\infty$ \\
+    $\qhat$ & 区間の幅。$\qhat=S_{(k)}$、$k=\lceil(n+1)(1-\alpha)\rceil$ \\
+    $C(x)$ & 入力 $x$ に対する予測区間 $[\fhat(x)-\qhat,\ \fhat(x)+\qhat]$ \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+%% 数値例。手計算で確かめられる大きさ（n=4）にしている。
+\paragraph{数値例.}
+較正用データが $n=4$ 個で、残差が $0.3,\ 1.2,\ 0.7,\ 0.5$ と観測されたとする。
+小さい順に並べると $0.3,\ 0.5,\ 0.7,\ 1.2$ である。
+$\alpha=0.2$ ならば $k=\lceil 5\times 0.8\rceil=4$ であり、$\qhat=S_{(4)}=1.2$ となる。
+このときテスト点が外れるのは、テスト点の残差が $1.2$ を超えるとき、
+すなわちテスト点の残差が他の $4$ 個のどれよりも大きいときだけである。
+
+当たる確率を考えるときは、較正用データとテスト点を引く前の時点に戻る。
+$5$ 個のデータは対等なので、同点がなければ、テスト点の残差が $5$ 個の中で最大になる確率は $1/5$ である。
+したがって当たる確率は $4/5=1-\alpha$ である。
+この確率は較正用データの引き方も含めたものであり、
+上の $4$ つの残差を固定したときの確率ではない（注意~\ref{rem:marginal}、\ref{sec:cond-coverage}節）。
+次節の証明は、この考え方を一般の $n$ で述べたものである。
+
 記法（$\eqd$、$\#$、$\Ind\{\cdot\}$、天井関数、置換）と可測性の約束は
 \ref{sec:notation}節に従う。
 
@@ -553,16 +587,21 @@ $0<(n+1)(1-\alpha)<n+1$ より $k\in\{1,\dots,n+1\}$ である。
 %% 仕様書: thesis/drafts/main_theorem_spec.md「仮定」〜「注意」に対応する。
 %% 論理構成は 補題1（スコアの交換可能性）→ 補題2（順序統計量の補題）
 %% → 定理3（下界）→ 系4（上界）。論理を変えるときは仕様書を先に直すこと。
+%% 言葉の説明は著者の下書き（2026-10-02）による。論理は仕様書 v3 のまま。
+%% 証明は各段とも「言葉の説明 → 補足（式と命題の引用）」の順に書いている。
 
 本章の主定理は次の仮定のもとで述べる。
 \begin{itemize}
   \item[\textbf{(A1)}] \textbf{交換可能性.}
     $(Z_1,\dots,Z_{n+1})$ は交換可能である（定義~\ref{def:exch}）。
+    おおまかにいえば、較正用データとテスト点は、同じやり方で集めた対等なデータである。
   \item[\textbf{(A2)}] \textbf{学習用データの独立性.}
     $\Dtr$ は $(Z_1,\dots,Z_{n+1})$ と独立である。
+    おおまかにいえば、学習用データは、較正用データ・テスト点とは独立に用意したものである。
   \item[\textbf{(A3)}] \textbf{スコアの非重複.}
     $(\Dtr,Z_1,\dots,Z_{n+1})$ の同時分布のもとで、確率 $1$ で
     $S_1,\dots,S_{n+1}$ は相異なる。
+    おおまかにいえば、同点がない。
 \end{itemize}
 $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も仮定しない。
 (A3) は上界（系~\ref{cor:upper}）でのみ用いる。
@@ -573,6 +612,8 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 \end{lemma}
 
 \begin{proof}
+  残差（スコア）は、どのデータにも同じ計算 $(x,y)\mapsto|y-\fhat(x)|$ を当てて作る。
+  これを式で書く。
   $z_i=(x_i,y_i)$ として、写像 $G$ を
   \begin{equation*}
     G(d,z_1,\dots,z_{n+1})
@@ -586,13 +627,20 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   \begin{equation*}
     (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi).
   \end{equation*}
-  (A2) より $\Dtr$ は $Z$ と独立であり、$Z_\pi$ は $Z$ の関数だから
+
+  次に、$\fhat$ は学習用データだけで決まり、(A2) より学習用データは
+  $(Z_1,\dots,Z_{n+1})$ と独立である。また (A1) より、データの列を入れ替えても分布は変わらない。
+  よって、入れ替えたデータの列と学習用データの組は、元の組と同じ分布に従う。
+  補足すると、(A2) より $\Dtr$ は $Z$ と独立であり、$Z_\pi$ は $Z$ の関数だから
   $\Dtr$ は $Z_\pi$ とも独立である。(A1) より $Z_\pi\eqd Z$ であるから、
   命題~\ref{prop:indep-pair} より
   \begin{equation*}
     (\Dtr,Z_\pi)\eqd(\Dtr,Z).
   \end{equation*}
-  $G$ は固定された写像なので、命題~\ref{prop:image} より
+
+  最後に、同じ分布のものに同じ計算を当てても、同じ分布である。
+  したがって、入れ替えた残差の列は、元の残差の列と同じ分布に従う。
+  補足すると、$G$ は固定された写像なので、命題~\ref{prop:image} より
   \begin{equation*}
     (S_{\pi(1)},\dots,S_{\pi(n+1)})=G(\Dtr,Z_\pi)\eqd G(\Dtr,Z)=(S_1,\dots,S_{n+1}).
     \qedhere
@@ -623,15 +671,20 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
     \label{eq:min-rank}
     R_j:=1+\#\{\,i\in\{1,\dots,n+1\}: S_i<S_j\,\}
   \end{equation}
-  で定める。(a)〜(d) では $m\in\{1,\dots,n+1\}$ を固定して (i)(ii) を示す。
+  で定める。$R_j$ は、$n+1$ 個の中で $S_j$ より小さいものの個数に $1$ を足したものである。
+  (a)〜(d) では $m\in\{1,\dots,n+1\}$ を固定して (i)(ii) を示す。
 
   \textbf{(a) 事象の書き換え.}
   $\{S_{n+1}\le S_{(m)}\}=\{R_{n+1}\le m\}$ が成り立つことを示す。
 
-  $m=n+1$ のときは、$S_{(n+1)}=+\infty$ であり、$R_{n+1}\le n+1$ も常に成り立つので、
-  両辺とも全事象である。
+  $m=n+1$ のときは、$S_{(n+1)}=+\infty$ なので左の条件は常に成り立ち、
+  順位は $n+1$ 以下なので右の条件 $R_{n+1}\le n+1$ も常に成り立つ。
+  すなわち両辺とも全事象である。
 
-  $m\le n$ とする。$N:=\#\{\,i\le n: S_i<S_{n+1}\,\}$ とおくと、
+  $m\le n$ とする。テスト点より残差が小さい較正用データの個数を $N$ とすると、
+  テスト点の順位は $R_{n+1}=N+1$ である。
+  $S_{n+1}\le S_{(m)}$ は $N\le m-1$ と同じであり、これは $R_{n+1}\le m$ と同じである。
+  補足すると、$N:=\#\{\,i\le n: S_i<S_{n+1}\,\}$ であり、
   $S_{n+1}<S_{n+1}$ は成り立たないので $R_{n+1}=N+1$ である。
   補題~\ref{lem:order-count}~(ii) を $s_i=S_i$（$i\le n$）、$l=m$、$t=S_{n+1}$ として
   適用すると
@@ -644,8 +697,12 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   $S_{n+1}\le S_{(m)}\iff N\le m-1\iff R_{n+1}\le m$ を得る。
 
   \textbf{(b) 対称性.}
-  各 $j$ について $R_j\eqd R_{n+1}$ である。
+  残差の列は交換可能なので、$j$ 番目とテスト点を入れ替えても分布は変わらない。
+  よって、どの $j$ についても、$R_j$ と $R_{n+1}$ は同じ分布に従う。
+  すなわち、各 $j$ について $R_j\eqd R_{n+1}$ である。
+  特に、$\Prob(R_j\le m)=\Prob(R_{n+1}\le m)$ がどの $j$ でも成り立つ。
 
+  補足として、これを式で確かめる。
   $j=n+1$ のときは自明なので、$j\le n$ とする。
   写像 $\rho\colon\Real^{n+1}\to\mathbb{N}$ を
   \begin{equation*}
@@ -663,13 +720,16 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   $\rho$ は固定された写像なので、命題~\ref{prop:image} より $R_j\eqd R_{n+1}$。
 
   \textbf{(c) 数え上げ.}
-  常に
+  $n+1$ 個のうち、順位が $m$ 以下のものは、いつでも $m$ 個以上ある。
+  同点がなければ、ちょうど $m$ 個である。
+  式で書くと、常に
   \begin{equation}
     \label{eq:rank-count}
     \sum_{j=1}^{n+1}\Ind\{R_j\le m\}\ \ge\ m
   \end{equation}
   が成り立ち、$S_1,\dots,S_{n+1}$ が相異なるときは等号が成り立つ。
 
+  補足として、その理由を述べる。
   $\{1,\dots,n+1\}$ の置換 $\sigma'$ を
   $S_{\sigma'(1)}\le\cdots\le S_{\sigma'(n+1)}$ となるようにとる。
   $S_i<S_{\sigma'(l)}$ を満たす $i$ は $i=\sigma'(l')$（$l'<l$）の形に限られる
@@ -680,15 +740,19 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
   $R_j\le m$ を満たす添字はちょうど $m$ 個である。
 
   \textbf{(d) 結論.}
-  \eqref{eq:rank-count} の両辺の期待値をとると、期待値の線形性と
-  $\Exp[\Ind\{E\}]=\Prob(E)$ より
+  「条件を満たすものの個数の平均」は「それぞれが条件を満たす確率の合計」に等しい。
+  (c) より個数はいつでも $m$ 以上なので、確率の合計も $m$ 以上である。
+  式で書くと、\eqref{eq:rank-count} の両辺の期待値をとり、期待値の線形性と
+  $\Exp[\Ind\{E\}]=\Prob(E)$ を使って
   \begin{equation*}
     \sum_{j=1}^{n+1}\Prob(R_j\le m)\ \ge\ m.
   \end{equation*}
   (b) より左辺の各項は $\Prob(R_{n+1}\le m)$ に等しいので、
-  $(n+1)\,\Prob(R_{n+1}\le m)\ge m$。(a) と合わせて (i) を得る。
-  確率 $1$ で相異なるときは \eqref{eq:rank-count} の等号が確率 $1$ で成り立つので、
-  同じ計算で (ii) を得る。
+  $(n+1)\,\Prob(R_{n+1}\le m)\ge m$、すなわち $\Prob(R_{n+1}\le m)\ge m/(n+1)$ である。
+  (a) と合わせて (i) を得る。
+  確率 $1$ で相異なるならば、(c) の個数は確率 $1$ でちょうど $m$ である。
+  すなわち \eqref{eq:rank-count} の等号が確率 $1$ で成り立つので、
+  同じ計算で $(n+1)\,\Prob(R_{n+1}\le m)=m$ となり、(ii) を得る。
 
   最後に $\beta\in(0,1)$ とし、$m:=\lceil(n+1)\beta\rceil$ とおく。
   $0<(n+1)\beta<n+1$ より $m\in\{1,\dots,n+1\}$ であり、$m\ge(n+1)\beta$ である。
@@ -697,6 +761,13 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 
 本補題は交換可能性のみを用い、スコアの分布の形には依存しない。
 相異なることは (ii) でのみ用いる。
+
+%% 出典。主定理は既知の結果であり、本論文の新規の主張ではないことを明記する。
+次の定理~\ref{thm:coverage} と系~\ref{cor:upper} は既知の結果である
+\cite{vovk2005algorithmic,lei2018distribution,angelopoulos2023conformal}。
+Lei ら~\cite{lei2018distribution} の定理の記述は i.i.d.\ を仮定しているが、
+同論文も交換可能性で足りると述べている。
+本論文では、学習用データの独立性 (A2) と同点の扱いを明示した形で証明を述べる。
 
 \begin{theorem}[有限標本被覆保証]
   \label{thm:coverage}
@@ -707,7 +778,7 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 \end{theorem}
 
 \begin{proof}
-  まず
+  まず、$Y_{n+1}$ が区間に入ることを、テスト点の残差の条件に書き換える。すなわち
   \begin{equation}
     \label{eq:cover-iff}
     Y_{n+1}\in C(X_{n+1})\iff S_{n+1}\le\qhat
@@ -720,7 +791,8 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
     \iff S_{n+1}\le\qhat.
   \end{equation*}
 
-  補題~\ref{lem:score-exch} より $(S_1,\dots,S_{n+1})$ は交換可能である。
+  次に、補題~\ref{lem:score-exch} より残差の列 $(S_1,\dots,S_{n+1})$ は交換可能なので、
+  補題~\ref{lem:quantile}~(iii) を $\beta=1-\alpha$ で使う。
   $\beta:=1-\alpha\in(0,1)$ とおくと $\lceil(n+1)\beta\rceil=k$ であるから、
   \eqref{eq:cover-iff} と補題~\ref{lem:quantile}~(iii) より
   \begin{equation*}
@@ -744,14 +816,16 @@ $Z_i$ の分布および $\mathcal{A}$ については、これ以外に何も�
 \end{corollary}
 
 \begin{proof}
+  まず、(A3) より同点がないので、補題~\ref{lem:quantile} の (ii) が使える。
   \eqref{eq:cover-iff}、補題~\ref{lem:score-exch}、および
   補題~\ref{lem:quantile}~(ii)（$m=k$）より
   \begin{equation*}
     \Prob\bigl(Y_{n+1}\in C(X_{n+1})\bigr)=\Prob\bigl(S_{n+1}\le S_{(k)}\bigr)=\frac{k}{n+1}.
   \end{equation*}
+  次に、天井関数の不等式で $k$ を上下から挟む。
   $u:=(n+1)(1-\alpha)$ とおくと、\ref{sec:notation}節の天井関数の不等式
   \eqref{eq:ceil-bounds} より $u\le\lceil u\rceil=k<u+1$ である。
-  これを $n+1$ で割れば
+  最後に、全体を $n+1$ で割れば
   \begin{equation*}
     1-\alpha\ \le\ \frac{k}{n+1}\ <\ 1-\alpha+\frac{1}{n+1}
   \end{equation*}
