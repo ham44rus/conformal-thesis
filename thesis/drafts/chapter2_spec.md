@@ -261,3 +261,4 @@ $$\hat g_\tau\in\operatorname*{arg\,min}_{g\in\mathcal{G}}\ \frac1N\sum_{i=1}^{N
 | v1.1 | 実装との対応メモのみ更新（確認環境の明記、Claude Code による実装確認の結果、落とし穴 4 の該当 $\alpha$ の追記、`limit_denominator` の上限を `10**9` に変更）。TeX 本文への影響なし |
 | v1.2 | 2.4 回帰モデルと分位点回帰を追加（定義 `def:cond-quantile`、pinball 損失 `eq:pinball`、命題 `prop:pinball-quantile` と証明の草案、分位点回帰 `eq:quantile-regression`）。第4章の仕様書 `chapter4_sections_spec.md` v1 の前提節。証明を本文に載せるかは TODO(著者)（第4章の仕様書の TODO 一覧 1〜3） |
 | v1.3 | 2.4 に著者の決定を反映：命題 `prop:pinball-quantile` の証明を本文に載せる（凸性と片側微分。条件付き版は $x$ ごとに適用）、`koenker1978regression` は分位点回帰の提案の出典としてのみ引く、条件付き分位点は $F(t\mid x)$ から定義し正則条件付き分布の存在は脚注で一言。分位点回帰の記号を $\hat g_\tau$ に変更（第4章で入れ替え後を $\hat q$ とするため） |
+| v1.4 | 2.1〜2.3 節の TeX に、章の冒頭の道具の一覧と数値例を足した（2026-10-04）。主張と証明の変更なし |
