@@ -94,6 +94,11 @@ def main(seed: int) -> None:
                 "ci_lo": ci_lo,
                 "ci_hi": ci_hi,
                 "upper_bound": 1 - alpha + 1 / (n_cal + 1),
+                # in_bounds は、理論の上下界 [1-alpha, 1-alpha+1/(n_cal+1)] に ±0.005 の許容幅を
+                # 付けた判定である（厳密に上下界の内側かどうかの判定ではない）。
+                # n_cal が大きいと上下界の幅 1/(n_cal+1) が平均被覆率の推定誤差より狭くなるため、
+                # 点推定は帯からわずかに外れうる。許容幅なしで見た事実（内側のセル数など）は
+                # specs/E1_coverage.md の「実行結果」に書いてある（論文では sec:e1）。
                 "in_bounds": bool(1 - alpha - 0.005 <= cov.mean() <= 1 - alpha + 1 / (n_cal + 1) + 0.005),
                 "beta_a": a_par,
                 "beta_b": b_par,
