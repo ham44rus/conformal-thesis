@@ -467,6 +467,50 @@ def fig_e3_stratified(summary: pd.DataFrame) -> None:
     save(fig, "fig_e3_stratified")
 
 
+# --- E4: 共変量シフトと重み付き等角予測（仕様書 specs/E4_covariate_shift.md「図」）---
+
+# 手法の順。experiments/e4_covariate_shift.py の METHOD_KEYS と同じ順に固定する
+E4_METHOD_ORDER = ("unweighted", "weighted")
+E4_LABELS = {"unweighted": "重みなし", "weighted": "重み付き"}
+E4_COLORS = {"unweighted": RED, "weighted": BLUE}
+E4_MARKERS = {"unweighted": "s", "weighted": "o"}
+
+
+def fig_e4_coverage(summary: pd.DataFrame) -> None:
+    """E4（卒論 sec:e4）: シフトの強さ gamma に対する平均被覆率（左）と平均の幅（右）。
+
+    左の誤差棒は ±1.96 × se_total（試行間＋テスト集合間の2成分合成。CLAUDE.md「報告の作法」）。
+    alpha は csv の target 列（= 1-alpha）から読む。
+    右の幅は有限な区間の幅 2*q_hat のテスト点平均を、試行で平均したもの。
+    """
+    target = float(summary["target"].iloc[0])
+    gammas = sorted(summary["gamma"].unique())
+
+    fig, (ax_cov, ax_w) = plt.subplots(1, 2, figsize=(6.6, 2.8), gridspec_kw={"wspace": 0.30})
+    for key in E4_METHOD_ORDER:
+        g = summary[summary["method"] == key].sort_values("gamma")
+        style = {"color": E4_COLORS[key], "marker": E4_MARKERS[key], "markersize": 5,
+                 "linewidth": 1.6, "label": E4_LABELS[key]}
+        ax_cov.errorbar(g["gamma"], g["coverage_mean"], yerr=1.96 * g["se_total"],
+                        capsize=3, **style)
+        ax_w.plot(g["gamma"], g["mean_width"], **style)
+
+    ax_cov.axhline(target, color=INK, linewidth=1, linestyle=(0, (4, 3)),
+                   label=r"名目値 $1-\alpha$")
+    ax_cov.set_ylabel("平均被覆率")
+    ax_cov.set_title("被覆率（誤差棒は試行間＋テスト集合間 95%）", fontsize=9, color=INK)
+    ax_cov.legend(loc="lower left", fontsize=7.5)
+    ax_w.set_ylabel(r"平均の幅 $2\hat{q}$")
+    ax_w.set_title("区間の幅", fontsize=9, color=INK)
+    ax_w.legend(loc="upper left", fontsize=7.5)
+    for ax in (ax_cov, ax_w):
+        ax.set_xticks(gammas, [f"{v:g}" for v in gammas])
+        ax.set_xlabel(r"シフトの強さ $\gamma$")
+        ax.grid(axis="y")
+        ax.set_axisbelow(True)
+    save(fig, "fig_e4_coverage")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -506,6 +550,13 @@ def main() -> None:
         fig_e3_stratified(pd.read_csv(e3_sum))
     else:
         print("  results/e3_*.csv が無いため E3 の図は省略（先に `make e3`）")
+
+    # E4 も独立に回すので、csv が無ければ飛ばす
+    e4_sum = RESULTS / "e4_summary.csv"
+    if e4_sum.exists():
+        fig_e4_coverage(pd.read_csv(e4_sum))
+    else:
+        print("  results/e4_summary.csv が無いため E4 の図は省略（先に `make e4`）")
 
 
 if __name__ == "__main__":

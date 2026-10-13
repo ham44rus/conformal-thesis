@@ -16,7 +16,7 @@
 # venv を使わない環境では:  make PYTHON=python3 test
 PYTHON ?= .venv/bin/python
 
-.PHONY: help setup test e1 e1b e1-reeval e2 e3 all-experiments figures clean check
+.PHONY: help setup test e1 e1b e1-reeval e2 e3 e4 all-experiments figures clean check
 
 help:
 	@echo "make setup      依存パッケージをインストール"
@@ -25,6 +25,7 @@ help:
 	@echo "make e1b        実験E1b（検証の水準）を実行"
 	@echo "make e1-reeval  E1 の再評価（400万点の独立テスト集合で KS 検定をやり直す）"
 	@echo "make e2         実験E2（モデル非依存性）を実行"
+	@echo "make e4         実験E4（共変量シフトと重み付き等角予測）を実行"
 	@echo "make figures    results/ の csv から figures/ の図を再生成"
 	@echo "make check      test + 主要実験の通し確認"
 	@echo "make clean      中間生成物を削除（results/ figures/ は消さない）"
@@ -49,6 +50,9 @@ e2:
 
 e3:
 	$(PYTHON) experiments/e3_conditional.py --seed 20260901
+
+e4:
+	$(PYTHON) experiments/e4_covariate_shift.py --seed 20260901
 
 figures:
 	$(PYTHON) experiments/make_figures.py

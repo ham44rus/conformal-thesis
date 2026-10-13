@@ -17,6 +17,7 @@ from .adaptive import (
     fit_quantile_pair,
     QuantilePair,
 )
+from .weighted import weighted_conformal_quantile
 
 __all__ = [
     "conformal_quantile",
@@ -37,4 +38,5 @@ __all__ = [
     "SigmaEstimator",
     "fit_quantile_pair",
     "QuantilePair",
+    "weighted_conformal_quantile",
 ]
