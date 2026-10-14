@@ -2115,7 +2115,78 @@ $(\qhat_{\mathrm{lo}},\qhat_{\mathrm{hi}})$ は $\Dtr$ のみから決まるの�
 
 \subsection{共変量シフトと重み付き等角予測}
 \label{sec:covariate-shift}
-%% TODO: 尤度比による重み付け。第5章E4に対応。
+%% 仕様書: specs/E4_covariate_shift.md。実装: src/conformal/weighted.py。検査: tests/test_weighted.py。
+%% 第5章 E4（sec:e4）に対応する。命題 prop:weighted は証明を載せず、tibshirani2019covariate を引用する。
+
+定理~\ref{thm:coverage} の保証は、較正用データとテスト点の交換可能性 (A1) に依存する
+（注意~\ref{rem:exch-violation}）。本節では、(A1) が破れる場合のうち、入力の分布だけがずれる
+\textbf{共変量シフト}を扱い、重みを付けて較正する方法（Tibshirani ら~\cite{tibshirani2019covariate}）を述べる。
+
+\paragraph{設定.}
+較正用データ $Z_1,\dots,Z_n$ は i.i.d.\ で、分布 $P=P_X\times P_{Y\mid X}$ に従うとする。
+テスト点 $Z_{n+1}=(X_{n+1},Y_{n+1})$ はこれらと独立で、分布 $\tilde P=\tilde P_X\times P_{Y\mid X}$ に従うとする。
+すなわち、入力の分布は $P_X$ から $\tilde P_X$ に変わるが、入力を与えたときの $Y$ の条件付き分布
+$P_{Y\mid X}$ は変わらない。学習用データ $\Dtr$ は $(Z_1,\dots,Z_{n+1})$ と独立とする。
+$\tilde P_X$ は $P_X$ に関して絶対連続であるとし、その密度（尤度比）を
+\begin{equation}
+  \label{eq:likelihood-ratio}
+  w(x):=\frac{d\tilde P_X}{dP_X}(x)
+\end{equation}
+と書く。$w$ は既知とする。$\tilde P_X\ne P_X$ のとき、$(Z_1,\dots,Z_{n+1})$ は一般に交換可能でない。
+
+\paragraph{重み付き共形分位点.}
+スコア $S_i$ は \eqref{eq:general-score} のとおりとする。テスト点の入力 $x$ に対し、重み
+\begin{equation}
+  \label{eq:weighted-prob}
+  p_i(x):=\frac{w(X_i)}{\sum_{j=1}^{n}w(X_j)+w(x)}\quad(i=1,\dots,n),\qquad
+  p_{n+1}(x):=\frac{w(x)}{\sum_{j=1}^{n}w(X_j)+w(x)}
+\end{equation}
+を定める（分母が正のときに定める）。\textbf{重み付き共形分位点}を
+\begin{equation}
+  \label{eq:weighted-quantile}
+  \qhat_w(x):=\min\Bigl\{\,s\in\Real:\ \sum_{i\le n:\ S_i\le s}p_i(x)\ \ge\ 1-\alpha\,\Bigr\}
+\end{equation}
+と定め、条件を満たす $s$ がないときは $\qhat_w(x):=+\infty$ とする。
+これは、$S_1,\dots,S_n$ に重み $p_1(x),\dots,p_n(x)$ を、$+\infty$ に重み $p_{n+1}(x)$ を置いた分布の
+$(1-\alpha)$ 分位点である。予測集合は
+\begin{equation}
+  \label{eq:weighted-set}
+  C_w(x):=\{\,y\in\Real:\ s(x,y)\le\qhat_w(x)\,\}
+\end{equation}
+とする（$\qhat_w(x)=+\infty$ のときは $C_w(x)=\Real$）。絶対残差スコアでは
+$C_w(x)=[\,\fhat(x)-\qhat_w(x),\ \fhat(x)+\qhat_w(x)\,]$ である。
+\eqref{eq:general-set} と違い、分位点がテスト点の入力 $x$ に依存する。
+
+$w\equiv1$（シフトなし）のとき、$p_i(x)=1/(n+1)$ であり、\eqref{eq:weighted-quantile} の条件は
+「$S_i\le s$ となる $i\le n$ が $(n+1)(1-\alpha)$ 個以上ある」となる。個数は整数なので、これは
+「$k=\lceil(n+1)(1-\alpha)\rceil$ 個以上ある」と同じであり、補題~\ref{lem:order-count}~(i) より
+$\qhat_w(x)=S_{(k)}=\qhat$（\eqref{eq:khat}。$k=n+1$ のときは $+\infty$）に一致する。
+
+\begin{proposition}[共変量シフトのもとでの被覆保証]
+  \label{prop:weighted}
+  上の設定のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C_w(X_{n+1})\bigr)\ \ge\ 1-\alpha .
+  \end{equation*}
+\end{proposition}
+
+この結果は Tibshirani ら~\cite{tibshirani2019covariate} による（同論文の系 1。分割型にも当てはまることは同論文 2.2 節）。
+本論文では証明を載せない。証明の考え方は定理~\ref{thm:coverage} と同じで、交換可能性の代わりに、
+重み $w$ を考慮すると並べ替えについて対称になるという性質（重み付き交換可能性）を使う。
+
+\begin{remark}[重み付き等角予測の前提]
+  \label{rem:weighted-assumptions}
+  \leavevmode
+  \begin{enumerate}
+    \item \textbf{尤度比が既知であること.}
+      命題~\ref{prop:weighted} は、正しい $w$ を使う場合の保証である。$w$ をデータから推定して使う場合は、
+      この保証はそのままでは成り立たない。本論文では $w$ が既知の場合だけを扱う。
+    \item \textbf{条件付き分布が変わらないこと.}
+      $P_{Y\mid X}$ が変わる場合は、設定を満たさず、命題~\ref{prop:weighted} は適用できない。
+    \item \textbf{重みの定数倍.}
+      \eqref{eq:weighted-prob} は $w$ を正の定数倍しても変わらないので、$w$ は定数倍を除いて分かればよい。
+  \end{enumerate}
+\end{remark}
 
 %%=====================================================================
 \section{数値実験}
@@ -2456,25 +2527,28 @@ $B$ 個の等頻度の層に分け、各層の被覆率を \eqref{eq:stratified-
 %% 実装: src/conformal/datasets.py（DGP）、experiments/*.py。環境は docs/環境.txt。
 
 \paragraph{データ生成過程.}
-入力は $X=(X_1,\dots,X_5)\sim\mathrm{Uniform}(0,1)^5$ とし、$2$ つの生成過程を用いる。
+学習用データと較正用データの入力は $X=(X_1,\dots,X_5)\sim\mathrm{Uniform}(0,1)^5$ とし、$2$ つの生成過程を用いる。
+テスト点の入力も、E4 を除いて同じ分布とする（E4 のテスト点の入力の分布は \ref{sec:e4}節で定める）。
 \begin{align}
   \text{等分散：}&\quad Y=X_1+\sin(2\pi X_2)+\varepsilon,\qquad \varepsilon\sim N(0,\,0.5^2), \label{eq:dgp-homo}\\
   \text{不均一分散：}&\quad Y=X_1+\sin(2\pi X_2)+\sigma(X_1)\,\varepsilon,\qquad
   \sigma(x)=0.1+1.0\,x,\quad \varepsilon\sim N(0,1). \label{eq:dgp-hetero}
 \end{align}
-\eqref{eq:dgp-homo} は E1・E1b・E2 で、\eqref{eq:dgp-hetero} は E3 で用いる。
+\eqref{eq:dgp-homo} は E1・E1b・E2 で、\eqref{eq:dgp-hetero} は E3・E4 で用いる（E4 のテスト点の生成は \ref{sec:e4}節）。
 \eqref{eq:dgp-hetero} では $X_1$ が大きいほど誤差の散らばりが大きく、$\sigma$ は $X_1$ の
 端点で $0.1$ から $1.1$ まで $11$ 倍、$5$ 分位の各層の代表値（$X_1=0.1,0.3,0.5,0.7,0.9$）
 では $0.2/0.4/0.6/0.8/1.0$ と $5$ 倍になる。
 
 \paragraph{共通の手続き.}
 すべての実験で、\textbf{学習集合と学習済みモデルは全試行で固定し、試行ごとに引き直すのは
-較正集合だけ}である。テスト集合も $1$ つを全試行で共有する（\ref{sec:metrics}節のテスト集合間
-成分はこの設計から生じる）。較正集合とテスト集合は学習集合と独立に生成するので、
-仮定 (A1$'$)(A2) が成り立つ。複数の手法・モデルを比べる実験（E2・E3）では、
+較正集合だけ}である。テスト集合も、実験の条件ごとに $1$ つを全試行で共有する（\ref{sec:metrics}節のテスト集合間
+成分はこの設計から生じる）。較正集合とテスト集合は学習集合と独立に生成する。
+E1・E1b・E2・E3 では仮定 (A1$'$)(A2) が成り立つ。E4 では、テスト点の入力の分布をずらすので (A1$'$) は成り立たない
+（(A2) は成り立つ）。複数の手法・モデルを比べる実験（E2・E3・E4）では、
 \textbf{同じ較正集合を全手法で共有}し、手法間の差からサンプリング変動を除く。
 共形分位点は \eqref{eq:khat} のとおり $k=\lceil(n+1)(1-\alpha)\rceil$ 番目の順序統計量とし、
-$k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）。
+$k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）。E4 の重み付きの手法では
+\eqref{eq:weighted-quantile} を用いる。
 
 \paragraph{規模.}
 各実験の設定を表~\ref{tab:exp-setup} にまとめる。
@@ -2493,6 +2567,7 @@ $k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）
     E1b（\ref{sec:e1b}節） & \eqref{eq:dgp-homo} & 500 & 1000 & 0.10 & 2000 & 4,000,000 / 2,000 \\
     E2（\ref{sec:e2}節） & \eqref{eq:dgp-homo} & 500 & 500 & 0.10 & 1000（+5 rep$\times$200） & 200,000 \\
     E3（\ref{sec:e3}節） & \eqref{eq:dgp-hetero} & 2,000 & 1000 & 0.10 & 500 & 200,000 \\
+    E4（\ref{sec:e4}節） & \eqref{eq:dgp-hetero} & 2,000 & 1000 & 0.10 & 500 & 200,000 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -3118,8 +3193,83 @@ $3$ つの手法はどれも、全体で $1$ つの共形分位点を使って�
 
 \subsection{E4：交換可能性が破れる場合}
 \label{sec:e4}
-%% TODO: 共変量シフト下で被覆が名目値を下回ること。重み付きによる部分的回復。
+%% 仕様書: specs/E4_covariate_shift.md。実装: experiments/e4_covariate_shift.py、src/conformal/weighted.py。
+%% 数値: results/e4_summary.csv, e4_trials.csv。図: figures/fig_e4_coverage.pdf。
 
+\paragraph{目的.}
+較正用データとテスト点で入力の分布がずれる（共変量シフト、\ref{sec:covariate-shift}節）と、(A1) が破れ、
+定理~\ref{thm:coverage} の保証は適用できない。このとき重みなしの平均被覆率が $1-\alpha$ を下回ることを確かめ、
+正しい尤度比を用いた重み付き等角予測の平均被覆率を、命題~\ref{prop:weighted} の保証と比較する。
+
+\paragraph{手続き.}
+学習用データと較正用データは \eqref{eq:dgp-hetero} から生成する。テスト点は、$X_1$ だけを密度
+\begin{equation}
+  \label{eq:dgp-shift}
+  p_\gamma(x)=(1+\gamma)\,x^{\gamma}\qquad(0<x<1)
+\end{equation}
+から生成し、$X_2,\dots,X_5$ の分布と、$X$ を与えたときの $Y$ の分布は \eqref{eq:dgp-hetero} のままとする。
+$\gamma=0$ はシフトなしで、$\gamma$ が大きいほどテスト点の $X_1$ は大きい側、すなわち誤差の散らばりが大きい側に寄る。
+尤度比 \eqref{eq:likelihood-ratio} は $w(x)=(1+\gamma)\,x_1^{\gamma}$ である。$\gamma\in\{0,1,2,4\}$ とする。
+
+学習集合 $2{,}000$ 点で勾配ブースティングの $\fhat$ を学習して固定し、スコアは絶対残差 \eqref{eq:score} とする。
+$\gamma$ ごとにテスト集合 $200{,}000$ 点を固定し、全試行で共有する。$R=500$ 回、較正集合 $1{,}000$ 点を引き直し
+（$\alpha=0.10$）、次の $2$ つの手法の被覆率と平均幅を記録する。
+\begin{enumerate}
+  \item[(a)] \textbf{重みなし}：\eqref{eq:khat} の $\qhat$ による区間 \eqref{eq:interval}。
+  \item[(b)] \textbf{重み付き}：\eqref{eq:weighted-quantile} の $\qhat_w(x)$ による区間。重みは上の $w$（正しい尤度比）。
+\end{enumerate}
+標準誤差は \eqref{eq:se-composite} による。
+
+\paragraph{結果.}
+表~\ref{tab:e4-summary} と図~\ref{fig:e4-coverage} に結果を示す。
+\begin{itemize}
+  \item $\gamma=0$ では、$2$ つの手法の被覆率は全試行で一致する（平均 $0.90101$）。
+  \item 重みなしの平均被覆率は、$\gamma=1,2,4$ で $0.84320$、$0.80605$、$0.76620$ と、$\gamma$ とともに下がる。
+    いずれも $1-\alpha=0.90$ を標準誤差の $3$ 倍以上下回る。
+  \item 重み付きの平均被覆率は、$\gamma=1,2,4$ で $0.90078$、$0.89901$、$0.90064$ である。
+    $\gamma=2$ は $0.90$ を $0.00099$ 下回るが、標準誤差（$0.00089$）の $3$ 倍以内である。
+  \item 平均幅は、重みなしが $2.307$ で一定であり、重み付きは $2.772$、$3.006$、$3.269$ と $\gamma$ とともに広がる。
+    幅が無限大になる区間はなかった。
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E4：共変量シフトのもとでの平均被覆率と平均幅（$n=1000$、$\alpha=0.10$、$R=500$）。
+    SE は \eqref{eq:se-composite} の合成標準誤差。出典：\texttt{results/e4\_summary.csv}}
+  \label{tab:e4-summary}
+  \begin{tabular}{rrrrrrr}
+    \toprule
+    & \multicolumn{3}{c}{重みなし} & \multicolumn{3}{c}{重み付き} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    $\gamma$ & 平均被覆率 & SE & 平均幅 & 平均被覆率 & SE & 平均幅 \\
+    \midrule
+    0 & 0.90101 & 0.00077 & 2.307 & 0.90101 & 0.00077 & 2.307 \\
+    1 & 0.84320 & 0.00099 & 2.307 & 0.90078 & 0.00082 & 2.772 \\
+    2 & 0.80605 & 0.00110 & 2.307 & 0.89901 & 0.00089 & 3.006 \\
+    4 & 0.76620 & 0.00119 & 2.307 & 0.90064 & 0.00100 & 3.269 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\linewidth]{../figures/fig_e4_coverage.pdf}
+  \caption{E4：シフトの強さ $\gamma$ に対する平均被覆率（左。誤差棒は合成標準誤差の $1.96$ 倍、破線は $1-\alpha$）と
+    平均幅（右）。出典：\texttt{results/e4\_summary.csv}}
+  \label{fig:e4-coverage}
+\end{figure}
+
+%% ===== 考察の論点メモ（考察は著者が書く。CLAUDE.md「生成AIの利用について」） =====
+%% 論点：
+%%  - 重みなしで被覆率が下がる理由（テスト点が誤差の散らばりの大きい側に寄る。E3 の層別被覆との関係）
+%%  - これは定理 thm:coverage に反しないこと（(A1) が成り立っていない）
+%%  - 重み付きで被覆率が保たれる代わりに、幅が広がること
+%%  - 限界：正しい尤度比を知っている場合の結果であること。条件付き分布が変わる場合は扱っていないこと
+%% 参照候補：\ref{rem:exch-violation}, \ref{prop:weighted}, \ref{rem:weighted-assumptions}, \ref{sec:e3}
+%% =============================
+
+%% 仮の改ページ：本文のない節見出しが続く間、見出しの列がページの下にはみ出すのを防ぐ（E5 の節を書いたら外す）
+\clearpage
 \subsection{E5：学習／較正の分割比}
 
 \subsection{E6：jackknife+・CV+ とのデータ効率比較}
