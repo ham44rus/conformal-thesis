@@ -511,6 +511,55 @@ def fig_e4_coverage(summary: pd.DataFrame) -> None:
     save(fig, "fig_e4_coverage")
 
 
+# --- E5: 学習／較正の分割比（仕様書 specs/E5_split_ratio.md「図」）---
+
+
+def fig_e5_split(summary: pd.DataFrame) -> None:
+    """E5（卒論 sec:e5）: 較正用の割合に対する被覆率（左）と平均の幅（右）。
+
+    左：平均被覆率を点、試行間の ±1 SD を誤差棒で描き、理論 Beta(k, n+1-k)
+    （卒論 thm:cond-coverage-beta）の平均 ±1 SD を線と帯で重ねる。1-alpha に破線。
+    右：平均の幅 2*q_hat（誤差棒は試行間の ±1 SD）。
+    横軸の目盛には較正用の点数 n_cal も添える。
+    """
+    s = summary.sort_values("cal_frac")
+    target = 1.0 - float(s["alpha"].iloc[0])
+    x = s["cal_frac"].to_numpy()
+    ticks = [f"{f:g}\n($n$={n})" for f, n in zip(x, s["n_cal"])]
+
+    fig, (ax_cov, ax_w) = plt.subplots(1, 2, figsize=(6.6, 2.8), gridspec_kw={"wspace": 0.30})
+
+    # 理論 Beta の平均 ±1 SD
+    ax_cov.fill_between(x, s["beta_mean"] - s["beta_sd"], s["beta_mean"] + s["beta_sd"],
+                        color=RED, alpha=0.15, linewidth=0)
+    ax_cov.plot(x, s["beta_mean"], color=RED, linewidth=1.4,
+                label=r"理論 Beta の平均 $\pm 1$ SD")
+    # 実測の平均と試行間 ±1 SD
+    ax_cov.errorbar(x, s["coverage_mean"], yerr=s["coverage_sd"], color=BLUE, marker="o",
+                    markersize=5, linestyle="none", capsize=3, label=r"実測の平均 $\pm 1$ SD")
+    ax_cov.axhline(target, color=INK, linewidth=1, linestyle=(0, (4, 3)),
+                   label=r"名目値 $1-\alpha$")
+    ax_cov.set_ylabel("被覆率")
+    ax_cov.set_title("被覆率（誤差棒は試行間の ±1 SD）", fontsize=9, color=INK)
+    # 凡例が帯・誤差棒に重ならないよう、縦軸の下側に余白を取って凡例を置く
+    y_lo = min((s["beta_mean"] - s["beta_sd"]).min(), (s["coverage_mean"] - s["coverage_sd"]).min())
+    y_hi = max((s["beta_mean"] + s["beta_sd"]).max(), (s["coverage_mean"] + s["coverage_sd"]).max())
+    ax_cov.set_ylim(y_lo - 0.6 * (y_hi - y_lo), y_hi + 0.05 * (y_hi - y_lo))
+    ax_cov.legend(loc="lower center", fontsize=7)
+
+    ax_w.errorbar(x, s["width_mean"], yerr=s["width_sd"], color=BLUE, marker="o",
+                  markersize=5, linewidth=1.6, capsize=3)
+    ax_w.set_ylabel(r"平均の幅 $2\hat{q}$")
+    ax_w.set_title("区間の幅（誤差棒は試行間の ±1 SD）", fontsize=9, color=INK)
+
+    for ax in (ax_cov, ax_w):
+        ax.set_xticks(x, ticks)
+        ax.set_xlabel("較正用の割合（較正用の点数）")
+        ax.grid(axis="y")
+        ax.set_axisbelow(True)
+    save(fig, "fig_e5_split")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -557,6 +606,13 @@ def main() -> None:
         fig_e4_coverage(pd.read_csv(e4_sum))
     else:
         print("  results/e4_summary.csv が無いため E4 の図は省略（先に `make e4`）")
+
+    # E5 も独立に回すので、csv が無ければ飛ばす
+    e5_sum = RESULTS / "e5_summary.csv"
+    if e5_sum.exists():
+        fig_e5_split(pd.read_csv(e5_sum))
+    else:
+        print("  results/e5_summary.csv が無いため E5 の図は省略（先に `make e5`）")
 
 
 if __name__ == "__main__":
