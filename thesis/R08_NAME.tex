@@ -2111,7 +2111,85 @@ $(\qhat_{\mathrm{lo}},\qhat_{\mathrm{hi}})$ は $\Dtr$ のみから決まるの�
 \end{remark}
 
 \subsection{jackknife+ と CV+}
-%% TODO: データ分割の無駄をなくす。保証が 1-2\alpha に緩むこと。
+\label{sec:jackknife-plus}
+%% 仕様書: specs/E6_jackknife_cv.md。実装: src/conformal/jackknife.py。検査: tests/test_jackknife.py。
+%% 第5章 E6（sec:e6）に対応する。命題 prop:jackknife-plus は証明を載せず、barber2021jackknife を引用する。
+
+分割等角予測は、手元のデータを学習用と較正用に分ける。データが少ないと、学習用が減って $\fhat$ の精度が下がり、
+較正用が減って $\qhat$ が引き直すたびに大きく揺れる（系~\ref{cor:cond-coverage-moments}）。
+本節では、データを分けずに、すべての点を学習にも較正にも使う jackknife+ と CV+（Barber ら~\cite{barber2021jackknife}）を述べる。
+
+\paragraph{設定.}
+\textbf{本節に限り、$n$ は手元のデータ全体の点数を表す}（較正用データの点数ではない）。
+データを $Z_i=(X_i,Y_i)$（$i=1,\dots,n$）、テスト点を $Z_{n+1}=(X_{n+1},Y_{n+1})$ とし、
+$Z_1,\dots,Z_{n+1}$ は交換可能とする（CV+ の保証には、さらに i.i.d. を仮定する。同論文の CV+ の証明はテスト点を追加で考えるため）。学習アルゴリズム $\mathcal{A}$（\ref{sec:split-algorithm}節）は、
+学習用データの並び順によらない結果を返すとする。
+実数 $v_1,\dots,v_n$ の小さい方から $j$ 番目の値を $\mathrm{ord}_j(v_1,\dots,v_n)$ と書く
+（定義~\ref{def:order-stat} の順序統計量 $v_{(j)}$ と同じ）。
+
+\paragraph{jackknife+.}
+各 $i=1,\dots,n$ について、点 $i$ を除いた $n-1$ 点で学習した予測関数を
+$\fhat_{-i}:=\mathcal{A}\bigl((Z_j)_{j\ne i}\bigr)$ とし、
+\begin{equation}
+  \label{eq:loo-residual}
+  R_i := |Y_i-\fhat_{-i}(X_i)| \qquad (i=1,\dots,n)
+\end{equation}
+とおく。点 $i$ は $\fhat_{-i}$ の学習に使われていないので、$R_i$ は分割等角予測の較正用データの残差と同じ役割を果たす。
+$k=\lceil(n+1)(1-\alpha)\rceil$（\eqref{eq:khat}）とし、$l:=n+1-k$ とおく（$l=\lfloor(n+1)\alpha\rfloor$ である）。
+テスト点の入力 $x$ に対し、\textbf{jackknife+ の予測区間}を
+\begin{equation}
+  \label{eq:jackknife-plus}
+  \begin{aligned}
+    C^{\mathrm{J+}}(x):=\bigl[\ &\mathrm{ord}_l\bigl(\fhat_{-1}(x)-R_1,\dots,\fhat_{-n}(x)-R_n\bigr),\\
+    &\mathrm{ord}_k\bigl(\fhat_{-1}(x)+R_1,\dots,\fhat_{-n}(x)+R_n\bigr)\ \bigr]
+  \end{aligned}
+\end{equation}
+と定める。$k=n+1$ のときは上端を $+\infty$、$l=0$ のときは下端を $-\infty$ とする。
+$n$ 個の予測 $\fhat_{-i}(x)$ のそれぞれの周りに半径 $R_i$ の区間を作り、その上端のうち区間の上端を超えるもの、
+下端のうち区間の下端を下回るものが、それぞれおよそ $\alpha$ の割合になるように端を決めている。
+
+\paragraph{CV+.}
+jackknife+ は学習を $n$ 回行う。CV+ はこれを $K$ 回に減らす。データの番号 $1,\dots,n$ を、同じ大きさ $n/K$ の
+$K$ 個の組 $S_1,\dots,S_K$ にランダムに分ける（$n$ は $K$ で割り切れるとする）。組 $S_j$ の点を除いて学習した予測関数を
+$\fhat_{-S_j}$ とする。点 $i$ の属する組を $S(i)$ と書き、\eqref{eq:loo-residual} と \eqref{eq:jackknife-plus} の
+$\fhat_{-i}$ を $\fhat_{-S(i)}$ に置き換えたものを \textbf{CV+ の予測区間} $C^{\mathrm{CV+}}(x)$ とする。
+$K=n$ なら各組が $1$ 点になり、jackknife+ に一致する。
+学習の回数は、分割等角予測が $1$ 回、CV+ が $K$ 回、jackknife+ が $n$ 回である。
+
+\begin{proposition}[jackknife+ と CV+ の被覆保証]
+  \label{prop:jackknife-plus}
+  上の設定のもとで
+  \begin{equation*}
+    \Prob\bigl(Y_{n+1}\in C^{\mathrm{J+}}(X_{n+1})\bigr)\ \ge\ 1-2\alpha,\qquad
+    \Prob\bigl(Y_{n+1}\in C^{\mathrm{CV+}}(X_{n+1})\bigr)\ \ge\ 1-2\alpha-\sqrt{2/n}.
+  \end{equation*}
+\end{proposition}
+
+この結果は Barber ら~\cite{barber2021jackknife} による（jackknife+ は同論文の定理 1、CV+ は定理 4）。
+ただし、CV+ の下限は同論文の定理 4 を簡単な形にしたものである。本論文では証明を載せない。
+jackknife+ の証明の考え方は定理~\ref{thm:coverage} と異なる。テスト点を含む $n+1$ 点のどの $2$ 点についても、
+その $2$ 点を除いて学習した予測関数で両者の残差を測り、残差の大きい方を「勝ち」とする総当たり戦を考える。
+区間がテスト点を外すとき、テスト点は $(1-\alpha)(n+1)$ 個以上の相手に勝っている。
+$2$ 点の組ごとに使う予測関数が違うので、勝ち負けが一列の順位に並ぶとは限らない
+（$a$ が $b$ に、$b$ が $c$ に、$c$ が $a$ に勝つことがある）。それでも数え上げにより、$(1-\alpha)(n+1)$ 個以上の相手に勝つ点は
+高々 $2\alpha(n+1)$ 個であることが示せる（一列の順位なら高々 $\alpha(n+1)$ 個）。交換可能性から、テスト点はどの点とも
+同じ確率でこれらの点の $1$ つになるので、外れる確率は高々 $2\alpha$ である。CV+ の証明もこの数え上げを組に合わせて変えたものである。
+
+\begin{remark}[jackknife+ の保証について]
+  \label{rem:jackknife-plus}
+  \leavevmode
+  \begin{enumerate}
+    \item \textbf{$2$ 倍は取り除けない.}
+      同論文の定理 2 は、$\alpha\le1/2$ のとき、jackknife+ の被覆確率が $1-2\alpha+6\sqrt{\log n/n}$ 以下になる
+      分布と学習アルゴリズムの例を与える。$n$ が大きいとこれは $1-2\alpha$ に近いので、仮定を置かなければ $2$ 倍は一般には取り除けない。
+      ただし同論文は、実際にはふつう $1-\alpha$ に近い被覆率になることも述べている。
+    \item \textbf{学習用データによらない予測関数.}
+      $\fhat_{-i}$ がすべて同じ関数 $\fhat$ なら、$R_i=|Y_i-\fhat(X_i)|$ である。$R_1,\dots,R_n$ の順序統計量を
+      $R_{(1)}\le\dots\le R_{(n)}$、$R_{(n+1)}:=+\infty$ とすると（定義~\ref{def:order-stat}）、$l=n+1-k$ より \eqref{eq:jackknife-plus} は
+      $[\,\fhat(x)-R_{(k)},\ \fhat(x)+R_{(k)}\,]$ となる。これは、$n$ 点すべてを較正用データとする分割等角予測の区間
+      \eqref{eq:interval} と同じである。
+  \end{enumerate}
+\end{remark}
 
 \subsection{共変量シフトと重み付き等角予測}
 \label{sec:covariate-shift}
@@ -2217,8 +2295,8 @@ $\qhat_w(x)=S_{(k)}=\qhat$（\eqref{eq:khat}。$k=n+1$ のときは $+\infty$）
   \label{eq:coverage-rate}
   \widehat{\mathrm{Cov}}=\frac1m\sum_{j=1}^{m}\Ind\bigl\{Y_j\in C(X_j)\bigr\}
 \end{equation}
-と定める。第\ref{sec:split-theory}章の定理が保証するのはこの量の期待値であり、
-名目水準 $1-\alpha$ を下回らないことが要求される。
+と定める。第\ref{sec:split-theory}章の定理が分割等角予測について保証するのは、この量の期待値が名目水準 $1-\alpha$ を
+下回らないことである（jackknife+ と CV+ の保証は命題~\ref{prop:jackknife-plus}）。
 
 \textbf{平均区間幅}\quad
 \begin{equation}
@@ -2235,7 +2313,7 @@ $\qhat_w(x)=S_{(k)}=\qhat$（\eqref{eq:khat}。$k=n+1$ のときは $+\infty$）
 \subsubsection{分散成分の分解}
 
 \paragraph{(1) 何がばらつくのか.}
-本論文のシミュレーションは、次の手順を多数回繰り返す形をとる。
+分割型の手法のシミュレーションは、次の手順を多数回繰り返す形をとる。
 \begin{enumerate}
   \item 学習集合 $\Dtr$ を生成し、予測モデル $\fhat$ を学習する
   \item 較正集合 $\Dcal$（サイズ $n$）を生成し、共形分位点 $\qhat$ を求める
@@ -2248,7 +2326,7 @@ $\qhat_w(x)=S_{(k)}=\qhat$（\eqref{eq:khat}。$k=n+1$ のときは $+\infty$）
     \toprule
     成分 & 何を引き直したときのばらつきか & 試行数 $R$ で縮むか \\
     \midrule
-    \textbf{試行間} & 較正集合 $\Dcal$ & 縮む \\
+    \textbf{試行間} & 較正集合 $\Dcal$（E5・E6 はデータ全体） & 縮む \\
     \textbf{テスト集合間} & テスト集合そのもの & \textbf{縮まない} \\
     \textbf{学習集合間} & 学習集合 $\Dtr$ & \textbf{縮まない} \\
     \bottomrule
@@ -2256,7 +2334,7 @@ $\qhat_w(x)=S_{(k)}=\qhat$（\eqref{eq:khat}。$k=n+1$ のときは $+\infty$）
 \end{center}
 
 \textbf{試行間成分}は、較正集合の引き直しによる $\qhat$ の変動に由来する。
-第\ref{sec:split-theory}章で述べたとおり、較正集合を固定したときの条件付き被覆率は
+第\ref{sec:split-theory}章で述べたとおり、分割型では、較正集合を固定したときの条件付き被覆率は
 $\mathrm{Beta}(n+1-l,\,l)$、$l=\lfloor(n+1)\alpha\rfloor$ に従うから、この成分の
 標準偏差はベータ分布の標準偏差そのものであり、$n$ とともに $O(n^{-1/2})$ で縮む。
 試行を $R$ 回繰り返せば、その平均の標準誤差はさらに $\sqrt{R}$ で割られる。
@@ -2269,10 +2347,11 @@ $\sqrt{p(1-p)/m}$ である。
 
 \textbf{学習集合間成分}は、学習集合を $1$ つ固定している以上、通常の試行では現れない。
 学習集合を複数回引き直して初めて観測できる（\ref{sec:e2}節 E2 の頑健性検証がこれにあたる）。
-E5（\ref{sec:e5}節）では学習集合も試行ごとに引き直すので、学習集合の引き直しによる変動は試行間成分に含まれ、$R$ で縮む。
+E5・E6（\ref{sec:e5}節・\ref{sec:e6}節）では学習用のデータも試行ごとに引き直すので、学習集合の引き直しによる変動は試行間成分に含まれ、$R$ で縮む。
+E6 の jackknife+・CV+ は学習用と較正用を分けないので、データ全体の引き直しによる変動がすべて試行間成分になる。
 
 なお、テスト集合を全試行で共有する設計では「$1$ 試行内の二項変動」は独立な成分として
-現れない。較正集合が決まれば $\qhat$ が決まり、テスト集合は固定なので被覆率が一意に
+現れない。各試行のデータと学習の乱数が決まれば区間が決まり、テスト集合は固定なので被覆率が一意に
 定まるからである。$1$ 回きりの適用について被覆率を報告する場面（第6章の実データ解析）では、
 この成分に対して Clopper--Pearson 信頼区間を用いる。
 
@@ -2528,14 +2607,14 @@ $B$ 個の等頻度の層に分け、各層の被覆率を \eqref{eq:stratified-
 %% 実装: src/conformal/datasets.py（DGP）、experiments/*.py。環境は docs/環境.txt。
 
 \paragraph{データ生成過程.}
-学習用データと較正用データの入力は $X=(X_1,\dots,X_5)\sim\mathrm{Uniform}(0,1)^5$ とし、$2$ つの生成過程を用いる。
+学習用データと較正用データ（E6 では分ける前のデータ全体）の入力は $X=(X_1,\dots,X_5)\sim\mathrm{Uniform}(0,1)^5$ とし、$2$ つの生成過程を用いる。
 テスト点の入力も、E4 を除いて同じ分布とする（E4 のテスト点の入力の分布は \ref{sec:e4}節で定める）。
 \begin{align}
   \text{等分散：}&\quad Y=X_1+\sin(2\pi X_2)+\varepsilon,\qquad \varepsilon\sim N(0,\,0.5^2), \label{eq:dgp-homo}\\
   \text{不均一分散：}&\quad Y=X_1+\sin(2\pi X_2)+\sigma(X_1)\,\varepsilon,\qquad
   \sigma(x)=0.1+1.0\,x,\quad \varepsilon\sim N(0,1). \label{eq:dgp-hetero}
 \end{align}
-\eqref{eq:dgp-homo} は E1・E1b・E2・E5 で、\eqref{eq:dgp-hetero} は E3・E4 で用いる（E4 のテスト点の生成は \ref{sec:e4}節）。
+\eqref{eq:dgp-homo} は E1・E1b・E2・E5・E6 で、\eqref{eq:dgp-hetero} は E3・E4 で用いる（E4 のテスト点の生成は \ref{sec:e4}節）。
 \eqref{eq:dgp-hetero} では $X_1$ が大きいほど誤差の散らばりが大きく、$\sigma$ は $X_1$ の
 端点で $0.1$ から $1.1$ まで $11$ 倍、$5$ 分位の各層の代表値（$X_1=0.1,0.3,0.5,0.7,0.9$）
 では $0.2/0.4/0.6/0.8/1.0$ と $5$ 倍になる。
@@ -2543,21 +2622,24 @@ $B$ 個の等頻度の層に分け、各層の被覆率を \eqref{eq:stratified-
 \paragraph{共通の手続き.}
 E1〜E4 の主分析では、\textbf{学習集合と学習済みモデルは全試行で固定し、試行ごとに引き直すのは
 較正集合だけ}である。
-E5 では、学習用データの量の影響を見るため、学習集合も試行ごとに引き直し、予測モデルも毎回学習する（\ref{sec:e5}節）。テスト集合も、実験の条件ごとに $1$ つを全試行で共有する（\ref{sec:metrics}節のテスト集合間
+E5 では、学習用データの量の影響を見るため、学習集合も試行ごとに引き直し、予測モデルも毎回学習する（\ref{sec:e5}節）。
+E6 でも、データを試行ごとに引き直し、予測モデルも毎回学習する。比べる $3$ つの方法には同じデータを使う（\ref{sec:e6}節）。
+テスト集合も、実験の条件ごとに $1$ つを全試行で共有する（\ref{sec:metrics}節のテスト集合間
 成分はこの設計から生じる）。較正集合とテスト集合は学習集合と独立に生成する。
+E6 では、テスト集合は各試行のデータと独立に生成する。
 E1・E1b・E2・E3 では仮定 (A1$'$)(A2) が成り立つ。E4 では、テスト点の入力の分布をずらすので (A1$'$) は成り立たない
 （(A2) は成り立つ）。複数の手法・モデルを比べる実験（E2・E3・E4）では、
 \textbf{同じ較正集合を全手法で共有}し、手法間の差からサンプリング変動を除く。
 共形分位点は \eqref{eq:khat} のとおり $k=\lceil(n+1)(1-\alpha)\rceil$ 番目の順序統計量とし、
 $k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）。E4 の重み付きの手法では
-\eqref{eq:weighted-quantile} を用いる。
+\eqref{eq:weighted-quantile} を用いる。E6 の jackknife+・CV+ では \eqref{eq:jackknife-plus} を用いる。
 
 \paragraph{規模.}
 各実験の設定を表~\ref{tab:exp-setup} にまとめる。
 
 \begin{table}[htbp]
   \centering
-  \caption{各実験の設定。$R$ は試行数（E1〜E4 は較正集合の、E5 は学習集合と較正集合の引き直し回数）。}
+  \caption{各実験の設定。$R$ は試行数（E1〜E4 は較正集合の、E5 は学習集合と較正集合の、E6 はデータ全体の引き直し回数）。E6 の学習・較正は分割型の点数（jackknife+・CV+ は総数 50--200 点を分けずに使う）。}
   \label{tab:exp-setup}
   \footnotesize
   \setlength{\tabcolsep}{3pt}
@@ -2571,6 +2653,7 @@ $k$ は有理数演算で厳密に求める（注意~\ref{rem:quantile-types}）
     E3（\ref{sec:e3}節） & \eqref{eq:dgp-hetero} & 2,000 & 1000 & 0.10 & 500 & 200,000 \\
     E4（\ref{sec:e4}節） & \eqref{eq:dgp-hetero} & 2,000 & 1000 & 0.10 & 500 & 200,000 \\
     E5（\ref{sec:e5}節） & \eqref{eq:dgp-homo} & 900--500 & 100--500（5 通り） & 0.10 & 500 & 100,000 \\
+    E6（\ref{sec:e6}節） & \eqref{eq:dgp-homo} & 25--100 & 25--100（3 通り） & 0.10 & 200 & 10,000 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -2586,6 +2669,7 @@ $K=5$ の out-of-fold 残差の絶対値を回帰し、下限 $\sigma_{\min}$ �
 $5\,\%$ 分位点とする。(c) CQR は \eqref{eq:cqr-pair} のとおり水準 $0.05$ と $0.95$ の
 分位点回帰（勾配ブースティングの pinball 損失）を別々に学習する。$3$ 手法とも同じ学習集合
 全体を使う。E3 の層別の境界は $X_1$ の真の $5$ 分位 $0.2/0.4/0.6/0.8$ に固定する。
+E4・E5・E6 の予測モデルも勾配ブースティング（既定値）である。
 
 \paragraph{乱数と再現性.}
 各実験スクリプトは $1$ つの seed から \texttt{numpy.random.default\_rng} を作り、
@@ -3376,11 +3460,92 @@ E5 では (A1$'$)(A2)(A3$'$) が成り立ち、$n=100,\dots,500$ で $k\le n$ �
 %% 参照候補：\ref{thm:cond-coverage-beta}, \ref{cor:cond-coverage-moments}, \ref{sec:e1}, \ref{sec:e2}
 %% =============================
 
-%% 仮の改ページ：本文のない節見出しが続く間、見出しの列がページの下にはみ出すのを防ぐ（E6 の節を書いたら外す）
-\clearpage
 \subsection{E6：jackknife+・CV+ とのデータ効率比較}
 \label{sec:e6}
+%% 仕様書: specs/E6_jackknife_cv.md。実装: experiments/e6_jackknife_cv.py、src/conformal/jackknife.py。
+%% 数値: results/e6_summary.csv, e6_trials.csv。図: figures/fig_e6_small_sample.pdf。
 
+\paragraph{目的.}
+データが少ないとき、分割等角予測はデータを学習用と較正用に分けるので、どちらも少なくなる。
+データを分けない jackknife+ と CV+（\ref{sec:jackknife-plus}節）を分割等角予測と比べ、被覆率、区間の幅、学習の回数を測る。
+命題~\ref{prop:jackknife-plus} の保証は $1-2\alpha$ 程度だが、実際の被覆率が $1-\alpha$ にどれだけ近いかも見る。
+
+\paragraph{手続き.}
+データは \eqref{eq:dgp-homo} から生成する。データの総数を $50$、$100$、$200$ 点とし、総数ごとに $R=200$ 回試行する。
+各試行でデータを生成し、次の $3$ つの方法に同じデータを使う。予測モデルはすべて勾配ブースティング（既定値）で、$\alpha=0.10$ とする。
+\begin{itemize}
+  \item 分割型：ランダムに並べ替えて半分を学習用、残り半分を較正用とし（較正用 $n=25,50,100$ 点）、
+    絶対残差 \eqref{eq:score} の $\qhat$（\eqref{eq:khat}）で区間 \eqref{eq:interval} を作る。学習は $1$ 回。
+  \item jackknife+：区間 \eqref{eq:jackknife-plus}。学習は総数と同じ回数。
+  \item CV+：$K=10$ 組に分ける。総数 $50$、$100$、$200$ はどれも $10$ で割り切れる。学習は $10$ 回。
+\end{itemize}
+モデルの乱数（\texttt{random\_state}）は試行ごとに $1$ つ引き、その試行のすべての学習で共有する
+（命題~\ref{prop:jackknife-plus} は、すべての学習で同じアルゴリズムを使うことを仮定するため）。
+全試行・全総数で共有するテスト集合 $10{,}000$ 点で、被覆率 \eqref{eq:coverage-rate} と平均区間幅 \eqref{eq:mean-width} を記録する。
+理論の下限は、分割型が $1-\alpha=0.90$（定理~\ref{thm:coverage}）、jackknife+ が $1-2\alpha=0.80$、
+CV+ が命題~\ref{prop:jackknife-plus} の簡単な形の下限（総数の順に $0.600$、$0.659$、$0.700$）である。
+分割型では (A1$'$)(A2)(A3$'$) が成り立ち、被覆率の平均の理論値は $k/(n+1)$（系~\ref{cor:cond-coverage-moments}）で、
+$n=25,50,100$ に対し $0.92308$、$0.90196$、$0.90099$ である。標準誤差は \eqref{eq:se-composite} による。
+
+\paragraph{結果.}
+表~\ref{tab:e6-summary} と図~\ref{fig:e6-small-sample} に結果を示す。区間が無限になったテスト点はなかった。
+\begin{itemize}
+  \item jackknife+ の平均被覆率は総数の順に $0.90682$、$0.90199$、$0.90077$、CV+ は $0.92506$、$0.91738$、$0.91437$ であり、
+    すべての総数で理論の下限を上回る。$1-\alpha=0.90$ との差は、jackknife+ が $0.0068$、$0.0020$、$0.0008$、
+    CV+ が $0.0251$、$0.0174$、$0.0144$ である。
+  \item 分割型の平均被覆率は $0.92825$、$0.90249$、$0.89273$ である。理論値 $k/(n+1)$ との差は、標準誤差の
+    $1.2$ 倍、$0.1$ 倍、$2.2$ 倍である。総数 $200$ では $0.90$ を下回るが、その差 $0.0073$ は標準誤差の $1.9$ 倍である。
+  \item 平均の幅は、すべての総数で jackknife+、CV+、分割型の順に狭い。jackknife+ の幅は分割型より、
+    総数 $50$ で約 $17\,\%$、$100$ で約 $9\,\%$、$200$ で約 $4\,\%$ 狭い。
+  \item 幅の試行間の標準偏差は、すべての総数で分割型が最も大きい（総数 $50$ で分割型 $0.559$、jackknife+ $0.366$、CV+ $0.351$）。
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E6：総数・方法ごとの被覆率と幅（$\alpha=0.10$、$R=200$、テスト集合 $10{,}000$ 点）。
+    SE は \eqref{eq:se-composite} の合成標準誤差、SD は試行間の標準偏差、下限は理論の被覆確率の下限（CV+ は命題~\ref{prop:jackknife-plus} の簡単な形）。
+    出典：\texttt{results/e6\_summary.csv}}
+  \label{tab:e6-summary}
+  \small
+  \begin{tabular}{rlrrrrrrr}
+    \toprule
+    総数 & 方法 & 平均被覆率 & SE & SD & 下限 & 平均幅 & 幅の SD & 学習回数 \\
+    \midrule
+    50 & 分割型 & 0.92825 & 0.00437 & 0.0498 & 0.900 & 2.722 & 0.559 & 1 \\
+    50 & jackknife+ & 0.90682 & 0.00464 & 0.0512 & 0.800 & 2.247 & 0.366 & 50 \\
+    50 & CV+ & 0.92506 & 0.00415 & 0.0453 & 0.600 & 2.339 & 0.351 & 10 \\
+    \midrule
+    100 & 分割型 & 0.90249 & 0.00404 & 0.0388 & 0.900 & 2.212 & 0.306 & 1 \\
+    100 & jackknife+ & 0.90199 & 0.00374 & 0.0321 & 0.800 & 2.021 & 0.201 & 100 \\
+    100 & CV+ & 0.91738 & 0.00344 & 0.0291 & 0.659 & 2.089 & 0.203 & 10 \\
+    \midrule
+    200 & 分割型 & 0.89273 & 0.00375 & 0.0300 & 0.900 & 1.982 & 0.186 & 1 \\
+    200 & jackknife+ & 0.90077 & 0.00351 & 0.0259 & 0.800 & 1.905 & 0.150 & 200 \\
+    200 & CV+ & 0.91437 & 0.00322 & 0.0224 & 0.700 & 1.960 & 0.141 & 10 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\linewidth]{../figures/fig_e6_small_sample.pdf}
+  \caption{E6：データの総数に対する平均被覆率（左。誤差棒は $\pm1.96$ SE、破線は $1-\alpha$、点線は $1-2\alpha$）と
+    平均の幅（右。誤差棒は試行間の $\pm1$ SD）。出典：\texttt{results/e6\_summary.csv}}
+  \label{fig:e6-small-sample}
+\end{figure}
+
+%% ===== 考察の論点メモ（考察は著者が書く。CLAUDE.md「生成AIの利用について」） =====
+%% 論点：
+%%  - jackknife+・CV+ の被覆率は理論の下限（0.80 など）よりずっと高く、0.90 に近い（rem:jackknife-plus）
+%%  - CV+ は jackknife+ より被覆率がやや高く、幅がやや広い（1 回の学習に使う点が総数の 9 割）
+%%  - 総数が少ないほど jackknife+ の幅の利点が大きい（50 点で約 17%、200 点で約 4%）
+%%  - 代わりに学習の回数が増える（jackknife+ は総数と同じ回数）
+%%  - 限界：等分散データ・1 つのモデル・総数 200 点まで
+%% 参照候補：\ref{prop:jackknife-plus}, \ref{rem:jackknife-plus}, \ref{sec:e5}
+%% =============================
+
+%% 仮の改ページ：本文のない節見出し（5.10 考察〜参考文献）が続く間、E6 の図の後で見出しの列がページの下にはみ出すのを防ぐ（それらの節を書いたら外す）
+\clearpage
 \subsection{考察}
 
 %%=====================================================================

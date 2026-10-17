@@ -1,7 +1,7 @@
 """jackknife+ と CV+ の予測区間。
 
 対応箇所:
-    卒論 第4章 jackknife+ と CV+ の節（次の run で書く）
+    卒論 第4章 jackknife+ と CV+ の節（sec:jackknife-plus。保証は prop:jackknife-plus）
     実験 E6（sec:e6。データが少ないときの分割型との比較）
     仕様書 specs/E6_jackknife_cv.md
 出典: Barber, Candès, Ramdas, Tibshirani (2021)（refs.bib の barber2021jackknife）
@@ -30,7 +30,7 @@ __all__ = ["loo_interval", "jackknife_plus_interval", "cv_plus_interval"]
 def loo_interval(
     loo_pred: np.ndarray, residuals: np.ndarray, alpha: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    r"""抜いた点の予測と残差から jackknife+ / CV+ の区間を作る（卒論 sec:e6。両者で共通）。
+    r"""抜いた点の予測と残差から jackknife+ / CV+ の区間を作る（卒論 eq:jackknife-plus。両者で共通）。
 
     loo_pred[i, j] = \mu_{-i}(x_j)（点 i を含まないモデルによるテスト点 j の予測）、
     residuals[i]   = R_i = |Y_i - \mu_{-i}(X_i)| として、テスト点 x ごとに
@@ -111,7 +111,7 @@ def jackknife_plus_interval(
     alpha: float,
     seeds: Sequence[int],
 ) -> tuple[np.ndarray, np.ndarray, int]:
-    r"""jackknife+ の予測区間（卒論 sec:e6、出典 barber2021jackknife）。
+    r"""jackknife+ の予測区間（卒論 eq:loo-residual・eq:jackknife-plus、出典 barber2021jackknife）。
 
     各 i = 1..n について、点 i を除いた n-1 点で \mu_{-i} を学習し、
         R_i = |Y_i - \mu_{-i}(X_i)|
@@ -158,7 +158,7 @@ def cv_plus_interval(
     rng: np.random.Generator,
     seeds: Sequence[int],
 ) -> tuple[np.ndarray, np.ndarray, int]:
-    r"""CV+ の予測区間（卒論 sec:e6、出典 barber2021jackknife）。
+    r"""CV+ の予測区間（卒論 sec:jackknife-plus、出典 barber2021jackknife）。
 
     データをランダムに K 組 S_1..S_K に分け（rng で 0..n-1 を並べ替え、ほぼ等分に切る）、
     組 S_j を除いた点で \mu_{-S_j} を学習する。点 i の属する組を S(i) として

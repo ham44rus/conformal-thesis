@@ -1,6 +1,6 @@
 # E6: jackknife+・CV+ とのデータ効率比較
 
-対応：卒論 第5章 E6 の節（`sec:e6`）、第4章 jackknife+ と CV+ の節（次の run で書く）
+対応：卒論 第5章 E6 の節（`sec:e6`）、第4章 jackknife+ と CV+ の節（`sec:jackknife-plus`）
 ／ 実装 `experiments/e6_jackknife_cv.py`、`src/conformal/jackknife.py`
 
 ## 目的
