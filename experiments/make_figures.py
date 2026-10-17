@@ -1,6 +1,6 @@
 """results/ の csv から figures/ の図を再生成する。
 
-対応箇所: 卒論 第5章の図
+対応箇所: 卒論 第5章の図、第6章 実データ解析の図（E7、sec:real-data）
 
 実験を回し直さずに図だけ直せるようにするため、実験の実行と作図は分離している。
 締切前の修正で効いてくるので、この分離は崩さないこと。
@@ -607,6 +607,52 @@ def fig_e6_small_sample(summary: pd.DataFrame) -> None:
     save(fig, "fig_e6_small_sample")
 
 
+# --- E7: 実データ解析（仕様書 specs/E7_real_data.md「図」）---
+
+# データの順。experiments/e7_real_data.py の DATASETS と同じ順に固定する
+E7_DATASET_ORDER = ("airfoil", "superconductivity", "bike")
+E7_DATA_LABELS = {"airfoil": "Airfoil Self-Noise", "superconductivity": "Superconductivity",
+                  "bike": "Bike Sharing"}
+E7_MARKERS = {"abs": "o", "norm": "s", "cqr": "^"}
+
+
+def fig_e7_strata(summary: pd.DataFrame, trials: pd.DataFrame) -> None:
+    """E7（卒論 sec:real-data）: 予測値 f_hat(x) の 5 分位で層別した被覆率。データごとに 1 枚。
+
+    点は層別被覆率の試行平均（e7_summary.csv の cov_bin1..5）、誤差棒は試行間の ±1 SD
+    （e7_trials.csv から計算。空の層は除く）。手法は E3 と同じ 3 つ（色も E3 の図にそろえる）。
+    1-alpha に破線。各パネルのタイトルにデータ名と点数。
+    """
+    alpha = float(summary["alpha"].iloc[0])
+    bin_cols = [c for c in summary.columns if c.startswith("cov_bin")]
+    x = np.arange(1, len(bin_cols) + 1)
+
+    fig, axes = plt.subplots(1, len(E7_DATASET_ORDER), figsize=(7.4, 2.7), sharey=True,
+                             gridspec_kw={"wspace": 0.12})
+    for ax, name in zip(axes, E7_DATASET_ORDER):
+        s = summary[summary["dataset"] == name]
+        for offset, key in zip((-0.12, 0.0, 0.12), E3_METHOD_ORDER):
+            mean = s[s["method"] == key][bin_cols].to_numpy().ravel()
+            sd = trials[(trials["dataset"] == name) & (trials["method"] == key)][bin_cols].std(ddof=1)
+            ax.errorbar(x + offset, mean, yerr=sd.to_numpy(), color=E3_COLORS[key],
+                        marker=E7_MARKERS[key], markersize=4, linewidth=1.3, capsize=2.5,
+                        label=E3_LABELS[key])
+        ax.axhline(1 - alpha, color=INK, linewidth=1, linestyle=(0, (4, 3)),
+                   label=r"$1-\alpha$")
+        ax.set_title(f"{E7_DATA_LABELS[name]}（{int(s['n_total'].iloc[0]):,} 点）",
+                     fontsize=9, color=INK)
+        ax.set_xticks(x, [str(b) for b in x])
+        ax.set_xlabel(r"予測値 $\hat f(x)$ の5分位の層")
+        ax.grid(axis="y")
+        ax.set_axisbelow(True)
+    axes[0].set_ylabel("層別被覆率（試行平均）")
+    # 凡例は線に重ならないよう図の下に横 1 列で置く
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.06), ncol=4, fontsize=8)
+    fig.suptitle("予測値で層別した被覆率（誤差棒は試行間の ±1 SD）", y=1.02, fontsize=10, color=INK)
+    save(fig, "fig_e7_strata")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -667,6 +713,13 @@ def main() -> None:
         fig_e6_small_sample(pd.read_csv(e6_sum))
     else:
         print("  results/e6_summary.csv が無いため E6 の図は省略（先に `make e6`）")
+
+    # E7 も独立に回すので、csv が無ければ飛ばす
+    e7_sum, e7_trials = RESULTS / "e7_summary.csv", RESULTS / "e7_trials.csv"
+    if e7_sum.exists() and e7_trials.exists():
+        fig_e7_strata(pd.read_csv(e7_sum), pd.read_csv(e7_trials))
+    else:
+        print("  results/e7_*.csv が無いため E7 の図は省略（先に `make e7`）")
 
 
 if __name__ == "__main__":

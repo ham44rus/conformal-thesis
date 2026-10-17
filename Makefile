@@ -16,7 +16,7 @@
 # venv を使わない環境では:  make PYTHON=python3 test
 PYTHON ?= .venv/bin/python
 
-.PHONY: help setup test e1 e1b e1-reeval e2 e3 e4 e5 e6 all-experiments figures clean check
+.PHONY: help setup test e1 e1b e1-reeval e2 e3 e4 e5 e6 e7 all-experiments figures clean check
 
 help:
 	@echo "make setup      依存パッケージをインストール"
@@ -28,6 +28,7 @@ help:
 	@echo "make e4         実験E4（共変量シフトと重み付き等角予測）を実行"
 	@echo "make e5         実験E5（学習／較正の分割比）を実行"
 	@echo "make e6         実験E6（jackknife+・CV+ とのデータ効率比較）を実行"
+	@echo "make e7         実験E7（実データ解析：UCI の 3 件。data/raw/ に zip が必要。約3時間）を実行"
 	@echo "make figures    results/ の csv から figures/ の図を再生成"
 	@echo "make check      test + 主要実験の通し確認"
 	@echo "make clean      中間生成物を削除（results/ figures/ は消さない）"
@@ -61,6 +62,9 @@ e5:
 
 e6:
 	$(PYTHON) experiments/e6_jackknife_cv.py --seed 20260901
+
+e7:
+	$(PYTHON) experiments/e7_real_data.py --seed 20260901
 
 figures:
 	$(PYTHON) experiments/make_figures.py
