@@ -18,6 +18,7 @@ from .adaptive import (
     QuantilePair,
 )
 from .weighted import weighted_conformal_quantile
+from .jackknife import jackknife_plus_interval, cv_plus_interval
 
 __all__ = [
     "conformal_quantile",
@@ -39,4 +40,6 @@ __all__ = [
     "fit_quantile_pair",
     "QuantilePair",
     "weighted_conformal_quantile",
+    "jackknife_plus_interval",
+    "cv_plus_interval",
 ]

@@ -560,6 +560,53 @@ def fig_e5_split(summary: pd.DataFrame) -> None:
     save(fig, "fig_e5_split")
 
 
+# --- E6: jackknife+・CV+ とのデータ効率比較（仕様書 specs/E6_jackknife_cv.md「図」）---
+
+# 方法の順。experiments/e6_jackknife_cv.py の METHODS と同じ順に固定する
+E6_METHOD_ORDER = ("split", "jackknife_plus", "cv_plus")
+E6_LABELS = {"split": "分割型（50:50）", "jackknife_plus": "jackknife+", "cv_plus": "CV+（$K$=10）"}
+E6_COLORS = {"split": RED, "jackknife_plus": BLUE, "cv_plus": "#4D8F3A"}
+E6_MARKERS = {"split": "s", "jackknife_plus": "o", "cv_plus": "^"}
+
+
+def fig_e6_small_sample(summary: pd.DataFrame) -> None:
+    """E6（卒論 sec:e6）: データの総数に対する平均被覆率（左）と平均の幅（右）。
+
+    左の誤差棒は ±1.96 × se_total（試行間＋テスト集合間の2成分合成。CLAUDE.md「報告の作法」）。
+    1-alpha（分割型の保証）と 1-2*alpha（jackknife+ の保証）に破線。
+    右の幅は有限な区間の幅のテスト点平均を試行で平均したもの（誤差棒は試行間の ±1 SD）。
+    横軸は総数を等間隔に並べ、誤差棒が重ならないよう方法ごとに少しずらす。
+    """
+    alpha = float(summary["alpha"].iloc[0])
+    n_totals = sorted(summary["n_total"].unique())
+    pos = np.arange(len(n_totals))
+
+    fig, (ax_cov, ax_w) = plt.subplots(1, 2, figsize=(6.6, 2.8), gridspec_kw={"wspace": 0.30})
+    for offset, key in zip((-0.12, 0.0, 0.12), E6_METHOD_ORDER):
+        g = summary[summary["method"] == key].sort_values("n_total")
+        style = {"color": E6_COLORS[key], "marker": E6_MARKERS[key], "markersize": 5,
+                 "linewidth": 1.4, "capsize": 3, "label": E6_LABELS[key]}
+        ax_cov.errorbar(pos + offset, g["coverage_mean"], yerr=1.96 * g["se_total"], **style)
+        ax_w.errorbar(pos + offset, g["width_mean"], yerr=g["width_sd"], **style)
+
+    ax_cov.axhline(1 - alpha, color=INK, linewidth=1, linestyle=(0, (4, 3)),
+                   label=r"$1-\alpha$")
+    ax_cov.axhline(1 - 2 * alpha, color=MUTED, linewidth=1, linestyle=(0, (1, 2)),
+                   label=r"$1-2\alpha$")
+    ax_cov.set_ylabel("平均被覆率")
+    ax_cov.set_title("被覆率（誤差棒は試行間＋テスト集合間 95%）", fontsize=9, color=INK)
+    ax_cov.legend(loc="lower right", fontsize=7)
+    ax_w.set_ylabel("平均の幅")
+    ax_w.set_title("区間の幅（誤差棒は試行間の ±1 SD）", fontsize=9, color=INK)
+    ax_w.legend(loc="upper right", fontsize=7)
+    for ax in (ax_cov, ax_w):
+        ax.set_xticks(pos, [str(n) for n in n_totals])
+        ax.set_xlabel("データの総数")
+        ax.grid(axis="y")
+        ax.set_axisbelow(True)
+    save(fig, "fig_e6_small_sample")
+
+
 def main() -> None:
     cov_path, sum_path = RESULTS / "e1_coverage.csv", RESULTS / "e1_summary.csv"
     if not cov_path.exists():
@@ -613,6 +660,13 @@ def main() -> None:
         fig_e5_split(pd.read_csv(e5_sum))
     else:
         print("  results/e5_summary.csv が無いため E5 の図は省略（先に `make e5`）")
+
+    # E6 も独立に回すので、csv が無ければ飛ばす
+    e6_sum = RESULTS / "e6_summary.csv"
+    if e6_sum.exists():
+        fig_e6_small_sample(pd.read_csv(e6_sum))
+    else:
+        print("  results/e6_summary.csv が無いため E6 の図は省略（先に `make e6`）")
 
 
 if __name__ == "__main__":
