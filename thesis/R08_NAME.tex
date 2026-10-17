@@ -3572,14 +3572,150 @@ jackknife+ の被覆率が $0.90$ より下がる可能性がある（注意~\re
 %%=====================================================================
 \section{実データ解析}
 \label{sec:real-data}
+%% 仕様書: specs/E7_real_data.md。実装: experiments/e7_real_data.py。入手方法: docs/データの入手方法.md。
+%% 数値: results/e7_summary.csv, e7_trials.csv, e7_timesplit.csv。図: figures/fig_e7_strata.pdf。
 %%=====================================================================
 
+第\ref{sec:experiments}章では、生成過程が分かっている人工データで、分割等角予測の性質を調べた。
+本章では、生成過程が分からない実データ $3$ 件で、第\ref{sec:experiments}章の E3 と同じ $3$ つの手法
+（絶対残差、正規化残差、CQR）を比べ（実験 E7）、人工データで見た性質が実データでも見られるかを調べる。
+データ、前処理、分割の仕方、層の切り方、検証の基準は結果を見る前に決め、試した $3$ 件の結果をすべて報告する。
+
 \subsection{データ}
-%% TODO: UCI Machine Learning Repository から2〜3件。入手手順は別途提出。
+\label{sec:real-data-data}
+UCI Machine Learning Repository の公開データ $3$ 件を用いる（表~\ref{tab:e7-data}）。ライセンスはいずれも CC BY 4.0 である。
+入手方法は提出物「データの入手方法」に記す。
+\begin{itemize}
+  \item \textbf{Airfoil Self-Noise}~\cite{brooks1989airfoil}：翼の風洞実験の条件（周波数、迎え角など $5$ 個）から、
+    騒音の大きさ（音圧レベル、dB）を予測する。
+  \item \textbf{Superconductivity}~\cite{hamidieh2018superconductivity}：超伝導物質の元素組成から作った $81$ 個の特徴から、
+    臨界温度（K）を予測する。説明変数の組がそれより前のいずれかの行と重複する行が $6{,}093$ 行あり、目的変数まで含めて重複する行は $66$ 行である。重複は除かずに使う。
+  \item \textbf{Bike Sharing}~\cite{fanaee2013bike}：$2011$〜$2012$ 年の $1$ 時間ごとの記録である。季節・時刻・天気・気温など
+    $12$ 個の説明変数から、$1$ 時間の自転車の貸出台数を予測する。貸出台数は会員と非会員の貸出台数の和なので、
+    この $2$ つは説明変数から除く（入れると答えを見ることになる）。時間の順に並んだデータである。
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E7 で用いるデータ。学習用・較正用・テスト用は主分析のランダム分割の点数（$2:1:1$）。}
+  \label{tab:e7-data}
+  \small
+  \setlength{\tabcolsep}{4pt}% Overfull（21.6pt）を避けるため列の間隔を詰める
+  \begin{tabular}{lrrrrrl}
+    \toprule
+    データ & 全体 & 学習用 & 較正用 $n$ & テスト用 & 説明変数 & 目的変数（範囲） \\
+    \midrule
+    Airfoil Self-Noise & 1,503 & 752 & 376 & 375 & 5 & 音圧レベル（103.4〜141.0 dB） \\
+    Superconductivity & 21,263 & 10,632 & 5,316 & 5,315 & 81 & 臨界温度（0.0002〜185 K） \\
+    Bike Sharing & 17,379 & 8,690 & 4,345 & 4,344 & 12 & 貸出台数（1〜977 台） \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{手続き}
+\label{sec:real-data-procedure}
+\paragraph{主分析（ランダム分割）.}
+データごとに、行をランダムに並べ替え、学習用 $50\,\%$、較正用 $25\,\%$、テスト用 $25\,\%$ に重ならないように分ける。
+これを $R=100$ 回くり返す。データ集合を固定し、学習用データとモデルの乱数を固定すると、残りの行はランダムに並んでいるので、
+較正用データとテスト点のスコアは交換可能である。したがって、定理~\ref{thm:coverage} の証明と同じ順位の議論から、
+分割の乱数についての確率として、各テスト点の被覆確率は $1-\alpha$ 以上になる。
+手法は E3（\ref{sec:e3}節）と同じで、予測モデルはすべて勾配ブースティング（既定値）である。
+(a) 絶対残差 \eqref{eq:score}、(b) 正規化残差 \eqref{eq:score-normalized}（$\hat\sigma$ は \eqref{eq:sigma-hat}。$\fhat$ は (a) と同じ）、
+(c) CQR \eqref{eq:cqr-score}（水準 $0.05$ と $0.95$ の分位点回帰）を比べ、$\alpha=0.10$ とする。
+テスト用データで、周辺被覆率 \eqref{eq:coverage-rate}、平均区間幅 \eqref{eq:mean-width}、層別被覆率を記録する。
+
+層別被覆率は、\eqref{eq:stratified-coverage} の $X_{1j}$ を予測値 $\fhat(X_j)$ に置き換えて求める。層の境界は試行ごとに
+較正用データの予測値の $5$ 分位から求め、テスト点はその予測値で層に分ける。$3$ 手法で同じ層を使う（層 $1$ が予測値の最も小さい側）。E3 では誤差の大きさを決める $X_1$ で層を切ったが、実データではそのような変数が分からないので、予測値で切る。
+各試行で層の被覆率の最大と最小の差（層別被覆率の幅）を求め、その平均を報告する。
+標準誤差は試行間の標準偏差を $\sqrt{R}$ で割って求める（テスト用データも試行ごとに引き直すので、\eqref{eq:se-composite} のテスト集合間の成分は無い）。
+
+\paragraph{補足分析（Bike Sharing の時間順の分割）.}
+Bike Sharing は時間の順に並んでいるので、時刻の早い順に最初の $50\,\%$ を学習用、次の $25\,\%$ を較正用、最後の $25\,\%$ をテスト用にする分割も
+$1$ 回行う。過去のデータで較正し、未来のデータを予測することにあたる。このとき較正用データとテスト点は交換可能とは限らず
+（注意~\ref{rem:exch-violation}）、定理~\ref{thm:coverage} は適用できない。$1$ 回の適用なので、被覆率には
+Clopper--Pearson の $95\,\%$ 区間を参考として付ける（\ref{sec:metrics}節）。この区間は、テスト点ごとの当たり外れを独立で同じ確率の
+試行とみなしたものであり、時間順のデータではこの仮定を確かめていない。
 
 \subsection{結果}
+\label{sec:real-data-results}
+表~\ref{tab:e7-summary}、図~\ref{fig:e7-strata}、表~\ref{tab:e7-timesplit} に結果を示す。
+\begin{itemize}
+  \item ランダム分割では、$3$ データ・$3$ 手法のすべてで平均被覆率は $0.89964$〜$0.90619$ であり、事前に決めた基準
+    （$1-\alpha$ から標準誤差の $3$ 倍を引いた値を下回らない）を満たす。同点がない場合の被覆確率 $k/(n+1)$（系~\ref{cor:upper}）を上回ったのは $9$ 通り中 $5$ 通りで、
+    その差は最大で標準誤差の $1.8$ 倍である。
+  \item 層別被覆率の幅の平均は、Superconductivity で絶対残差 $0.317$、正規化残差 $0.093$、CQR $0.043$、
+    Bike Sharing で $0.306$、$0.057$、$0.083$ であり、正規化残差と CQR は絶対残差より小さい。
+    Airfoil では $0.119$、$0.097$、$0.135$ であり、CQR は絶対残差より大きい。
+  \item 絶対残差の層別被覆率は、Superconductivity と Bike Sharing の層 $1$・$2$（予測値の小さい側）で $0.99$ 以上である。
+    一方、Superconductivity の層 $4$ で $0.682$、Bike Sharing の層 $5$ で $0.693$ である（図~\ref{fig:e7-strata}）。
+  \item 平均の幅は、$3$ データとも正規化残差、絶対残差、CQR の順に狭い。
+  \item Bike Sharing の時間順の分割では、被覆率は絶対残差 $0.875$（Clopper--Pearson の $95\,\%$ 参考区間 $[0.864,\,0.884]$）、
+    正規化残差 $0.957$（$[0.951,\,0.963]$）、CQR $0.882$（$[0.872,\,0.891]$）である。観測された被覆率は、
+    絶対残差と CQR で $0.90$ を下回り、正規化残差で上回る。$3$ 手法とも参考区間は $0.90$ を含まない。
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E7：ランダム分割での被覆率・幅・層別被覆率の幅（$\alpha=0.10$、$R=100$）。
+    SE は試行間の標準偏差を $\sqrt{R}$ で割った標準誤差、$k/(n+1)$ は同点がない場合の被覆確率、幅の単位は目的変数の単位。
+    層別被覆率の幅は、各試行の層の被覆率の最大と最小の差の平均。出典：\texttt{results/e7\_summary.csv}}
+  \label{tab:e7-summary}
+  \small
+  \begin{tabular}{llrrrrr}
+    \toprule
+    データ & 手法 & 平均被覆率 & SE & $k/(n+1)$ & 平均幅 & 層別被覆率の幅 \\
+    \midrule
+    Airfoil & 絶対残差 & 0.90464 & 0.00212 & 0.90186 & 8.85 & 0.119 \\
+    Airfoil & 正規化残差 & 0.90053 & 0.00225 & 0.90186 & 8.53 & 0.097 \\
+    Airfoil & CQR & 0.90619 & 0.00245 & 0.90186 & 12.25 & 0.135 \\
+    \midrule
+    Superconductivity & 絶対残差 & 0.89972 & 0.00062 & 0.90013 & 41.39 & 0.317 \\
+    Superconductivity & 正規化残差 & 0.90084 & 0.00065 & 0.90013 & 32.18 & 0.093 \\
+    Superconductivity & CQR & 0.90080 & 0.00053 & 0.90013 & 45.48 & 0.043 \\
+    \midrule
+    Bike Sharing & 絶対残差 & 0.89996 & 0.00065 & 0.90014 & 228.34 & 0.306 \\
+    Bike Sharing & 正規化残差 & 0.90034 & 0.00068 & 0.90014 & 188.23 & 0.057 \\
+    Bike Sharing & CQR & 0.89964 & 0.00065 & 0.90014 & 243.15 & 0.083 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/fig_e7_strata.pdf}
+  \caption{E7：予測値 $\fhat(x)$ の $5$ 分位の層ごとの被覆率（ランダム分割、$R=100$ の平均。誤差棒は試行間の $\pm1$ SD、
+    破線は $1-\alpha$）。層 $1$ が予測値の最も小さい側。出典：\texttt{results/e7\_summary.csv}、\texttt{e7\_trials.csv}}
+  \label{fig:e7-strata}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption{E7 の補足分析：Bike Sharing の時間順の分割（$1$ 回。学習用 $8{,}690$、較正用 $4{,}345$、テスト用 $4{,}344$ 点）。
+    区間は Clopper--Pearson の $95\,\%$ 区間（テスト点の当たり外れを独立とみなした参考値）。出典：\texttt{results/e7\_timesplit.csv}}
+  \label{tab:e7-timesplit}
+  \small
+  \begin{tabular}{lrcrrrrrr}
+    \toprule
+    手法 & 被覆率 & $95\,\%$ 参考区間 & 平均幅 & 層 1 & 層 2 & 層 3 & 層 4 & 層 5 \\
+    \midrule
+    絶対残差 & 0.875 & [0.864, 0.884] & 477.43 & 1.000 & 0.999 & 0.998 & 0.976 & 0.605 \\
+    正規化残差 & 0.957 & [0.951, 0.963] & 449.70 & 0.998 & 0.992 & 0.973 & 0.974 & 0.898 \\
+    CQR & 0.882 & [0.872, 0.891] & 474.23 & 1.000 & 0.999 & 1.000 & 0.982 & 0.622 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \subsection{考察}
+%% ===== 考察の論点メモ（考察は著者が書く。CLAUDE.md「生成AIの利用について」） =====
+%% 論点：
+%%  - 周辺被覆は 3 データ・3 手法すべてで 0.90 付近（ランダム分割なら交換可能。定理 thm:coverage どおり）
+%%  - 絶対残差の層別被覆は、予測値が小さい層で過剰・大きい層で不足（E3 と同じ型。誤差の大きさが予測値で変わる）
+%%  - 正規化残差・CQR は Superconductivity・Bike で層別被覆を平らにした。Airfoil では差が小さく、CQR はむしろ広がった
+%%  - 平均の幅は正規化残差が最も狭い。CQR が最も広い
+%%  - 時間順の分割では 3 手法とも 0.90 から外れた（交換可能性が成り立たない例。E4・rem:exch-violation）
+%%  - 限界：3 データ、勾配ブースティングのみ、層は予測値の 5 分位だけ
+%% 参照候補：\ref{thm:coverage}, \ref{sec:e3}, \ref{sec:e4}, \ref{rem:exch-violation}, \ref{thm:x-conditional-impossible}
+%% =============================
 
 %%=====================================================================
 \section{結論と今後の課題}
