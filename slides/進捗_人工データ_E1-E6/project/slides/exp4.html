@@ -1,15 +1,15 @@
-<section id="exp4" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<section id="exp4" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 4：今回のずらし方では、当たる割合が下がった</h2>
-<p style="font-size:30px;line-height:1.5;color:#4A5568">予測したいデータでは、誤差の大きい所（X1 が大きい所）が多く出るようにずらした。ずれの大きさを 4 段階に変えた</p>
-<table style="font-size:30px;color:#1F2A44;line-height:1.4">
-<tr style="background:#E6EBF2"><th style="width:28%;text-align:left">ずれの大きさ</th><th style="width:18%;text-align:right">なし</th><th style="width:18%;text-align:right">小</th><th style="width:18%;text-align:right">中</th><th style="width:18%;text-align:right">大</th></tr>
-<tr><td>そのまま（当たる割合）</td><td style="text-align:right">0.901</td><td style="text-align:right">0.843</td><td style="text-align:right">0.806</td><td style="text-align:right">0.766</td></tr>
-<tr><td>重み付き（当たる割合）</td><td style="text-align:right">0.901</td><td style="text-align:right">0.901</td><td style="text-align:right">0.899</td><td style="text-align:right">0.901</td></tr>
-<tr><td>重み付き（区間の幅）</td><td style="text-align:right">2.31</td><td style="text-align:right">2.77</td><td style="text-align:right">3.01</td><td style="text-align:right">3.27</td></tr>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">予測したいデータで、誤差の大きい所が多く出るようにずらした</p>
+<table style="font-size:38px;color:#1F2A44;line-height:1.35">
+<tr style="background:#E6EBF2"><th style="width:32%;text-align:left">ずれの大きさ</th><th style="width:17%;text-align:right">なし</th><th style="width:17%;text-align:right">小</th><th style="width:17%;text-align:right">中</th><th style="width:17%;text-align:right">大</th></tr>
+<tr><td>そのまま</td><td style="text-align:right">0.901</td><td style="text-align:right">0.843</td><td style="text-align:right">0.806</td><td style="text-align:right">0.766</td></tr>
+<tr><td>重み付き</td><td style="text-align:right">0.901</td><td style="text-align:right">0.901</td><td style="text-align:right">0.899</td><td style="text-align:right">0.901</td></tr>
+<tr><td>幅（重み付き）</td><td style="text-align:right">2.31</td><td style="text-align:right">2.77</td><td style="text-align:right">3.01</td><td style="text-align:right">3.27</td></tr>
 </table>
-<div style="background:#FFFFFF;border-left:8px solid #D9822B;padding:28px 40px">
-<p style="font-size:30px;line-height:1.5;color:#1F2A44">保証の条件「順番を入れ替えても分布が変わらない」が外れ、このずれでは当たる割合が 77% まで下がった。正しいずれの比（重み）を使うと約 90% に戻った（その分、幅は広がる）。入力の分布だけをずらし、出力の決まり方は変えていない</p>
+<div style="background:#FFFFFF;border-left:10px solid #A34F00;padding:28px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">正しい重みを使うと約 90% に戻る。その分、幅は広がる</p>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">人工データでの検証　11 / 15　　較正用 1,000 点、500 回の平均。そのままの幅は 2.31 で一定。重み付きの方法は Tibshirani ら（2019）</p>
-<aside>実験 4 です。保証には「データの順番を入れ替えても分布が変わらない」という条件がありました。これを崩すため、予測したいデータでは、誤差の大きい所が多く出るように、入力の分布をずらしました。そのままの方法では、ずれが大きくなるほど当たる割合が下がり、一番大きいずれで 77% になりました。一方、ずれ方が正確に分かっていれば、較正用の点に重みを付けて計算し直す方法があり、これを使うと、どのずれでも約 90% に戻りました。ただし、この保証は、入力の分布だけがずれて、正しい重みが分かっている場合に限ります。その代わり、誤差の大きい所に合わせるので、幅は 2.3 から 3.3 まで広がります。</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　11 / 16　　上 2 行は当たる割合。較正用 1,000 点、500 回の平均</p>
+<aside>実験 4 です。保証には「データの順番を入れ替えても分布が変わらない」という条件、交換可能性がありました。これを崩すため、予測したいデータでは、誤差の大きい所が多く出るように、入力の分布をずらしました。出力の決まり方は変えていません。そのままの方法では、ずれが大きくなるほど当たる割合が下がり、一番大きいずれで 77% になりました。一方、ずれ方が正確に分かっていれば、較正用の点に重みを付けて計算し直す方法があり（Tibshirani ら 2019）、これを使うと、どのずれでも約 90% に戻りました。ただし、この保証は、入力の分布だけがずれて、正しい重みが分かっている場合に限ります。その代わり、誤差の大きい所に合わせるので、幅は 2.3 から 3.3 まで広がります。そのままの方法の幅は 2.31 で一定でした。</aside>
 </section>

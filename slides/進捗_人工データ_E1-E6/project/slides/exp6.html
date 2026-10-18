@@ -1,17 +1,18 @@
 <section id="exp6" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 6：データが少ないときは、分けずに使う</h2>
-<div style="display:flex;gap:24px">
-<div style="flex:1;background:#FFFFFF;padding:24px 32px;border:1px solid #D5DCE8;border-radius:12px"><p style="font-size:28px;line-height:1.5"><b>分割型</b>：半分を学習、半分を較正（学習 1 回）</p></div>
-<div style="flex:1;background:#FFFFFF;padding:24px 32px;border:1px solid #D5DCE8;border-radius:12px"><p style="font-size:28px;line-height:1.5"><b>jackknife+</b>：1 点ずつ抜いて学習をくり返す（学習はデータ数と同じ回数）</p></div>
-<div style="flex:1;background:#FFFFFF;padding:24px 32px;border:1px solid #D5DCE8;border-radius:12px"><p style="font-size:28px;line-height:1.5"><b>CV+</b>：10 組に分け、1 組ずつ抜いて学習（学習 10 回）</p></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:36px;line-height:1.4;color:#1F2A44"><b>jackknife+</b>：1 点ずつ抜いて学習をくり返す</p>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44"><b>CV+</b>：10 組に分け、1 組ずつ抜いて学習する</p>
 </div>
-<table style="font-size:28px;color:#1F2A44;line-height:1.4">
-<tr style="background:#E6EBF2"><th style="width:22%;text-align:left">データの総数</th><th style="width:26%;text-align:right">分割型</th><th style="width:26%;text-align:right">jackknife+</th><th style="width:26%;text-align:right">CV+</th></tr>
-<tr><td>50 点</td><td style="text-align:right">0.928 ／ 2.72</td><td style="text-align:right">0.907 ／ 2.25</td><td style="text-align:right">0.925 ／ 2.34</td></tr>
-<tr><td>100 点</td><td style="text-align:right">0.902 ／ 2.21</td><td style="text-align:right">0.902 ／ 2.02</td><td style="text-align:right">0.917 ／ 2.09</td></tr>
-<tr><td>200 点</td><td style="text-align:right">0.893 ／ 1.98</td><td style="text-align:right">0.901 ／ 1.91</td><td style="text-align:right">0.914 ／ 1.96</td></tr>
+<table style="font-size:38px;color:#1F2A44;line-height:1.35">
+<tr style="background:#E6EBF2"><th style="width:31%;text-align:left">方法（50 点）</th><th style="width:21%;text-align:right">学習回数</th><th style="width:26%;text-align:right">当たる割合</th><th style="width:22%;text-align:right">区間の幅</th></tr>
+<tr><td>分割型（半々）</td><td style="text-align:right">1 回</td><td style="text-align:right">0.928</td><td style="text-align:right">2.72</td></tr>
+<tr><td>jackknife+</td><td style="text-align:right">50 回</td><td style="text-align:right">0.907</td><td style="text-align:right">2.25</td></tr>
+<tr><td>CV+</td><td style="text-align:right">10 回</td><td style="text-align:right">0.925</td><td style="text-align:right">2.34</td></tr>
 </table>
-<p style="font-size:28px;line-height:1.5;color:#4A5568">理論の保証は jackknife+ で 80%、CV+ で約 60〜70% と低いが、今回のデータとモデルではどれも 90% 前後。50 点では jackknife+ の幅が分割型より約 17% 狭い。代わりに学習の回数が増える</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">人工データでの検証　13 / 15　　表は「当たる割合 ／ 区間の幅」、200 回の平均。方法は Barber ら（2021）</p>
-<aside>実験 6 です。データが少ないと、分割型ではデータを半分ずつに分けるので、学習用も較正用も少なくなります。そこで、データを分けずに使う方法を比べました。jackknife+ は、1 点ずつ抜いて学習をくり返し、抜いた点で外れ幅を測ります。全部のデータを学習にも較正にも使えますが、学習はデータ数と同じ回数必要です。CV+ は 10 組に分けて同じことをするので、学習は 10 回で済みます。理論の保証は 80% や 60〜70% と低いのですが、今回のデータとモデルでは、どれも 90% 前後当たりました。いつでもそうなるとは限りません。50 点のときは、jackknife+ の幅が分割型より 17% ほど狭くなりました。【質問されたら】分割型の 200 点の 0.893 は 90% を少し下回りますが、ばらつきの範囲内です（標準誤差の約 2 倍）。</aside>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:24px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">保証は低いが今回は約 90%。jackknife+ は幅が約 17% 狭い</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　13 / 16　　データ 50 点、200 回の平均。理論の保証は jackknife+ 80%、CV+ 約 60%</p>
+<aside>実験 6 です。データが少ないと、分割型ではデータを半分ずつに分けるので、学習用も較正用も少なくなります。そこで、データを分けずに使う方法を比べました。jackknife+ は、1 点ずつ抜いて学習をくり返し、抜いた点で外れ幅を測ります。全部のデータを学習にも較正にも使えますが、学習はデータ数と同じ回数必要です。CV+ は 10 組に分けて同じことをするので、学習は 10 回で済みます。表はデータが 50 点のときです。理論の保証は jackknife+ が 80%、CV+ が約 60% と低いのですが、今回のデータとモデルでは、どれも 90% 前後当たりました。いつでもそうなるとは限りません。jackknife+ の幅は分割型より 17% ほど狭くなりました。【質問されたら】100 点・200 点でも同じ傾向で、jackknife+ の幅は分割型より約 9%、4% 狭く、差は小さくなります。分割型の 200 点の 0.893 は 90% を少し下回りますが、ばらつきの範囲内です（標準誤差の約 2 倍）。</aside>
 </section>
