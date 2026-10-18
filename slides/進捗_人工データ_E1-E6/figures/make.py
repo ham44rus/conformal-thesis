@@ -43,7 +43,7 @@ for ax, methods, t in zip(axes, [["abs"], ["abs", "norm"], ["abs", "cqr"]], ["�
         y = e3[e3.method == m].sort_values("bin").coverage_mean.to_numpy()
         faded = (m == "abs" and len(methods) > 1)
         ax.plot(range(1, 6), y, color=COL[m], lw=1.6 if faded else 2.4, marker=MK[m], ms=7,
-                alpha=0.45 if faded else 1, markeredgecolor="white", markeredgewidth=1.2)
+                alpha=0.65 if faded else 1, markeredgecolor="white", markeredgewidth=1.2)
     ax.set_title(t, fontsize=14, color=INK, pad=6)
     ax.set_ylim(0.6, 1.03); ax.set_xlim(0.6, 5.4)
     ax.set_xticks(range(1, 6), ["1\n小", "2", "3", "4", "5\n大"])

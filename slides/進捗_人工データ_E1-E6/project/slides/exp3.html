@@ -1,7 +1,7 @@
 <section id="exp3" data-transition="fade" style="background:#FFFFFF;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 3：全体は 90% でも、組ごとには偏る</h2>
 <p style="font-size:30px;line-height:1.5;color:#4A5568">外れ方が場所で変わるデータ（②）で、テスト点を X₁ の値で 0.2 刻みの 5 組に分けた（X₁ が大きい組ほど誤差が大きい）。灰色の線＝絶対残差（比較用）</p>
-<img src="/_blob/8b7ef58e95eb54b0c14bb26706c81303" alt="3 つの手法ごとに、誤差の大きさで分けた 5 組の当たる割合を示した折れ線図。絶対残差は組 1 でほぼ 100%、組 5 で 73% まで下がる。正規化残差は 88〜93%、CQR は 87〜94% に収まり、灰色で重ねた絶対残差より 90% の破線に近い。" style="width:1380px;height:569px;object-fit:contain;align-self:center">
+<img src="/_blob/f35a3fe674b82b554bb54dc96ecae831" alt="3 つの手法ごとに、誤差の大きさで分けた 5 組の当たる割合を示した折れ線図。絶対残差は組 1 でほぼ 100%、組 5 で 73% まで下がる。正規化残差は 88〜93%、CQR は 87〜94% に収まり、灰色で重ねた絶対残差より 90% の破線に近い。" style="width:1380px;height:569px;object-fit:contain;align-self:center">
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">人工データでの検証　10 / 15　　500 回の平均。組の間の差（最大−最小）：絶対残差 0.27 → 正規化残差 0.04、CQR 0.07</p>
 <aside>実験 3 です。外れ方が場所で変わるデータを使い、テスト点を、誤差の大きさを決めている X1 の値で 5 つの組に分けて、組ごとの当たる割合を見ました。左の絶対残差は、全体では 90% なのに、誤差の小さい組ではほぼ 100%、誤差の大きい組では 73% しか当たりません。幅がどこでも同じなのに、誤差の大きさは組によって違う、ということと整合する結果です。真ん中の正規化残差と右の CQR は、外れやすい所ほど幅を広くするので、組の間の差が 0.27 から 0.04、0.07 まで縮みました。ただし、組ごとの 90% までは保証されません。</aside>
 </section>
