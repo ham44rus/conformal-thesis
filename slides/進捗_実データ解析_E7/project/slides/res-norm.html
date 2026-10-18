@@ -1,6 +1,7 @@
 <section id="res-norm" data-transition="fade" style="background:#FFFFFF;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;align-items:center;gap:24px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44;align-self:stretch">正規化残差：組の間の差が小さくなる</h2>
-<img src="/_blob/c34b8d858926b387ebc8c3a2a16d01e7" alt="正規化残差（青）と絶対残差（灰色）の、組ごとの当たる割合。Superconductivity と Bike Sharing では、青の線は 84〜94% の間に収まり、灰色の線より 90% の破線に近い。Airfoil では両者の差は小さい。" style="width:1500px;height:619px;object-fit:contain">
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　12 / 17　　線＝各組の 100 回平均。差（各回の最大−最小の 100 回平均）：Supercon. 0.32 → 0.09、Bike 0.31 → 0.06、Airfoil 0.12 → 0.10</p>
+<p style="font-size:28px;line-height:1.5;color:#4A5568;align-self:stretch">組の間の差（各回の最大−最小の 100 回平均）：Superconductivity 0.32 → 0.09、Bike 0.31 → 0.06、Airfoil 0.12 → 0.10</p>
+<img src="/_blob/c34b8d858926b387ebc8c3a2a16d01e7" alt="正規化残差（青）と絶対残差（灰色）の、組ごとの当たる割合。Superconductivity と Bike Sharing では、青の線は 84〜94% の間に収まり、灰色の線より 90% の破線に近い。Airfoil では両者の差は小さい。" style="width:1420px;height:586px;object-fit:contain">
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　12 / 17　　線は組ごとの 100 回平均。破線は 90%</p>
 <aside>次に、外れやすさに合わせて幅を変える正規化残差です。青の線が正規化残差、灰色が先ほどの絶対残差です。Superconductivity と Bike Sharing では、組の間の差がずっと小さくなりました。一番当たる組と一番当たらない組の差は、0.3 程度から 0.06〜0.09 に縮んでいます。外れやすい所ほど幅を広くする仕組みと整合する結果です。ただし Superconductivity の組 4 のように 84% 程度の所もあり、組ごとの当たり方まで保証されるわけではありません。Airfoil では、もともと差が小さく、あまり変わりませんでした。この小さな差は、はっきりした改善とは言えません。なお、下の数字は 100 回それぞれの差を平均したもので、線から読める差とは少し違います。</aside>
 </section>
