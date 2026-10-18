@@ -23,11 +23,11 @@
 
 | ファイル | 実験 | 状態 |
 |---|---|---|
-| `E1_coverage.md` | 有限標本被覆保証の検証 | **実装済み** |
-| `E1b_detection_levels.md` | 検証の水準と誤りの検出力 | **実装済み** |
-| `E2_model_agnostic.md` | 下敷きモデルへの非依存性 | **仕様確定**（W4で実装） |
-| `E3_conditional_coverage.md` | 異分散データと条件付き被覆の破綻（**見せ場**）| 仕様のみ（W7で実装） |
-| （E4）| 交換可能性が破れる場合（共変量シフト）| 未着手 |
-| （E5）| 学習／キャリブレーション分割比の影響 | 未着手 |
-| （E6）| jackknife+・CV+ とのデータ効率比較 | 未着手 |
-| （E7）| UCI 実データでの検証 | 未着手 |
+| `E1_coverage.md` | 有限標本被覆保証の検証 | **実装済み**（`sec:e1`） |
+| `E1b_detection_levels.md` | 検証の水準と誤りの検出力 | **実装済み**（`sec:e1b`） |
+| `E2_model_agnostic.md` | 下敷きモデルへの非依存性 | **実装済み**（`sec:e2`） |
+| `E3_conditional_coverage.md` | 異分散データと条件付き被覆の破綻（**見せ場**）| **実装済み**（`sec:e3`） |
+| `E4_covariate_shift.md` | 交換可能性が破れる場合（共変量シフト）| **実装済み**（`sec:e4`） |
+| `E5_split_ratio.md` | 学習／較正の分割比 | **実装済み**（`sec:e5`） |
+| `E6_jackknife_cv.md` | jackknife+・CV+ とのデータ効率比較 | **実装済み**（`sec:e6`） |
+| `E7_real_data.md` | UCI 実データでの検証（第6章） | **実装済み**（`sec:real-data`） |
