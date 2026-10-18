@@ -50,6 +50,6 @@ for ax, methods, t in zip(axes, [["abs"], ["abs", "norm"], ["abs", "cqr"]], ["�
     ax.set_yticks([0.6, 0.7, 0.8, 0.9, 1.0], ["60%", "70%", "80%", "90%", "100%"])
     ax.grid(axis="y", color=GRID, lw=0.8); ax.set_axisbelow(True)
     for sp in ("top", "right"): ax.spines[sp].set_visible(False)
-    ax.set_xlabel("ばらつきの大きさで分けた組", fontsize=11, color=MUTED)
+    ax.set_xlabel("X₁ の値で分けた組", fontsize=11, color=MUTED)
 axes[0].set_ylabel("各組の当たる割合")
 f.tight_layout(); f.savefig(f"{out}/e3_strata.png", dpi=220, facecolor="white")
