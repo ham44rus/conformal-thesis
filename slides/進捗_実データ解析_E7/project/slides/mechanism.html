@@ -1,5 +1,5 @@
 <section id="mechanism" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">しくみ：データを 3 つに分けて使う</h2>
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">しくみ：学習用・較正用に分けて、新しい点を予測する</h2>
 <div style="display:flex;gap:24px;align-items:stretch">
 <div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E6EBF2;padding:36px;border-radius:16px">
 <p style="font-size:30px;font-weight:700;color:#1F2A44">① 学習用</p>
@@ -24,5 +24,5 @@
 </div>
 </div>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　3 / 17　　この方法を「分割等角予測」と呼ぶ</p>
-<aside>しくみを説明します。手元のデータを 3 つに分けます。1 つ目の学習用データで予測モデルを作ります。2 つ目の較正用データで、予測がどれだけ外れるかを測り、幅を決めます。新しいデータには、予測値プラスマイナスその幅を答えます。図の青い線が予測、帯が当たる範囲です。幅は、較正用の外れ幅を小さい順に並べて決めます。このとき、順位だけは新しい 1 点を含めて数えます。たとえば較正用が 99 点なら、100 点分として数えて 90 番目の値を幅にします。新しい点の外れ幅そのものは分からないので使いません。こうすると、新しい点が 90% 以上の確率で帯に入る、ということが証明できます。これを前回のゼミで証明しました。</aside>
+<aside>しくみを説明します。手元のデータを学習用と較正用に分けて、新しいデータを予測します。1 つ目の学習用データで予測モデルを作ります。2 つ目の較正用データで、予測がどれだけ外れるかを測り、幅を決めます。新しいデータには、予測値プラスマイナスその幅を答えます。図の青い線が予測、帯が当たる範囲です。幅は、較正用の外れ幅を小さい順に並べて決めます。このとき、順位だけは新しい 1 点を含めて数えます。たとえば較正用が 99 点なら、100 点分として数えて 90 番目の値を幅にします。新しい点の外れ幅そのものは分からないので使いません。こうすると、新しい点が 90% 以上の確率で帯に入る、ということが証明できます。これを前回のゼミで証明しました。</aside>
 </section>

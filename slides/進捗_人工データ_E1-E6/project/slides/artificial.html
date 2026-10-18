@@ -1,0 +1,19 @@
+<section id="artificial" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">人工データとは：決めた式から作るデータ</h2>
+<p style="font-size:32px;line-height:1.5;color:#4A5568">データの作り方をこちらが知っているので、くり返し実験して「理論どおりか」を確かめられる</p>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFFFF;padding:44px;border:1px solid #D5DCE8;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700;color:#1F2A44">① 外れ方が一定のデータ</h3>
+<p style="font-size:30px;line-height:1.5;color:#1F2A44;background:#EEF2F7;padding:20px 24px;border-radius:12px">Y ＝ X₁ ＋ sin(2πX₂) ＋ 誤差</p>
+<p style="font-size:28px;line-height:1.5;color:#4A5568">誤差の大きさは、どの X でも同じ（標準偏差 0.5）。実験 1・2・5・6 で使う</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFFFF;padding:44px;border:1px solid #D5DCE8;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700;color:#1F2A44">② 外れ方が場所で変わるデータ</h3>
+<p style="font-size:30px;line-height:1.5;color:#1F2A44;background:#EEF2F7;padding:20px 24px;border-radius:12px">Y ＝ X₁ ＋ sin(2πX₂) ＋ (0.1＋X₁) × 誤差</p>
+<p style="font-size:28px;line-height:1.5;color:#4A5568">X₁ が大きいほど誤差が大きい（最大 11 倍）。実験 3・4 で使う</p>
+</div>
+</div>
+<p style="font-size:28px;line-height:1.5;color:#4A5568">入力 X は 5 個の数（0〜1 の一様乱数）。何度でも新しく作れるので、同じ実験を数百〜数千回くり返せる</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">人工データでの検証　5 / 15</p>
+<aside>人工データは、こちらが決めた式から、コンピュータで作るデータです。作り方を知っているので、理論どおりかを正確に答え合わせできます。2 種類使いました。1 つ目は、外れ方がどこでも同じデータです。Y は X1 と sin 2πX2 の和に、大きさが一定の誤差を足したものです。2 つ目は、X1 が大きいほど誤差が大きくなるデータで、端と端で誤差の大きさが 11 倍違います。何度でも新しく作れるので、同じ実験を数百回から数千回くり返して、当たる割合のばらつきまで調べられます。</aside>
+</section>

@@ -1,0 +1,15 @@
+<section id="appendix1b" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">補足：平均だけ見ても、間違いに気づけない</h2>
+<p style="font-size:30px;line-height:1.5;color:#4A5568">較正用 1,000 点、目標 90%、2,000 回。理論の範囲は 0.9000〜0.9010（幅わずか 0.001）</p>
+<table style="font-size:28px;color:#1F2A44;line-height:1.4">
+<tr style="background:#E6EBF2"><th style="width:34%;text-align:left">ケース</th><th style="width:22%;text-align:right">平均</th><th style="width:44%;text-align:left">どの検査で気づけるか</th></tr>
+<tr><td>正しい実装</td><td style="text-align:right">0.90025</td><td>すべての検査を通る</td></tr>
+<tr><td>よくある誤り（n＋1 を n にする）</td><td style="text-align:right">0.89927</td><td>平均が下限 0.90 を下回る（差は 0.001 だけ）</td></tr>
+<tr><td>テスト点が少ない（2,000 点）</td><td style="text-align:right">0.90038</td><td>平均は正しく見える。ばらつきが理論の 1.2 倍で、ばらつき方の検査でだけ気づける</td></tr>
+</table>
+<div style="background:#FFFFFF;border-left:8px solid #2F6DB5;padding:28px 40px">
+<p style="font-size:30px;line-height:1.5;color:#1F2A44">だから実験 1 では、平均だけでなく、ばらつき方まで理論と比べた</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">人工データでの検証　15 / 15（補足）</p>
+<aside>【時間があれば・質問されたら】補足です。検証のやり方によって、見つけられる間違いが違います。よくある実装の誤りに、n プラス 1 とすべき所を n にしてしまう、というものがあります。この誤りがあっても、当たる割合の平均は 0.001 しか変わりません。平均が下限の 0.90 を下回ることで気づけますが、ぎりぎりです。また、テスト点が少ないと、平均は正しく見えるのに、ばらつきが理論の 1.2 倍になり、ばらつき方まで調べないと気づけません。だから実験 1 では、ばらつき方まで理論と比べました。</aside>
+</section>
