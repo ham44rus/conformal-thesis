@@ -1,12 +1,11 @@
 <section id="progress" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">補足：前回からの進捗（人工データの追加実験 3 つ）</h2>
-<table style="font-size:30px;color:#1F2A44;line-height:1.4">
-<tr style="background:#E6EBF2"><th style="width:10%;text-align:left"></th><th style="width:34%;text-align:left">調べたこと</th><th style="width:56%;text-align:left">結果</th></tr>
-<tr><td>①</td><td>交換可能性が破れる場合（共変量シフト）</td><td>重みなしでは当たる割合が 0.901 → 0.766 まで低下。正しい重みを付けると 0.90 に戻る</td></tr>
-<tr><td>②</td><td>学習用と較正用の分け方（総数 1,000 点）</td><td>較正用を 100 → 500 点にすると、当たる割合のばらつきが 0.028 → 0.013。予測誤差の増加は約 5%</td></tr>
-<tr><td>③</td><td>データを分けない jackknife+・CV+（総数 50〜200 点）</td><td>保証は jackknife+ が 80%、CV+ が約 60〜70% だが、実測は 0.90〜0.93。総数 50 点で jackknife+ の区間が分割型より約 17% 狭い</td></tr>
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">補足：人工データの追加実験 3 つ</h2>
+<table style="font-size:38px;color:#1F2A44;line-height:1.35">
+<tr style="background:#E6EBF2"><th style="width:36%;text-align:left">調べたこと</th><th style="width:64%;text-align:left">結果</th></tr>
+<tr><td>分布がずれたら</td><td>重みなし 0.766 → 重み付き 0.901</td></tr>
+<tr><td>分け方</td><td>較正用 100 → 500 点で、ぶれが半分</td></tr>
+<tr><td>データが少ないとき</td><td>jackknife+ は幅が約 17% 狭い</td></tr>
 </table>
-<p style="font-size:32px;line-height:1.5;color:#4A5568">論文：第4章（jackknife+・重み付き等角予測）と第5章の対応する節を執筆。現在 65 ページ</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　17 / 17（補足）</p>
-<aside>【時間があれば話す】補足として、前回の証明の発表のあとに行った、人工データの追加実験 3 つを紹介します。1 つ目は、較正データとテストデータの分布がずれる場合で、重みを付けないと当たる割合が 77% まで下がり、正しい重みを付けると 90% に戻りました。2 つ目は学習用と較正用の分け方で、較正用を増やすと当たる割合のばらつきが半分になる一方、モデルの精度はあまり落ちませんでした。3 つ目は、データを分けない jackknife+ と CV+ で、理論の保証は jackknife+ が 80%、CV+ が 60〜70% ほどですが、実際にはどちらも 90% 以上当たりました。総数 50 点では、jackknife+ の区間が分割型より 17% ほど狭くなりました。以上です。</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">実データ解析　17 / 17（補足）</p>
+<aside>【時間があれば話す】補足として、人工データの追加実験 3 つを紹介します。1 つ目は、較正データとテストデータの分布がずれる場合で、重みを付けないと当たる割合が 77% まで下がり、正しい重みを付けると 90% に戻りました。2 つ目は学習用と較正用の分け方で、較正用を 100 点から 500 点に増やすと当たる割合のばらつきが 0.028 から 0.013 へ半分になる一方、モデルの精度はあまり落ちませんでした。3 つ目は、データを分けない jackknife+ と CV+ で、理論の保証は jackknife+ が 80%、CV+ が 60〜70% ほどですが、実際にはどちらも 90% 前後当たりました。総数 50 点では、jackknife+ の区間が分割型より 17% ほど狭くなりました。以上です。</aside>
 </section>

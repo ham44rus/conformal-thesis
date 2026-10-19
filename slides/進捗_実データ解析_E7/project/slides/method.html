@@ -1,22 +1,22 @@
 <section id="method" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">手続き：人工データのときと同じやり方</h2>
 <div style="display:flex;gap:32px">
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<p style="font-size:30px;font-weight:700;color:#2F6DB5">① 分ける</p>
-<p style="font-size:28px;line-height:1.5;color:#1F2A44">ランダムに<br>学習用 50%（予測モデルを作る）<br>較正用 25%（区間の広さを決める）<br>テスト用 25%（当たるか調べる）<br>これを 100 回</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<p style="font-size:40px;font-weight:700;color:#1F5A9D">① 分ける</p>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">学習 50%<br>較正 25%<br>テスト 25%<br>これを 100 回</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<p style="font-size:30px;font-weight:700;color:#2F6DB5">② 区間を作る</p>
-<p style="font-size:28px;line-height:1.5;color:#1F2A44">前のスライドの 3 手法<br>予測モデル：勾配ブースティング<br>90% 当たる範囲を作る</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<p style="font-size:40px;font-weight:700;color:#1F5A9D">② 区間を作る</p>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">3 つの手法<br>予測モデルは<br>勾配ブースティング</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<p style="font-size:30px;font-weight:700;color:#2F6DB5">③ 測る</p>
-<p style="font-size:28px;line-height:1.5;color:#1F2A44">全体の当たる割合<br>組ごとの当たる割合（テスト用を予測値の大きさで 5 組に分ける。組の境目は較正用データで決め、3 手法で共通）<br>区間の幅</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<p style="font-size:40px;font-weight:700;color:#1F5A9D">③ 測る</p>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">全体の当たる割合<br>組ごとの当たる割合</p>
 </div>
 </div>
 <div style="background:#1F2A44;padding:32px 40px;border-radius:16px">
-<p style="font-size:32px;line-height:1.5;color:#F7F6F2"><b>結果を見る前に</b>、データ・分け方・組の分け方・合否の基準を決め、試した 3 件はすべて報告する（いいとこ取りをしない）</p>
+<p style="font-size:40px;line-height:1.5;color:#F7F6F2"><b>結果を見る前に</b>、分け方・組の分け方・基準を決め、3 件すべて報告する</p>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　9 / 17</p>
-<aside>手続きは、人工データの実験と同じです。データをランダムに、学習用 50%、較正用 25%、テスト用 25% に分け、これを 100 回くり返しました。手法は前のスライドの 3 つで、予測モデルはすべて勾配ブースティングです。組は、人工データでは誤差の大きさを決める変数で分けましたが、実データではそういう変数が分からないので、予測値の大きさで 5 つに分けました。また、データや組の分け方、合否の基準は、結果を見る前に決めました。結果の良いデータだけを載せる、ということをしないためです。</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">実データ解析　9 / 17　　組＝テスト用を予測値の大きさで 5 つに分けた区分（境目は較正用で決め、3 手法で共通）</p>
+<aside>手続きは、人工データの実験と同じです。データをランダムに、学習用 50%、較正用 25%、テスト用 25% に分け、これを 100 回くり返しました。手法は前のスライドの 3 つで、予測モデルはすべて勾配ブースティングです。組は、人工データでは誤差の大きさを決める変数で分けましたが、実データではそういう変数が分からないので、予測値の大きさで 5 つに分けました。境目は較正用データで決め、3 手法で同じ組を使います。また、データや組の分け方、合否の基準は、結果を見る前に決めました。結果の良いデータだけを載せる、ということをしないためです。</aside>
 </section>

@@ -1,21 +1,21 @@
 <section id="airfoil" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">例外：Airfoil では差がはっきりしない</h2>
-<p style="font-size:32px;line-height:1.5;color:#4A5568">組の間の差：絶対残差 0.119 → 正規化残差 0.097（少し縮む）、CQR 0.135（むしろ広がる）</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">組の間の差：絶対残差 0.119 → 正規化残差 0.097、CQR 0.135</p>
 <div style="display:flex;gap:32px">
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<h3 style="font-size:32px;font-weight:700;color:#1F2A44">① もともと差が小さい</h3>
-<p style="font-size:28px;line-height:1.5;color:#4A5568">絶対残差でも 0.119。組による外れやすさの違いが小さく、縮める余地が少ない可能性</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">① 差がもともと小さい</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">縮める余地が少ない</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<h3 style="font-size:32px;font-weight:700;color:#1F2A44">② 1 組のテスト点が少ない</h3>
-<p style="font-size:28px;line-height:1.5;color:#4A5568">テスト用 375 点 ÷ 5 組 ＝ 約 75 点。当たり外れを独立と仮定した概算では、偶然だけで ±0.035 ほどぶれる</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">② 1 組が約 75 点</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">偶然のぶれ ±0.035</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:1px solid #D5DCE8;border-radius:16px">
-<h3 style="font-size:32px;font-weight:700;color:#1F2A44">③ 学習用が少ない</h3>
-<p style="font-size:28px;line-height:1.5;color:#4A5568">752 点では、外れやすさの予測や、上下の端の予測が不安定になる可能性がある</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">③ 学習用が少ない</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">752 点で予測が不安定</p>
 </div>
 </div>
-<p style="font-size:28px;line-height:1.5;color:#4A5568">いずれも原因の候補。この実験だけでは、どれが主な原因かは切り分けていない</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7486">実データ解析　14 / 17</p>
-<aside>Airfoil だけは様子が違いました。正規化残差は少し縮み、CQR はむしろ広がりました。理由の候補を 3 つ考えています。1 つ目は、もともと絶対残差でも差が 0.119 と小さく、縮める余地が少なかった可能性。2 つ目は、1 つの組のテスト点が約 75 点しかないことです。当たり外れを独立と仮定した概算では、90% を測ると偶然だけで ±3.5% ほどぶれます。3 つ目は、学習用が 752 点と少なく、幅を予測するモデル自体が不安定になった可能性です。どれも原因の候補で、まだ切り分けてはいません。</aside>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">いずれも原因の候補。どれが主な原因かは切り分けていない</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">実データ解析　14 / 17　　±0.035 は、当たり外れを独立で当たる確率 0.90 と仮定した概算</p>
+<aside>Airfoil だけは様子が違いました。正規化残差は少し縮み、CQR はむしろ広がりました。理由の候補を 3 つ考えています。1 つ目は、もともと絶対残差でも差が 0.119 と小さく、縮める余地が少なかった可能性。2 つ目は、1 つの組のテスト点が約 75 点しかないことです。当たり外れを独立と仮定した概算では、90% を測ると偶然だけで ±3.5% ほどぶれます。3 つ目は、学習用が 752 点と少なく、外れやすさの予測や上下の端の予測が不安定になった可能性です。どれも原因の候補で、まだ切り分けてはいません。</aside>
 </section>
