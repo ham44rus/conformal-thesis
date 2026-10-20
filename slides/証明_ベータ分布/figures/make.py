@@ -24,7 +24,7 @@ FORMULAS = {
     "f_order": r"$\mathrm{Cov}\;=\;F(S_{(k)})\;=\;V_{(k)}$",
     "f_equiv": r"$V_{(k)}\leq u\quad\Longleftrightarrow\quad\#\{\,i:\ V_i\leq u\,\}\;\geq\;k$",
     "f_binom": r"$P\left(V_{(k)}\leq u\right)\;=\;\sum_{j=k}^{n}\binom{n}{j}\,u^{j}(1-u)^{n-j}$",
-    "f_density": r"$\frac{d}{du}P\left(V_{(k)}\leq u\right)\;\propto\;u^{k-1}(1-u)^{n-k}$",
+    "f_density": r"$\frac{d}{du}P\left(V_{(k)}\leq u\right)\;=\;\frac{n!}{(k-1)!\,(n-k)!}\,u^{k-1}(1-u)^{n-k}$",
     "f_moments": r"$E[\mathrm{Cov}]=\frac{k}{n+1},\qquad \mathrm{Var}[\mathrm{Cov}]=\frac{k(n+1-k)}{(n+1)^{2}(n+2)}$",
     "f_ex": r"$n=20,\ k=19:\quad u^{18}(1-u)^{1}$",
 }

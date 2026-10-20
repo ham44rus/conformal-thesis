@@ -1,14 +1,14 @@
 <section id="step2" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
-<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ②：順番は変わらない</h2>
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ②：大小は逆転しない</h2>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-size:40px;line-height:1.5;color:#1F2A44">・Vi ＝ F(Si) とおく → ① より、0〜1 に一様に散らばる n 個</p>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">・F は増える一方なので、大小の順番はそのまま</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・F は減ることがない（非減少）ので、大小を逆転させない</p>
 </div>
 <div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:28px 40px;display:flex;justify-content:center">
 <img src="/_blob/7d20de3ff7a609d485460d7745f56aa6" alt="Cov = F(S(k)) = V(k)" style="width:454px;height:67px;object-fit:contain">
 </div>
 <img src="/_blob/1cc5d3f5d7cb8a9a15a90dfce8628800" alt="0% から 100% の数直線に 20 個の点。左から 19 番目の点がオレンジで、19 本目 = Cov（94%）と書かれている" style="width:840px;height:252px;object-fit:contain;align-self:center">
 <p style="font-size:36px;line-height:1.4;color:#1F2A44;align-self:center">較正用 20 点 ＝ 0〜1 に投げた 20 本のダーツ。Cov は<b style="color:#A34F00">左から 19 本目</b>の位置</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　7 / 12　　S(k)：k 番目に小さい値（補題 lem:beta-tools (ii)）。図は 1 回分の例</p>
-<aside>ステップ 2 です。較正用の残差 Si を F に通したものを Vi とおきます。ステップ 1 より、V1 から Vn は 0 から 1 に一様に散らばる n 個です。F は増える一方の関数なので、通しても大小の順番は変わりません。だから、k 番目に小さい残差を F に通したものは、Vi の k 番目に小さい値と同じです。つまり被覆率は V の k 番目です。イメージとしては、較正用 20 点は、0 から 1 の線に投げた 20 本のダーツで、被覆率は、左から 19 本目のダーツの位置です。この図の回では 94% でした。</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　7 / 12　　S(k)・V(k)：小さい方から k 番目（補題 lem:beta-tools (ii)）。図は 1 回分の例</p>
+<aside>ステップ 2 です。較正用の残差 Si を F に通したものを Vi とおきます。ステップ 1 より、V1 から Vn は 0 から 1 に一様に散らばる n 個です。F は減ることがない関数なので、通しても大小が逆転しません。だから、k 番目に小さい残差を F に通したものは、Vi の k 番目に小さい値と同じです。つまり被覆率は V の k 番目です。イメージとしては、較正用 20 点は、0 から 1 の線に投げた 20 本のダーツで、被覆率は、左から 19 本目のダーツの位置です。この図の回では 94% でした。</aside>
 </section>

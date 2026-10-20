@@ -1,16 +1,17 @@
 <section id="step3b" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ③-2：微分すると、ベータ分布の形が出る</h2>
 <div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:24px 40px;display:flex;flex-direction:column;align-items:center;gap:8px">
-<img src="/_blob/04b113d62b7ab7bebb769e2a47d81aec" alt="P(V(k) ≤ u) を u で微分すると u^(k−1) (1−u)^(n−k) に比例する" style="width:667px;height:77px;object-fit:contain">
-<p style="font-size:36px;line-height:1.4;color:#4A5568">和の隣どうしが打ち消し合い、1 項だけ残る。これが Beta(k, n+1−k) の密度の形</p>
+<img src="/_blob/837df8ac24fcb1abe4ef505cd7f6bece" alt="P(V(k) ≤ u) を u で微分すると n!/((k−1)!(n−k)!) u^(k−1) (1−u)^(n−k)" style="width:909px;height:87px;object-fit:contain">
+<p style="font-size:36px;line-height:1.4;color:#4A5568">和の隣どうしが打ち消し合い、1 項だけ残る</p>
 </div>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44;font-weight:700">直観：k 本目がちょうど u にあるには</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44;font-weight:700">直観：k 本目が u のすぐ近く（幅 du）にあるには</p>
 <div style="display:flex;gap:32px">
 <div style="flex:1;background:#FFFFFF;padding:32px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:40px;font-weight:700;color:#1F5A9D">左に k−1 本</h3><p style="font-size:36px;line-height:1.4;color:#1F2A44">1 本ごとに確率 u</p></div>
-<div style="flex:1;background:#FFFFFF;padding:32px;border:4px solid #A34F00;border-radius:16px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:40px;font-weight:700;color:#A34F00">u に 1 本</h3><p style="font-size:36px;line-height:1.4;color:#1F2A44">これが k 本目</p></div>
+<div style="flex:1;background:#FFFFFF;padding:32px;border:4px solid #A34F00;border-radius:16px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:40px;font-weight:700;color:#A34F00">u の近くに 1 本</h3><p style="font-size:36px;line-height:1.4;color:#1F2A44">これが k 本目</p></div>
 <div style="flex:1;background:#FFFFFF;padding:32px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:40px;font-weight:700;color:#1F5A9D">右に n−k 本</h3><p style="font-size:36px;line-height:1.4;color:#1F2A44">1 本ごとに確率 1−u</p></div>
 </div>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">かけ算すると、u を k−1 回 × (1−u) を n−k 回 ＝ 上の式の形</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　9 / 12　　∝ は「比例する」。論文では二項係数の恒等式で計算している</p>
-<aside>ステップ 3 の後半です。前のページの和を u で微分すると、和の隣どうしが打ち消し合って、u の k−1 乗と、1−u の n−k 乗をかけたものに比例する 1 項だけが残ります。これがベータ分布 Beta(k, n+1−k) の密度の形です。直観的には次のように数えられます。k 本目がちょうど u のところにあるには、k−1 本が u より左にあり、1 本が u にあり、残りの n−k 本が右にある必要があります。左に来る確率は 1 本ごとに u、右に来る確率は 1 本ごとに 1−u なので、かけ算すると同じ形になります。</aside>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">かけ算すると、u を k−1 回 × (1−u) を n−k 回</p>
+<p style="font-size:36px;line-height:1.4;color:#4A5568">Beta(a, b) の密度は「u を a−1 回 × (1−u) を b−1 回」に比例 → a＝k、b＝n+1−k</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　9 / 12　　前の係数は、どのダーツをどこに置くかの選び方の数</p>
+<aside>ステップ 3 の後半です。前のページの和を u で微分すると、和の隣どうしが打ち消し合って、定数かける u の k−1 乗かける 1−u の n−k 乗、という 1 項だけが残ります。ベータ分布 Beta(a, b) の密度は u の a−1 乗かける 1−u の b−1 乗に比例するので、a を k、b を n+1−k とすると一致します。直観的には次のように数えられます。k 本目が u のすぐ近く、幅 du の小さな区間にあるには、k−1 本が u より左にあり、1 本がその小さな区間にあり、残りの n−k 本が右にある必要があります。左に来る確率は 1 本ごとに u、右に来る確率は 1 本ごとに 1−u なので、かけ算すると同じ形になります。前の定数は、どのダーツを左、真ん中、右に置くかの選び方の数です。</aside>
 </section>
