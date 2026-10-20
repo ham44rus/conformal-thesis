@@ -1,0 +1,17 @@
+<section id="exp1-detail" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 1：設定の中身</h2>
+<table style="font-size:36px;color:#1F2A44;line-height:1.3">
+<tr style="background:#E6EBF2"><th style="width:22%;text-align:left">項目</th><th style="width:78%;text-align:left">内容</th></tr>
+<tr><td>データ</td><td>データ①（外れ方が一定。誤差の標準偏差 0.5）</td></tr>
+<tr><td>予測モデル</td><td>リッジ回帰。学習用 500 点で 1 回だけ学習し、全試行で固定</td></tr>
+<tr><td>較正用</td><td>20・50・100・500・2,000 点の 5 通り。毎回新しく作る</td></tr>
+<tr><td>目標</td><td>80%・90%・95%（α＝0.20・0.10・0.05）→ 合わせて 15 通り</td></tr>
+<tr><td>くり返し</td><td>15 通りそれぞれ 1,000 回</td></tr>
+<tr><td>測り方</td><td>テスト点 10 万点（全試行で共通）のうち、区間に入った割合</td></tr>
+</table>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:24px 40px">
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">モデルを固定し、較正用だけを引き直す → <b>較正用の引き方によるばらつきだけ</b>が見える</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　8 / 26　　論文 5 章 sec:e1、仕様書 specs/E1_coverage.md</p>
+<aside>実験 1 の設定を詳しく説明します。データは、外れ方が一定のデータ①で、誤差の標準偏差は 0.5 です。予測モデルはリッジ回帰で、学習用 500 点で 1 回だけ学習し、全部の試行で同じモデルを使います。較正用データは 20 点、50 点、100 点、500 点、2,000 点の 5 通りで、試行のたびに新しく作ります。目標は 80%、90%、95% の 3 通りで、外れてよい割合 α でいうと 0.20、0.10、0.05 です。合わせて 15 通りの組み合わせを、それぞれ 1,000 回くり返しました。当たる割合は、全部の試行で共通のテスト点 10 万点のうち、区間に入った点の割合で測りました。モデルを固定して較正用だけを引き直すので、較正用の引き方によるばらつきだけを取り出して、理論と比べられます。</aside>
+</section>
