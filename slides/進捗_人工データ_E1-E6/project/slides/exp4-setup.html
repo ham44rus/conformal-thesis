@@ -1,0 +1,20 @@
+<section id="exp4-setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 4：入力の分布がずれるとは</h2>
+<div style="display:flex;gap:32px;align-items:center">
+<div style="flex:1;background:#FFFFFF;padding:40px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">較正用（手元のデータ）</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">X1 がまんべんなく出る</p>
+</div>
+<x-shape kind="arrow-right" style="width:96px;height:48px;background:#A34F00"></x-shape>
+<div style="flex:1;background:#FFFFFF;padding:40px;border:4px solid #A34F00;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">予測したいデータ</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">X1 が大きい所（誤差大）が多く出る</p>
+</div>
+</div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">このとき交換可能性が崩れる。出力の決まり方は変えていない</p>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:28px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44"><b>重み付き</b>：予測したいデータで出やすい点ほど重く数える（ずれ方が分かる場合）</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　16 / 25　　データ②。重み付きの方法は Tibshirani ら（2019）</p>
+<aside>実験 4 です。保証の条件である交換可能性が崩れたら、どうなるかを調べました。較正用、つまり手元のデータでは X1 がまんべんなく出ますが、予測したいデータでは、X1 が大きい所、つまり誤差が大きい所が多く出るように、入力の分布をずらしました。出力の決まり方は変えていません。このずれの大きさを 4 段階に変えました。比べる方法として、重み付きの方法も試しました。予測したいデータで出やすい点ほど、較正用の中で重く数えて幅を決める方法です。ただし、ずれ方が正確に分かっている場合にしか使えません。</aside>
+</section>

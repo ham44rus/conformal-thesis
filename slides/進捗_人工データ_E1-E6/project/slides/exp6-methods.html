@@ -1,0 +1,23 @@
+<section id="exp6-methods" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 6：データを分けずに使う方法</h2>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">データが少ないと、半分に分けるのはもったいない</p>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:#FFFFFF;padding:36px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">分割型</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">半分で学習、半分で較正</p>
+<p style="font-size:36px;font-weight:700;color:#1F5A9D">学習 1 回</p>
+</div>
+<div style="flex:1;background:#FFFFFF;padding:36px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">jackknife+</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">1 点ずつ抜いて学習し、抜いた点で外れ幅を測る</p>
+<p style="font-size:36px;font-weight:700;color:#1F5A9D">学習はデータ数と同じ回数</p>
+</div>
+<div style="flex:1;background:#FFFFFF;padding:36px;border:2px solid #C9D1DC;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:40px;font-weight:700;color:#1F2A44">CV+</h3>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">10 組に分け、1 組ずつ抜いて同じことをする</p>
+<p style="font-size:36px;font-weight:700;color:#1F5A9D">学習 10 回</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　20 / 25　　方法は Barber ら（2021）。理論の保証は jackknife+ 80%、CV+ 約 60〜70%</p>
+<aside>実験 6 です。データが少ないと、分割型ではデータを半分ずつに分けるので、学習用も較正用も少なくなり、もったいないです。そこで、データを分けずに使う方法を比べました。jackknife+ は、1 点ずつ抜いて学習をくり返し、抜いた点で外れ幅を測ります。全部のデータを学習にも較正にも使えますが、学習はデータ数と同じ回数必要です。CV+ は 10 組に分けて同じことをするので、学習は 10 回で済みます。理論の保証は、jackknife+ が 80%、CV+ がデータ数によって約 60〜70% と、分割型の 90% より低くなっています。</aside>
+</section>

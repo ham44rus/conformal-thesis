@@ -1,0 +1,14 @@
+<section id="exp3-width" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 3：組ごとの区間の幅</h2>
+<table style="font-size:38px;color:#1F2A44;line-height:1.35">
+<tr style="background:#E6EBF2"><th style="width:30%;text-align:left">組（X1）</th><th style="width:14%;text-align:right">1</th><th style="width:14%;text-align:right">2</th><th style="width:14%;text-align:right">3</th><th style="width:14%;text-align:right">4</th><th style="width:14%;text-align:right">5</th></tr>
+<tr><td>絶対残差</td><td style="text-align:right">2.31</td><td style="text-align:right">2.31</td><td style="text-align:right">2.31</td><td style="text-align:right">2.31</td><td style="text-align:right">2.31</td></tr>
+<tr><td>正規化残差</td><td style="text-align:right">0.88</td><td style="text-align:right">1.36</td><td style="text-align:right">2.14</td><td style="text-align:right">2.74</td><td style="text-align:right">3.49</td></tr>
+<tr><td>CQR</td><td style="text-align:right">0.97</td><td style="text-align:right">1.47</td><td style="text-align:right">2.10</td><td style="text-align:right">2.55</td><td style="text-align:right">3.10</td></tr>
+</table>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:28px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">正規化残差と CQR は、誤差の大きい組ほど幅を広くしていた。その結果、組の間の差が 0.27 → 0.04・0.07 に縮んだ</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　15 / 25　　500 回の平均。組の間の差＝組ごとの当たる割合の最大−最小</p>
+<aside>組ごとの区間の幅です。絶対残差は、どの組でも 2.31 で同じです。一方、正規化残差は、組 1 の 0.88 から組 5 の 3.49 まで、CQR は 0.97 から 3.10 まで、誤差の大きい組ほど幅を広くしていました。その結果、組ごとの当たる割合の差、つまり一番当たる組と一番当たらない組の差が、絶対残差の 0.27 から、正規化残差で 0.04、CQR で 0.07 まで縮みました。このデータは誤差の大きさが X1 で決まるように作ってあるので、幅を X1 に合わせて変えたことが、偏りが縮んだ理由と考えられます。ただし、組ごとの 90% までは保証されません。</aside>
+</section>
