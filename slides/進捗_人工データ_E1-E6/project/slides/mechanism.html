@@ -1,5 +1,5 @@
 <section id="mechanism" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">しくみ：学習用・較正用に分けて、新しい点を予測</h2>
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">しくみ：学習用・較正用に分けて、テスト点を予測</h2>
 <div style="display:flex;gap:24px;align-items:stretch">
 <div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E6EBF2;padding:36px;border-radius:16px">
 <p style="font-size:40px;font-weight:700;color:#1F2A44">① 学習用</p>
@@ -12,7 +12,7 @@
 </div>
 <x-shape kind="arrow-right" style="width:64px;height:36px;align-self:center;background:#6B7486"></x-shape>
 <div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#F6E2CC;padding:36px;border-radius:16px">
-<p style="font-size:40px;font-weight:700;color:#1F2A44">③ 新しいデータ</p>
+<p style="font-size:40px;font-weight:700;color:#1F2A44">③ テスト点</p>
 <p style="font-size:36px;line-height:1.4;color:#1F2A44">予測値 ± 半幅 を答える</p>
 </div>
 </div>
@@ -24,5 +24,5 @@
 </div>
 </div>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　3 / 26　　この方法を「分割等角予測」と呼ぶ。区間の幅＝上端−下端＝半幅の 2 倍。橙の点は外れた例</p>
-<aside>しくみを説明します。手元のデータを学習用と較正用に分けて、新しいデータを予測します。1 つ目の学習用データで予測モデルを作ります。2 つ目の較正用データで、予測がどれだけ外れるかを測り、半幅を決めます。新しいデータには、予測値プラスマイナスその半幅を答えます。このあと出てくる「区間の幅」は、上端から下端までの長さで、半幅の 2 倍です。図の青い線が予測、帯が当たる範囲です。半幅は、較正用の外れ幅を小さい順に並べて決めます。正確には、順位だけは新しい 1 点を含めて数えます。たとえば較正用が 99 点なら、100 点分として数えて 90 番目の値を半幅にします。新しい点の外れ幅そのものは分からないので使いません。こうすると、新しい点が 90% 以上の確率で帯に入る、ということが証明できます。これを前回のゼミで証明しました。</aside>
+<aside>しくみを説明します。手元のデータを、モデルを作る学習用データと、区間の幅を決める較正用データに分けます。区間を使って予測する 1 点をテスト点と呼びます。1 つ目の学習用データで予測モデルを作ります。2 つ目の較正用データで、予測がどれだけ外れるかを測り、半幅を決めます。テスト点には、予測値プラスマイナスその半幅を答えます。このあと出てくる「区間の幅」は、上端から下端までの長さで、半幅の 2 倍です。図の青い線が予測、帯が当たる範囲です。半幅は、較正用の外れ幅を小さい順に並べて決めます。正確には、順位だけは新しい 1 点を含めて数えます。たとえば較正用が 99 点なら、100 点分として数えて 90 番目の値を半幅にします。テスト点の外れ幅そのものは分からないので使いません。こうすると、テスト点が 90% 以上の確率で帯に入る、ということが証明できます。これを前回のゼミで証明しました。</aside>
 </section>
