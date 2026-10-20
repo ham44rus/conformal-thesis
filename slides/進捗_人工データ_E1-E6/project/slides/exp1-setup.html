@@ -1,15 +1,20 @@
-<section id="exp1-setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<section id="exp1-setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
 <h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 1：何を確かめたか</h2>
-<div style="display:flex;flex-direction:column;gap:20px">
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">・較正用の点数：20・50・100・500・2,000 点</p>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">・目標：80%・90%・95% → 合わせて 15 通り</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・較正用の点数 5 通り（20〜2,000 点）× 目標 3 通り（80・90・95%）</p>
 <p style="font-size:40px;line-height:1.5;color:#1F2A44">・それぞれ 1,000 回。較正用だけを毎回引き直す</p>
 </div>
-<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:32px 40px;display:flex;flex-direction:column;gap:12px">
-<p style="font-size:40px;line-height:1.5;color:#1F2A44;font-weight:700">理論の予言</p>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">① 平均は「目標」から「目標＋1/(較正用＋1)」の間</p>
-<p style="font-size:40px;line-height:1.5;color:#1F2A44">② 1 回ごとの当たる割合の散らばり方は、決まった形（ベータ分布）</p>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:32px 40px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44;font-weight:700">理論の予言（例：目標 90%、較正用 20 点）</p>
+<div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44"><b style="color:#1F5A9D">① 平均</b>　1,000 回の平均は <b>90.0%〜94.8%</b> に入る</p>
+<p style="font-size:36px;line-height:1.4;color:#4A5568">　　上の端＝90%＋1/(20＋1)。2,000 点なら 90.0%〜90.05%</p>
+</div>
+<div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44"><b style="color:#1F5A9D">② ばらつき</b>　1 回ごとの当たる割合のヒストグラムの形も決まっている</p>
+<p style="font-size:36px;line-height:1.4;color:#4A5568">　　ベータ分布という形。次のページで実験と重ねる</p>
+</div>
 </div>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　7 / 25　　予測モデルは固定。当たる割合はテスト点 10 万点で測る</p>
-<aside>実験 1 では、前回証明した定理が、本当にそのとおりに成り立つかを確かめました。較正用の点数を 20 点から 2,000 点まで 5 通り、目標を 80%、90%、95% の 3 通りにして、合わせて 15 通りです。それぞれ 1,000 回、予測モデルは固定したまま、較正用だけを毎回引き直しました。理論は 2 つのことを予言しています。1 つ目は、当たる割合の平均が、目標と、目標に 1/(較正用の点数＋1) を足した値の間に入ること。2 つ目は、1 回ごとの当たる割合の散らばり方が、ベータ分布という決まった形になることです。この 2 つを確かめました。</aside>
+<aside>実験 1 では、前回証明した定理が、本当にそのとおりに成り立つかを確かめました。較正用の点数を 20 点から 2,000 点まで 5 通り、目標を 80%、90%、95% の 3 通りにして、合わせて 15 通りです。それぞれ 1,000 回、予測モデルは固定したまま、較正用だけを毎回引き直しました。理論は 2 つのことを予言しています。目標 90%、較正用 20 点の場合で説明します。1 つ目は平均です。1,000 回の当たる割合の平均は、90.0% から 94.8% の間に入ります。上の端は、90% に 1/(20＋1) を足した値です。較正用が 2,000 点なら、範囲は 90.0% から 90.05% と、ほぼ 90% ちょうどになります。2 つ目はばらつきです。1 回ごとの当たる割合はばらつきますが、そのヒストグラムの形まで、ベータ分布という形に決まっています。次のページで、実験の結果と重ねて見せます。</aside>
 </section>
