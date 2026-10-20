@@ -1,8 +1,13 @@
-<section id="exp4-setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
-<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 4：手元と予測したいデータで、入力の出方がずれる</h2>
-<p style="font-size:36px;line-height:1.4;color:#1F2A44">例：去年のデータで幅を決めたが、今年はぶれの大きい種類のデータ（X1 が大きい）が増えた</p>
-<img src="/_blob/3cabd79abd835fb7efb930c869980552" alt="2 つの散布図。横軸 X1、縦軸 残差。左の手元のデータは X1 が 0 から 1 にまんべんなく散らばり、灰色の帯の外は約 10%。右の予測したいデータは点が X1 の大きい右側に集まり、ぶれが大きいので帯の外が約 23% に増える。" style="width:1100px;height:536px;object-fit:contain;align-self:center">
-<p style="font-size:36px;line-height:1.4;color:#1F2A44">X から Y が決まるルールは同じ。<b>入力の出方だけ</b>が違う → 交換可能性が崩れる</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　17 / 26　　データ②。点は説明用の 300 個。ずれの大きさは 4 段階（次のページ）</p>
-<aside>実験 4 です。保証の条件である交換可能性が崩れたら、どうなるかを調べました。例えば、去年のデータで幅を決めたのに、今年はぶれの大きい種類のデータが増えた、という状況です。図の縦軸は残差、つまり予測からのずれで、灰色の帯が、手元のデータで決めた幅です。左の手元のデータでは、X1 が 0 から 1 までまんべんなく出て、帯の外に出るのは約 10% です。右の予測したいデータでは、X1 が大きい所、つまりぶれの大きい所に点が集まるので、同じ帯では外に出る点が約 23% に増えます。X から Y が決まるルールは同じで、変えたのは入力の出方だけです。それでも交換可能性が崩れて、保証が成り立たなくなります。このずれの大きさを 4 段階に変えました。比べる方法として、重み付きの方法も試しました。予測したいデータで出やすい点ほど、較正用の中で重く数えて幅を決める方法で、ずれ方が分かっている場合に使えます。</aside>
+<section id="exp4-setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:20px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">実験 4：新しい点が来やすい場所が、手元と違う場合</h2>
+<div style="display:flex;gap:32px;align-items:center">
+<img src="/_blob/d2bf83d58359678eaaf60b834c6fa774" alt="上の図は手元のデータの残差の散布図で、灰色の帯が手元で決めた幅。右ほどぶれが大きく、帯の外の点は右側に多い。下の図は X1 の来やすさで、手元のデータはどこも同じ高さ、新しい点（ずれ大）は右側ほど来やすい。" style="width:1080px;height:620px;object-fit:contain">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">例：去年のデータで幅を決めたが、今年はぶれの大きい種類が増えた</p>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">帯の外は右側に多い → 新しい点が右から来やすいと<b>外れが増える</b></p>
+<p style="font-size:36px;line-height:1.4;color:#A34F00">X から Y が決まるルールは同じ。それでも交換可能性が崩れる</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　17 / 26　　データ②。上の点は説明用の 300 個。来やすさの偏りは 4 段階に変えた（次のページ）</p>
+<aside>実験 4 です。保証の条件である交換可能性が崩れたら、どうなるかを調べました。例えば、去年のデータで幅を決めたのに、今年はぶれの大きい種類のデータが増えた、という状況です。上の図は手元のデータで、縦軸は残差、つまり予測からのずれです。灰色の帯が、手元のデータで決めた幅です。X1 が大きい右側ほどぶれが大きく、帯の外に出る点も右側に多くなっています。下の図は、新しい点がどの X1 の所から来やすいかを表しています。手元のデータは、どこからも同じように来ます。一方、今回ずらした新しい点は、右側、つまりぶれの大きい所から来やすくなっています。すると、同じ幅を使っても、新しい点は帯の外に出やすくなります。X から Y が決まるルールは変えておらず、変えたのは新しい点の来やすい場所だけです。それでも交換可能性が崩れて、保証が成り立たなくなります。この来やすさの偏りを 4 段階に変えました。比べる方法として、重み付きの方法も試しました。新しい点が来やすい所の較正用の点ほど重く数えて幅を決める方法で、偏り方が分かっている場合に使えます。</aside>
 </section>

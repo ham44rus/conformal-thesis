@@ -53,23 +53,27 @@ for ax, methods, t in zip(axes, [["abs"], ["abs", "norm"], ["abs", "cqr"]], ["�
 f.tight_layout(rect=(0, 0.09, 1, 1))
 f.text(0.55, 0.03, "X1 の値で分けた組（右ほど誤差が大きい）", ha="center", fontsize=20, color=INK); f.savefig(f"{out}/e3_strata.png", dpi=220, facecolor="white")
 
-# 実験4：入力のずれのイメージ（データ②の残差。左＝手元の較正用、右＝ずれ「大」の予測したいデータ）
-# 帯は較正用で決めた半幅（区間の幅の半分）、題の「帯の外」は実験の値（results/e4_summary.csv）。点は説明用の乱数 300 個
-rng = np.random.default_rng(0)
+# 実験4：入力のずれのイメージ（データ②）。上＝手元の較正用データの残差と、それで決めた幅（灰色の帯）。
+# 下＝X1 の出やすさ（密度）。手元は一様、新しい点（ずれ「大」）は (1+γ)x^γ、γ=4。点は説明用の乱数 300 個
 e4 = pd.read_csv(f"{root}/results/e4_summary.csv").query("method == 'unweighted'").set_index("gamma")
-q = e4.loc[0.0, "mean_width"] / 2
-f, axes = plt.subplots(1, 2, figsize=(8, 3.9), sharey=True)
-for ax, gamma, col, t in zip(axes, [0, 4], [COL["norm"], COL["cqr"]], ["手元（較正用）", "予測したいデータ（ずれ大）"]):
-    x1 = rng.uniform(size=300) ** (1 / (1 + gamma))  # 密度 (1+γ) x^γ からの乱数
-    e = (0.1 + x1) * rng.normal(size=300)
-    out_ = np.abs(e) > q
-    ax.axhspan(-q, q, color="#DDE2E9", zorder=0)
-    ax.scatter(x1[~out_], e[~out_], s=14, color=col, alpha=0.8, linewidths=0)
-    ax.scatter(x1[out_], e[out_], s=30, color=INK, marker="x", linewidths=1.6)
-    ax.set_title(f"{t}\n帯の外：約 {(1 - e4.loc[float(gamma), 'coverage_mean'])*100:.0f}%", fontsize=20, color=INK, pad=8, linespacing=1.3)
-    ax.set_xlim(0, 1); ax.set_ylim(-3.2, 3.2); ax.set_xticks([0, 0.5, 1]); ax.set_yticks([-2, 0, 2])
-    for sp in ("top", "right"): ax.spines[sp].set_visible(False)
-axes[0].set_ylabel("残差", fontsize=20, color=INK)
-f.tight_layout(rect=(0, 0.08, 1, 1))
-f.text(0.55, 0.025, "横軸 X1（右ほどぶれ大）。灰色の帯＝手元で決めた幅", ha="center", fontsize=18, color=INK)
+q = e4.loc[0.0, "mean_width"] / 2  # 較正用で決めた半幅（区間の幅の半分）
+rng = np.random.default_rng(0)
+f, (ax, axd) = plt.subplots(2, 1, figsize=(8, 4.6), sharex=True, gridspec_kw={"height_ratios": [2.2, 1]})
+x1 = rng.uniform(size=300)
+e = (0.1 + x1) * rng.normal(size=300)
+ax.axhspan(-q, q, color="#DDE2E9", zorder=0)
+ax.scatter(x1, e, s=14, color=COL["norm"], alpha=0.8, linewidths=0)
+ax.set_ylim(-3.2, 3.2); ax.set_yticks([-2, 0, 2]); ax.set_ylabel("残差", fontsize=20, color=INK)
+ax.text(0.02, 2.5, "手元のデータ（灰色の帯＝ここで決めた幅）", fontsize=18, color=INK)
+xs = np.linspace(0, 1, 200)
+axd.plot(xs, np.ones_like(xs), color=MUTED, lw=3, label="手元のデータ")
+axd.fill_between(xs, 5 * xs ** 4, color=COL["cqr"], alpha=0.25, linewidth=0)
+axd.plot(xs, 5 * xs ** 4, color=COL["cqr"], lw=3, label="新しい点（ずれ大）")
+axd.set_ylim(0, 5.3); axd.set_yticks([]); axd.set_ylabel("来やすさ", fontsize=18, color=INK, labelpad=12)
+axd.text(0.02, 1.4, "手元のデータ：どこも同じ", fontsize=18, color=MUTED)
+axd.text(0.15, 3.6, "新しい点（ずれ大）：右側から来やすい", fontsize=18, color=COL["cqr"])
+axd.set_xlim(0, 1); axd.set_xticks([0, 0.5, 1]); axd.set_xlabel("X1（右ほどぶれが大きい）", fontsize=20, color=INK)
+for a in (ax, axd):
+    for sp in ("top", "right"): a.spines[sp].set_visible(False)
+f.tight_layout(h_pad=0.6)
 f.savefig(f"{out}/e4_shift.png", dpi=220, facecolor="white")
