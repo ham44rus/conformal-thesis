@@ -1,0 +1,16 @@
+<section id="setup" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">準備：被覆率を式で書く</h2>
+<div style="display:flex;flex-direction:column;gap:20px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・学習用データを固定する → 予測モデル f̂ が 1 つに決まる</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・F(s)：新しい点の残差 |Y − f̂(X)| が s 以下になる確率</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・q̂：較正用の残差 S1, …, Sn のうち k 番目に小さい値</p>
+</div>
+<div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:32px 40px;display:flex;justify-content:center">
+<img src="/_blob/9024c162f9082f88c1b02eda0f9ea79b" alt="Cov = P(|Y − f̂(X)| ≤ q̂) = F(q̂)" style="width:694px;height:74px;object-fit:contain">
+</div>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:28px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">「残差が q̂ 以下」＝「区間に入る」。だから <b>Cov ＝ F(q̂)</b></p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　4 / 12　　F は残差の分布関数。区間は f̂(X) ± q̂</p>
+<aside>準備として、被覆率を式で書きます。まず学習用データを固定します。すると予測モデル f ハットが 1 つに決まります。F(s) を、新しい点の残差、つまり Y と予測の差の絶対値が、s 以下になる確率とします。分布関数です。q ハットは、較正用の残差 S1 から Sn のうち、k 番目に小さい値です。区間は予測 ± q ハットなので、残差が q ハット以下であることと、区間に入ることは同じです。したがって Cov は F(q ハット) と書けます。</aside>
+</section>

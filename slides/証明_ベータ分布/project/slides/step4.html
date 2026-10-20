@@ -1,0 +1,18 @@
+<section id="step4" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ④：予測モデルの固定を外す</h2>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・①〜③の答え Beta(k, n+1−k) に、予測モデルは出てこない</p>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・学習用と較正用は独立 → 学習用について平均しても同じ答え</p>
+</div>
+<div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:28px 40px">
+<p style="font-size:40px;line-height:1.5;color:#1F2A44"><b>どんな予測モデルでも、Cov は Beta(k, n+1−k) に従う</b>　∎</p>
+</div>
+<table style="font-size:36px;color:#1F2A44;line-height:1.35">
+<tr style="background:#E6EBF2"><th style="width:40%;text-align:left">仮定</th><th style="width:60%;text-align:left">使った所</th></tr>
+<tr><td>データが i.i.d.</td><td>① n 個が独立に一様</td></tr>
+<tr><td>残差に同点がない</td><td>① F(S) が一様になる</td></tr>
+<tr><td>学習用と較正用が独立</td><td>④ 固定を外す</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　10 / 12　　平均してよいのはフビニの定理による</p>
+<aside>最後のステップ 4 です。ここまでは学習用データを固定していました。しかし、ステップ 1 から 3 の答えである Beta(k, n+1−k) には、予測モデルが何も出てきません。学習用と較正用は独立なので、学習用データについて平均しても、答えは同じです。これはフビニの定理で正当化できます。したがって、どんな予測モデルでも、被覆率はベータ分布に従います。これで証明終わりです。表は、3 つの仮定をどこで使ったかのまとめです。</aside>
+</section>

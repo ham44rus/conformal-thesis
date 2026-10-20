@@ -1,0 +1,14 @@
+<section id="step3a" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ③-1：本数を数える形に言い換える</h2>
+<div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:24px 40px;display:flex;flex-direction:column;align-items:center;gap:8px">
+<img src="/_blob/31aa38f27db5d065bdd1dc8dce9c5652" alt="V(k) ≤ u と、u 以下の個数が k 以上であることは同値" style="width:724px;height:77px;object-fit:contain">
+<p style="font-size:36px;line-height:1.4;color:#4A5568">k 本目が u 以下 ⇔ u より左に k 本以上（# は個数）</p>
+</div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">・1 本が u 以下になる確率は u → u 以下の本数は<b>二項分布 Bin(n, u)</b></p>
+<div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:24px 40px;display:flex;flex-direction:column;align-items:center;gap:8px">
+<img src="/_blob/00694e54288e627197c484ec806dda32" alt="P(V(k) ≤ u) は、j = k から n までの二項確率 C(n, j) u^j (1−u)^(n−j) の和" style="width:707px;height:144px;object-fit:contain">
+<p style="font-size:36px;line-height:1.4;color:#4A5568">u 以下がちょうど j 本の確率を、j＝k〜n で足す</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　8 / 12　　補題 lem:order-count (i)、lem:beta-tools (iii)</p>
+<aside>ステップ 3 の前半です。k 本目のダーツが u 以下にある、ということは、u より左にダーツが k 本以上ある、ということと同じです。k 本目が u 以下なら、1 本目から k 本目まで全部 u 以下です。逆に u 以下が k 本以上あれば、小さい順に並べた k 本目も u 以下です。ステップ 1 より、1 本のダーツが u 以下になる確率は u で、ダーツは独立なので、u 以下の本数は二項分布 Bin(n, u) に従います。だから、k 本目が u 以下である確率は、u 以下がちょうど j 本である確率を、j が k から n まで足したものになります。</aside>
+</section>

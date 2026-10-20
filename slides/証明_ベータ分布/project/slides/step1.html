@@ -1,0 +1,16 @@
+<section id="step1" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">ステップ ①：残差を「下から何%」に直す</h2>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">F(S) ＝ 残差 S が、全体の下から何% の位置か</p>
+<div style="display:flex;gap:40px;align-items:center">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:28px 32px;display:flex;justify-content:center">
+<img src="/_blob/c4d293c060e24df0b6e16f55d594418c" alt="P(F(S) ≤ u) = u（0 ≤ u ≤ 1）" style="width:650px;height:63px;object-fit:contain">
+</div>
+<p style="font-size:36px;line-height:1.4;color:#1F2A44">下から 10% 以内に入る確率は、ちょうど 10%。<b>0〜1 の一様分布</b></p>
+<p style="font-size:36px;line-height:1.4;color:#A34F00">「同点がない」をここで使う</p>
+</div>
+<img src="/_blob/491aac541b29135b8f14f7058c753e11" alt="左：残差 S のヒストグラム。0 付近が多く右に裾を引く。右：F(S) のヒストグラム。0% から 100% までほぼ同じ高さ" style="width:760px;height:367px;object-fit:contain">
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　6 / 12　　確率積分変換（補題 lem:beta-tools (i)）。図は残差 2 万個の例</p>
+<aside>ステップ 1 です。残差 S を分布関数 F に通した F(S) は、S が全体の下から何% の位置にあるかを表します。例えば、下から 10% 以内に入る確率は、定義からちょうど 10% です。どの区間でも同じなので、F(S) は 0 から 1 の一様分布に従います。これを確率積分変換といいます。右の図で、左の残差は小さい値が多く偏っていますが、F に通すと、右のようにどこも同じ高さになります。ここで、同点がない、つまり F が連続であることを使います。較正用の残差 n 個は独立なので、F に通した n 個も、独立に 0 から 1 に一様に散らばります。</aside>
+</section>

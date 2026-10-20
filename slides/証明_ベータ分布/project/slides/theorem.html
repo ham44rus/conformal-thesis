@@ -1,0 +1,16 @@
+<section id="theorem" data-transition="fade" style="background:#F7F6F2;color:#1F2A44;font-family:'BIZ UDPGothic', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<h2 style="font-family:'BIZ UDPGothic', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.15;color:#1F2A44">定理：被覆率はベータ分布に従う</h2>
+<div style="background:#FFFFFF;border:2px solid #C9D1DC;border-radius:16px;padding:32px 40px;display:flex;flex-direction:column;align-items:center;gap:16px">
+<img src="/_blob/4fa4bd150502d494f9f356fe8298f60f" alt="Cov は Beta(k, n+1−k) に従う。k は (n+1)(1−α) の切り上げ" style="width:1036px;height:63px;object-fit:contain">
+<p style="font-size:36px;line-height:1.4;color:#4A5568">n：較正用の点数　k：幅に使う順位（残差の小さい方から k 番目）</p>
+</div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44;font-weight:700">仮定</p>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:#FFFFFF;padding:32px;border:2px solid #C9D1DC;border-radius:16px"><p style="font-size:36px;line-height:1.4;color:#1F2A44">データが i.i.d.</p></div>
+<div style="flex:1;background:#FFFFFF;padding:32px;border:2px solid #C9D1DC;border-radius:16px"><p style="font-size:36px;line-height:1.4;color:#1F2A44">残差に同点がない</p></div>
+<div style="flex:1;background:#FFFFFF;padding:32px;border:2px solid #C9D1DC;border-radius:16px"><p style="font-size:36px;line-height:1.4;color:#1F2A44">学習用と較正用が独立</p></div>
+</div>
+<p style="font-size:40px;line-height:1.5;color:#1F2A44">例：目標 90%、較正用 20 点 → k＝⌈21×0.9⌉＝19、<b style="color:#1F5A9D">Beta(19, 2)</b></p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">補足：ベータ分布の証明　3 / 12　　論文 定理 thm:cond-coverage-beta。⌈ ⌉ は切り上げ</p>
+<aside>答えがこの定理です。被覆率 Cov は、ベータ分布 Beta(k, n+1−k) に従います。n は較正用の点数、k は幅に使う順位で、較正用の残差を小さい方から並べて k 番目を幅にします。仮定は 3 つです。データが i.i.d. であること。これは前回の交換可能より強い仮定です。残差に同点がないこと。そして、学習用と較正用が独立であることです。例えば目標 90%、較正用 20 点なら、k は 21 × 0.9 の切り上げで 19 なので、Beta(19, 2) になります。</aside>
+</section>
