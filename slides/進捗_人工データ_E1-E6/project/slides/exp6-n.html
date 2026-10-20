@@ -6,9 +6,10 @@
 <tr><td>100 点</td><td style="text-align:right">0.902 / 2.21</td><td style="text-align:right">0.902 / 2.02</td><td style="text-align:right">0.917 / 2.09</td></tr>
 <tr><td>200 点</td><td style="text-align:right">0.893 / 1.98</td><td style="text-align:right">0.901 / 1.91</td><td style="text-align:right">0.914 / 1.96</td></tr>
 </table>
+<p style="font-size:32px;line-height:1.4;color:#4A5568">分割型 200 点の 0.893 は、95% 区間 0.885〜0.900 なので 90% の保証と矛盾しない</p>
 <div style="background:#FFFFFF;border-left:10px solid #1F5A9D;padding:28px 40px">
 <p style="font-size:40px;line-height:1.5;color:#1F2A44">データが増えると差は小さくなる（jackknife+ の幅は 50 点で約 17%、200 点で約 4% 狭い）</p>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　22 / 25　　表は「当たる割合 / 区間の幅」、200 回の平均</p>
-<aside>データの数を 50 点、100 点、200 点と変えた結果です。表は、当たる割合と区間の幅を並べています。jackknife+ と CV+ は、どのデータ数でも 90% 前後当たりました。幅は、どのデータ数でも jackknife+ が一番狭く、分割型より 50 点で約 17%、100 点で約 9%、200 点で約 4% 狭くなりました。データが増えると、分割型でも学習用と較正用の両方に十分な点が回るので、差は小さくなります。【質問されたら】分割型の 200 点の 0.893 は 90% を少し下回りますが、ばらつきの範囲内です（標準誤差の約 2 倍）。</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:28px;color:#4A5568">人工データでの検証　22 / 25　　表は「当たる割合 / 区間の幅」、200 回の平均。当たる割合の 95% 区間は各 ±0.009 以内</p>
+<aside>データの数を 50 点、100 点、200 点と変えた結果です。表は、当たる割合と区間の幅を並べています。jackknife+ と CV+ は、どのデータ数でも 90% 前後当たりました。幅は、どのデータ数でも jackknife+ が一番狭く、分割型より 50 点で約 17%、100 点で約 9%、200 点で約 4% 狭くなりました。データが増えると、分割型でも学習用と較正用の両方に十分な点が回るので、差は小さくなります。【質問されたら】分割型の 200 点の 0.893 は 90% を少し下回りますが、95% 区間が 0.885〜0.900 なので、90% の保証と矛盾するとは言えません。</aside>
 </section>
