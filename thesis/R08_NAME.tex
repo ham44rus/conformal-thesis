@@ -3766,8 +3766,46 @@ Bike Sharing を時間順に分けると、較正用（$2012$ 年 $1$〜$7$ 月�
 %%=====================================================================
 
 \section{数式と実装の対応表}
-%% TODO: 本文の式番号と、src/ の関数名を対応させた表。
-%%       ★これは必ず入れること。実装を理解している証拠になり、口頭試問でも効く。
+\label{app:code-map}
+
+本文の式・節と、それを実装した関数の対応を表~\ref{tab:code-map} に示す。関数はすべて
+\texttt{src/conformal/} にある。各関数の docstring には、対応する式・節のラベル名を書いており
+（例：\texttt{eq:khat}）、その名前が本文に存在することをテスト \texttt{tests/test\_label\_refs.py} で確認している。
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{本文の式・節と実装の対応（ファイルはすべて \texttt{src/conformal/} の下）}
+  \label{tab:code-map}
+  \begin{tabular}{p{0.27\linewidth}p{0.27\linewidth}p{0.38\linewidth}}
+    \toprule
+    本文 & 内容 & 実装（ファイル: 関数） \\
+    \midrule
+    \eqref{eq:score} & 絶対残差スコア & \texttt{scores.py: absolute\_residual} \\
+    \eqref{eq:khat} & 共形分位点の順位 $k$ & \texttt{split.py: conformal\_index} \\
+    定義~\ref{def:order-stat}, \eqref{eq:khat} & 共形分位点 $\qhat$ & \texttt{split.py: conformal\_quantile} \\
+    \eqref{eq:interval} & 予測区間 & \texttt{split.py: interval\_from\_quantile} \\
+    \eqref{eq:score-normalized} & 正規化残差スコア & \texttt{scores.py: normalized\_residual} \\
+    \eqref{eq:sigma-hat} & 尺度 $\hat\sigma(x)$ の推定 & \texttt{adaptive.py: SigmaEstimator, fit\_sigma} \\
+    注意~\ref{rem:normalized-reduction} & 学習用データ内の out-of-fold 予測 & \texttt{adaptive.py: out\_of\_fold\_predict} \\
+    \ref{sec:cqr}節 & 下側・上側の分位点回帰 & \texttt{adaptive.py: QuantilePair, fit\_quantile\_pair} \\
+    \eqref{eq:cqr-score} & CQR のスコア & \texttt{scores.py: cqr\_score} \\
+    \eqref{eq:cqr-interval} & CQR の予測区間 & \texttt{scores.py: cqr\_interval} \\
+    \eqref{eq:weighted-prob}--\eqref{eq:weighted-quantile} & 重み付き共形分位点 & \texttt{weighted.py: weighted\_conformal\_quantile} \\
+    \eqref{eq:loo-residual}, \eqref{eq:jackknife-plus} & jackknife+ の区間 & \texttt{jackknife.py: jackknife\_plus\_interval, loo\_interval} \\
+    \ref{sec:jackknife-plus}節 & CV+ の区間 & \texttt{jackknife.py: cv\_plus\_interval} \\
+    \eqref{eq:coverage-rate} & 被覆率 & \texttt{metrics.py: coverage} \\
+    \eqref{eq:mean-width} & 平均区間幅 & \texttt{metrics.py: mean\_width} \\
+    \ref{sec:metrics}節 & 層別被覆率（特徴量・区間幅） & \texttt{metrics.py: feature\_stratified\_coverage, size\_stratified\_coverage} \\
+    \eqref{eq:dgp-homo} & データ①（等分散） & \texttt{datasets.py: homoscedastic} \\
+    \eqref{eq:dgp-hetero} & データ②（異分散） & \texttt{datasets.py: heteroscedastic} \\
+    \eqref{eq:dgp-shift} & 入力をずらしたデータ②と正しい重み & \texttt{datasets.py: heteroscedastic\_shifted, shift\_weight} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+共形分位点（\eqref{eq:khat}）の順位 $k$ は、\texttt{conformal\_index} で $\alpha$ を有理数に直してから計算し、浮動小数点の
+丸めで $k$ が $1$ つずれることを防いでいる（例：$\alpha=1/3$、$n=8$ で $k=6$ が $7$ になる）。これは \texttt{tests/test\_quantile\_index.py} で検査している。
 
 \section{実験環境と再現手順}
 %% TODO: Python 3.11 / numpy, scipy, scikit-learn, pandas, matplotlib

@@ -28,7 +28,7 @@ def weighted_conformal_quantile(
     test_weights: np.ndarray,
     alpha: float,
 ) -> np.ndarray:
-    r"""テスト点ごとの重み付き共形分位点 \hat{q}(x) を返す（卒論 sec:covariate-shift）。
+    r"""テスト点ごとの重み付き共形分位点 \hat{q}(x) を返す（卒論 sec:covariate-shift、eq:weighted-quantile）。
 
     定義。較正スコア S_1..S_n、較正点の重み w_i = w(X_i)、テスト点の重み w(x) に対し、
 

@@ -11,7 +11,7 @@ import numpy as np
 
 
 def homoscedastic(n: int, rng: np.random.Generator, sigma: float = 0.5):
-    """等分散のDGP（E1, E2, E5, E6 で使用）。
+    """等分散のDGP（E1, E2, E5, E6 で使用。卒論 eq:dgp-homo）。
 
         X ~ Uniform(0,1)^5,  Y = X1 + sin(2*pi*X2) + N(0, sigma^2)
     """
@@ -21,7 +21,7 @@ def homoscedastic(n: int, rng: np.random.Generator, sigma: float = 0.5):
 
 
 def heteroscedastic(n: int, rng: np.random.Generator, base: float = 0.1, slope: float = 1.0):
-    """異分散のDGP（E3 で使用。条件付き被覆の破綻を見せるための設定）。
+    """異分散のDGP（E3 で使用。条件付き被覆の破綻を見せるための設定。卒論 eq:dgp-hetero）。
 
         X ~ Uniform(0,1)^5,  Y = X1 + sin(2*pi*X2) + sigma(X1) * N(0,1)
         sigma(x) = base + slope * x        ← X1 が大きいほど誤差が大きい
@@ -35,7 +35,7 @@ def heteroscedastic(n: int, rng: np.random.Generator, base: float = 0.1, slope: 
 def heteroscedastic_shifted(
     n: int, rng: np.random.Generator, gamma: float, base: float = 0.1, slope: float = 1.0
 ):
-    """共変量シフトをかけた異分散のDGP（E4 のテスト点で使用。卒論 sec:e4）。
+    """共変量シフトをかけた異分散のDGP（E4 のテスト点で使用。卒論 sec:e4、eq:dgp-shift）。
 
     heteroscedastic と違うのは X1 の分布だけである。X1 を密度
 
